@@ -10,7 +10,7 @@ if [[ -z "$SRC_DIR" ]];then
 	SRC_DIR=.
 fi
 
-# location where we will be putting execuatble. Must match custom tests
+# location where we will be putting execuatble. Must match custom tests.
 if [[ -z "$EXE_DIR" ]];then
 	EXE_DIR=/opt/azurehpc/test/nhc
 fi
@@ -38,8 +38,20 @@ else
   echo "$NVCC not found. Exiting setUP"
 fi
 
-
+# create perf-test executables
+VERSION=4.5-0.12
+VERSION_HASH=ge93c538
+apt-get install -y libpci-dev
+pushd ${EXE_DIR}
+wget https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
+tar xvf perftest-${VERSION}.${VERSION_HASH}.tar.gz
+pushd perftest-4.5
+./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h
+make
+rm ${EXE_DIR}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
+popd
+popd
 # copy all custom test to the nhc scripts dir
-cp *.nhc /etc/nhc/scripts
+cp $SRC_DIR/*.nhc /etc/nhc/scripts
 
 exit 0
