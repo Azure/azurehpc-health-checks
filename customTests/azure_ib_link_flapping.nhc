@@ -4,8 +4,8 @@
 IB_FLAPPING_LINK_TEST="IB link flapping detected"
 
 
-function check_ib_link_flapping()
-{
+function check_ib_link_flapping(){
+
 TIME_INTERVAL_HOURS=$1
 if [[ -z  "$TIME_INTERVAL_HOURS" ]];then
    TIME_INTERVAL_HOURS=6

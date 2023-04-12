@@ -13,9 +13,8 @@ HOSTNAME=`hostname`
 GPU_NUMA=( 1 1 0 0 3 3 2 2 )
 
 
+function check_ib_bw_gdr(){
 
-function check_ib_bw_gdr()
-{
 EXP_IB_BW=$1
 for device in {0..3};
 do
