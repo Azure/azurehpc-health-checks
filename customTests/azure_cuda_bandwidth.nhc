@@ -36,7 +36,7 @@ function check_cuda_bw()
 	if [[ -z "$EXP_CUDA_BW" ]]; then
 		EXP_CUDA_BW=24
 	fi
-	echo $EXP_CUDA_BW
+
 	# location of executables, must match setup location
 	EXE_DIR=$2
 	if [[ -z "$EXE_DIR" ]]; then
