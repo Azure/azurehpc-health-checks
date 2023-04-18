@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Clocks Throttle Reason Codes: https://docs.nvidia.com/deploy/nvml-api/group__nvmlClocksThrottleReasons.html
+
 GPU_THROTTLE_QUERY="clocks_throttle_reasons.active"
 
 GPU_CLOCKS_THROTTLE_REASON_HW_SLOWDOWN=0x0000000000000008
@@ -36,8 +38,6 @@ function check_gpu_clock_throttling() {
       IFS=$' \t\n'
       if [[ ${gpu_clock_throttle_out_line[0]} != $GPU_CLOCKS_THROTTLE_REASON_GPU_IDLE && ${gpu_clock_throttle_out_line[0]} != $GPU_CLOCKS_THROTTLE_REASON_NONE && ${gpu_clock_throttle_out_line[0]} != $GPU_CLOCKS_THROTTLE_REASON_SW_POWER_CAP ]]; then
          log "Warning: GPU $i throttled, reason=${gpu_clock_throttle_out_line[0]}"
-# Just log GPU throttling (but do not DRAIN node)
-#         die 1 "$FUNCNAME: GPU $i clock throttled, reason=${gpu_clock_throttle_out_line[0]}"
       fi
    done
 }
