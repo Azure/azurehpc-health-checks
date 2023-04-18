@@ -27,11 +27,9 @@ function check_gpu_persistence() {
    do
       if [[ ${gpu_query_out_lines[$i]} == Disabled ]]; then
          dbg "$FUNCNAME: GPU id $i: Persistence mode is disabled, will attempt to enable"
-         # attempt to enable persistence mode if disabled
          gpu_persistence_out=$(nvidia-smi -i $i -pm 1)
          gpu_persistence_out_rc=$?
          if [[ $gpu_query_out_rc != 0 ]]; then
-            # if  failure to enable persistence mode the test fails
             log "$gpu_persistence_out"
             die 1 "$FUNCNAME: nvidia-smi (enable persistence mode) returned error code $gpu_persistence_out_rc"
          else
