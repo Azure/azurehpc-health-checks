@@ -13,6 +13,7 @@ sudo make test
 echo -e "\n"
 sudo make install
 
-cd ..
 echo -e "\nRunning set up script for custom tests"
-./customTests/custom-test-setup.sh
+pushd customTests/
+./custom-test-setup.sh
+popd
