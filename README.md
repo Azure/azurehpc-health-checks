@@ -23,8 +23,8 @@ Configuration
 Usage
 -----
 ### _References_ ###
-- 
--
+- [LBNL Node Health Checks](https://github.com/mej/nhc)
+- [Azure HPC Images](https://github.com/Azure/azhpc-images)
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
