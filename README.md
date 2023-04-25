@@ -22,13 +22,13 @@ Setup
 
 Configuration
 -------------
-This project comes with default VM SKU test configuration files that list the tests to be run. You can modify existing configuration files to suit you tesing needs. For information on modifying or creating a configuration files please reference [LBNL Node Health Checks documentation](https://github.com/mej/nhc).
+This project comes with default VM SKU test configuration files that list the tests to be run. You can modify existing configuration files to suit your tesing needs. For information on modifying or creating configuration files please reference [LBNL Node Health Checks documentation](https://github.com/mej/nhc).
 
 Usage
 -----
 - Usage follows that of the LBNL NHC tests. i.e.:
 ```sudo nhc -l ~/healthlog.log -t 300 -c ~/ndv4.conf``` 
-- Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but ths may vary from machine to machine.
+- Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
 
 ### _References_ ###
 - [LBNL Node Health Checks](https://github.com/mej/nhc)
