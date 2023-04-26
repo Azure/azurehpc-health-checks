@@ -58,13 +58,19 @@ if [ -e '/dev/nvidiactl' ]; then
 	cp $SRC_DIR/*.nhc /etc/nhc/scripts
 fi
 # Stream
-echo -e "Building Stream"
-if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null; then
-  echo "clang compiler found "
-  pushd ${EXE_DIR}
-  wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
-  `
-  popd
+
+
+if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v clang &> /dev/null; then
+	echo -e "clang compiler found Building Stream"
+	pushd ${SRC_DIR}/stream
+	wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
+	popd
+	if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null; then
+		make CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=$EXE_DIR
+	else
+		make CC=clang EXEC_DIR=$EXE_DIR
+	fi
+	mv 
 else
   echo "ls command not found"
 fi
