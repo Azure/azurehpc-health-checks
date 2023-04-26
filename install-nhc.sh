@@ -8,11 +8,11 @@ tar -xf nhc-$NHC_VERSION.tar.xz
 
 pushd lbnl-nhc-$NHC_VERSION
 ./configure --prefix=/usr --sysconfdir=/etc --libexecdir=/usr/libexec
-popd
 
 sudo make test
 echo -e "\n"
 sudo make install
+popd
 
 echo -e "\nRunning set up script for custom tests"
 pushd customTests/
