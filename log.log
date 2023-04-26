@@ -1,3 +1,0 @@
-ERROR:  nhc:  Health check failed:  check_fs_used:  /snap/core20/1822 is 100% full (64896kB), threshold is 100%
-ERROR:  nhc:  Health check failed:  check_fs_used:  /snap/core20/1822 is 100% full (64896kB), threshold is 100%
-ERROR:  nhc:  Health check failed:  check_fs_used:  /snap/snapd/18357 is 100% full (51072kB), threshold is 100%
