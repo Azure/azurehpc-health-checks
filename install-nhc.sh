@@ -13,6 +13,7 @@ popd
 sudo make test
 echo -e "\n"
 sudo make install
+popd
 
 echo -e "\nRunning set up script for custom tests"
 pushd customTests/
