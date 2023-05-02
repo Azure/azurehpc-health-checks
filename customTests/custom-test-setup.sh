@@ -54,15 +54,16 @@ if [ -e '/dev/nvidiactl' ]; then
 	rm ${EXE_DIR}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
 	popd
 	popd
-	# copy all custom test to the nhc scripts dir
-	cp $SRC_DIR/*.nhc /etc/nhc/scripts
 fi
 
 # Stream
 if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v clang &> /dev/null; then
 	echo -e "clang compiler found Building Stream"
 	pushd ${SRC_DIR}/stream
-	wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
+	if ! [[ -f "stream.c" ]]; then 
+		wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
+	fi
+
 	if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null; then
 		make CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=$EXE_DIR
 	else
@@ -72,5 +73,8 @@ if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v 
 else
   echo "clang command not found"
 fi
+
+# copy all custom test to the nhc scripts dir
+cp $SRC_DIR/*.nhc /etc/nhc/scripts
 
 exit 0
