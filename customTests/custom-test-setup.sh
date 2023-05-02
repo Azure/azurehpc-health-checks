@@ -70,7 +70,7 @@ if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v 
 	fi
 	popd
 else
-  echo "ls command not found"
+  echo "clang command not found"
 fi
 
 exit 0
