@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# Expected bandwidth > 180 Gbps
+
+IB_WRITE_BW_EXE_PATH=/opt/azurehpc/test/nhc/perftest-4.5/ib_write_bw
+IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
+IB_WRITE_BW_DURATION=10
+IB_WRITE_BW_ARGS="-s $(( 1 * 1024 * 1024 )) -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits -d mlx5_ib0"
+SLEEP_TIME=5
+
+#taskset -c 0   /opt/azurehpc/test/nhc/perftest-4.5/ib_write_bw -a -F --iters=20000 -d mlx5_ib0 -p 46084 -x 0 --report_gbits > /dev/null
+
+HOSTNAME=`hostname`
+#NUMA mapping for NDv4(A100)
+GPU_NUMA=( 1 1 0 0 3 3 2 2 )
+
+
+function check_ib_bw(){
+
+EXP_IB_BW=$1
+
+IB_WRITE_BW_OUT1=$( taskset -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS  > /dev/null &)
+IB_WRITE_BW_OUT1_RC=$?
+if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
+   #log "$IB_WRITE_BW_OUT1"
+   PORT=$(echo $IB_WRITE_BW_OUT1 | grep -oP '(?<=port\s)\w+')
+   NETSTAT_OUT=$(netstat -lnp | grep $PORT)
+   #log "Running: netstat -lnp | grep $PORT:"
+   #log "$NETSTAT_OUT"
+   #die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
+   echo "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
+   return 1
+fi
+sleep $SLEEP_TIME
+device_peer=$(( device+4 ))
+IB_WRITE_BW_OUT2=$( taskset -c 29 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $HOSTNAME)
+IB_WRITE_BW_OUT2_RC=$?
+if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
+   #log "$IB_WRITE_BW_OUT2"
+   PORT=$(echo $IB_WRITE_BW_OUT2 | grep -oP '(?<=port\s)\w+')
+   NETSTAT_OUT=$(netstat -lnp | grep $PORT)
+   #log "Running: netstat -lnp | grep $PORT:"
+   #log "$NETSTAT_OUT"
+   #die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC"
+   echo "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
+   return 1
+fi
+IFS=$'\n'
+IB_WRITE_BW_OUT2_LINES=( $IB_WRITE_BW_OUT2 )
+IFS=$' \t\n'
+
+for ((i=0; i<${#IB_WRITE_BW_OUT2_LINES[*]}; i++))
+do
+   if [[ "${IB_WRITE_BW_OUT2_LINES[$i]//1048576}" != "${IB_WRITE_BW_OUT2_LINES[$i]}" ]]; then
+      LINE=( ${IB_WRITE_BW_OUT2_LINES[$i]} )
+      ib_bandwidth=${LINE[3]}
+      #dbg "IB device=mlx5_ib0: Measured IB BW $ib_bandwidth Gbps"
+      echo "IB device=mlx5_ib0: Measured IB BW $ib_bandwidth Gbps"
+      break
+   fi
+done
+if [[ $ib_bandwidth < $EXP_IB_BW ]]; then
+      #log "$IB_WRITE_BW_OUT2"
+      #die 1 "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib${device}, mlx5_ib${device_peer}, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
+      echo "dead"
+      return 1
+fi
+
+return 0
+}
+
+check_ib_bw 390
+
+exit 0
