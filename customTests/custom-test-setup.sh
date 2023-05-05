@@ -75,7 +75,7 @@ if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v 
 	fi
 	popd
 else
-  echo "clang command not found"
+	echo "clang command not found. Skipping Stream build. Add clang to PATH ENV variable and rerun script to build Stream"
 fi
 
 # copy all custom test to the nhc scripts dir
