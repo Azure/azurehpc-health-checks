@@ -44,7 +44,11 @@ if [ -e '/dev/nvidiactl' ]; then
 	echo -e "Building PerfTest"
 	VERSION=4.5-0.12
 	VERSION_HASH=ge93c538
-	apt-get install -y libpci-dev
+	if [ "$(awk -F= '/^NAME/{print $2}' /etc/os-release)" = "\"Ubuntu\"" ]; then
+		apt-get install -y libpci-dev
+	else
+		yum install -y pciutils-devel
+	fi
 	pushd ${EXE_DIR}
 	wget https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
 	tar xvf perftest-${VERSION}.${VERSION_HASH}.tar.gz
