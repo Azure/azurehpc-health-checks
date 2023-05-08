@@ -92,8 +92,9 @@ else
 		fi
 		popd
 	else
-	echo "clang command not found"
+		echo "clang command not found. Skipping Stream build. Add clang to PATH ENV variable and rerun script to build Stream"
 	fi
+	
 fi
 
 # copy all custom test to the nhc scripts dir
