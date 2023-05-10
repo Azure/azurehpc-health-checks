@@ -5,7 +5,7 @@
 
 TOPOFILE=$3
 if [[ -z "$TOPOFILE" ]];then
-   TOPOFILE=/opt/microsoft/ndv4-topo.xml
+   TOPOFILE=/opt/microsoft/ndv5-topo.xml
 fi
 
 MPI_ARGS="-np 8 --map-by ppr:8:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"

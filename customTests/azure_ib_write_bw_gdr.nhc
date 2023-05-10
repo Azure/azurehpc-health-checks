@@ -5,12 +5,12 @@
 IB_WRITE_BW_EXE_PATH=/opt/azurehpc/test/nhc/perftest-4.5/ib_write_bw
 IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
 IB_WRITE_BW_DURATION=10
-IB_WRITE_BW_ARGS="-s $(( 1 * 1024 * 1024 )) -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits"
+IB_WRITE_BW_ARGS="-p 18516 -s $(( 1 * 1024 * 1024 )) -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits"
 SLEEP_TIME=5
 
 HOSTNAME=`hostname`
 #NUMA mapping for NDv4(A100)
-GPU_NUMA=( 1 1 0 0 3 3 2 2 )
+GPU_NUMA=( 0 0 0 0 1 1 1 1 )
 
 
 function check_ib_bw_gdr(){
