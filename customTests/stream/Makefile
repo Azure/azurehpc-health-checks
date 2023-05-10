@@ -25,7 +25,7 @@ ZEN3:
 
 ZEN2:
 	@echo $(CC)
-	$(CC) $(CFLAGS) $(ZEN3FLAGS)  stream.c -o $(ZEN_OUTPUT)
+	$(CC) $(CFLAGS) $(ZEN2FLAGS)  stream.c -o $(ZEN_OUTPUT)
 
 clean:
 	rm $(ZEN4_OUTPUT)
