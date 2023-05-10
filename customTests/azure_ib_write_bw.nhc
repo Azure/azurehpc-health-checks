@@ -21,7 +21,6 @@ if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
    log "Running: netstat -lnp | grep $PORT:"
    log "$NETSTAT_OUT"
    die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
-   #echo "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
    return 1
 fi
 sleep $SLEEP_TIME
@@ -35,7 +34,6 @@ if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
    log "Running: netstat -lnp | grep $PORT:"
    log "$NETSTAT_OUT"
    die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC"
-   #echo "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
    return 1
 fi
 IFS=$'\n'
@@ -48,14 +46,12 @@ do
       LINE=( ${IB_WRITE_BW_OUT2_LINES[$i]} )
       ib_bandwidth=${LINE[3]}
       dbg "IB device=mlx5_ib0: Measured IB BW $ib_bandwidth Gbps"
-      #echo "IB device=mlx5_ib0: Measured IB BW $ib_bandwidth Gbps"
       break
    fi
 done
 if [[ $ib_bandwidth < $EXP_IB_BW ]]; then
       log "$IB_WRITE_BW_OUT2"
       die 1 "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib${device}, mlx5_ib${device_peer}, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
-      #echo "dead"
       return 1
 fi
 
