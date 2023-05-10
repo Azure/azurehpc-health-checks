@@ -25,7 +25,7 @@ if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
 fi
 sleep $SLEEP_TIME
 device_peer=$(( device+4 ))
-IB_WRITE_BW_OUT2=$( numactl --membind=0 -c 1 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $HOSTNAME)
+IB_WRITE_BW_OUT2=$( numactl --membind=0 -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $HOSTNAME)
 IB_WRITE_BW_OUT2_RC=$?
 if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
    log "$IB_WRITE_BW_OUT2"
