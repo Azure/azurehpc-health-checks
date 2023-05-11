@@ -28,6 +28,17 @@ function install_perf_test(){
 	
 	VERSION=4.5-0.12
 	VERSION_HASH=ge93c538
+
+	distro=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+	if [[ $distro =~ "Ubuntu" ]]; then
+		apt-get install -y libpci-dev
+	elif [[ $distro =~ "AlmaLinux" ]]; then
+		dnf install -y pciutils-devel
+	else
+		echo "OS version is not supported"
+		return 1
+	fi
+
 	apt-get install -y libpci-dev
 	pushd ${EXE_DIR}
 	wget https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
