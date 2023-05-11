@@ -35,7 +35,7 @@ function install_perf_test(){
 	elif [[ $distro =~ "AlmaLinux" ]]; then
 		dnf install -y pciutils-devel
 	else
-		echo "OS version is not supported"
+		echo "OS version is not supported, Perf-test build skipped. Proceed w/ caution."
 		return 1
 	fi
 
