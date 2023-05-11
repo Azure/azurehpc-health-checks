@@ -39,7 +39,6 @@ function install_perf_test(){
 		return 1
 	fi
 
-	apt-get install -y libpci-dev
 	pushd ${EXE_DIR}
 	wget https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
 	tar xvf perftest-${VERSION}.${VERSION_HASH}.tar.gz
