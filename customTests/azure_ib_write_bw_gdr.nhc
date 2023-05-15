@@ -9,9 +9,12 @@ IB_WRITE_BW_ARGS="-p 18516 -s $(( 1 * 1024 * 1024 )) -D ${IB_WRITE_BW_DURATION} 
 SLEEP_TIME=5
 
 HOSTNAME=`hostname`
-#NUMA mapping for NDv4(A100)
-GPU_NUMA=( 0 0 0 0 1 1 1 1 )
-
+#NUMA mapping
+if [[ $2 == "ndv4"]]; then
+   GPU_NUMA=( 1 1 0 0 3 3 2 2 )
+elif [[ $2 == "ndv5"]]; then
+   GPU_NUMA=( 0 0 0 0 1 1 1 1 )
+fi
 
 function check_ib_bw_gdr(){
 
