@@ -1,18 +1,15 @@
 #!/bin/bash
 
-# Check for NVlink ssues by running NCCL allreduce.
-
-TOPOFILE=$3
-if [[ -z "$TOPOFILE" ]];then
-   TOPOFILE=/opt/microsoft/ndv4-topo.xml
-fi
+# Check for NVlink issues by running NCCL allreduce.
 
 MPI_ARGS_2="-np 8 --map-by ppr:8:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
-ENVIRON_VARS_2="-x LD_LIBRARY_PATH=/usr/local/nccl-rdma-sharp-plugins/lib:$LD_LIBRARY_PATH -x NCCL_IB_PCI_RELAXED_ORDERING=1 -x UCX_IB_PCI_RELAXED_ORDERING=on -x UCX_TLS=tcp -x UCX_NET_DEVICES=eth0 -x CUDA_DEVICE_ORDER=PCI_BUS_ID -x NCCL_SOCKET_IFNAME=eth0 -x NCCL_TOPO_FILE=$TOPOFILE"
-NCCL_ARGS_2="-b 1G -f 2 -g 1 -e 2G -c 1"
-
 
 function collect_nccl_allreduce_data() {
+   TOPOFILE=$1
+   MESSAGE_SIZE=$2
+
+   ENVIRON_VARS_2="-x LD_LIBRARY_PATH=/usr/local/nccl-rdma-sharp-plugins/lib:$LD_LIBRARY_PATH -x NCCL_IB_PCI_RELAXED_ORDERING=1 -x UCX_IB_PCI_RELAXED_ORDERING=on -x UCX_TLS=tcp -x UCX_NET_DEVICES=eth0 -x CUDA_DEVICE_ORDER=PCI_BUS_ID -x NCCL_SOCKET_IFNAME=eth0 -x NCCL_TOPO_FILE=$TOPOFILE"
+   NCCL_ARGS_2="-b $MESSAGE_SIZE -f 2 -g 1 -e $MESSAGE_SIZE -c 1"
 
    nccl_allreduce_out=$(source /etc/profile.d/modules.sh && module load mpi/hpcx && mpirun $MPI_ARGS_2 $ENVIRON_VARS_2 /opt/nccl-tests/build/all_reduce_perf $NCCL_ARGS_2)
    nccl_allreduce_out_rc=$?
@@ -30,9 +27,12 @@ function check_nccl_allreduce() {
    EXP_NCCL_ALLREDUCE_BW=$1
    REPEATS="${2:-1}"
 
+   TOPOFILE=$3
+   MESSAGE_SIZE=$4
+
    for iter in $(seq 1 $REPEATS)
    do
-      collect_nccl_allreduce_data
+      collect_nccl_allreduce_data $TOPOFILE $MESSAGE_SIZE
 
       for ((i=0; i<${#nccl_allreduce_out_lines[*]}; i++))
       do
