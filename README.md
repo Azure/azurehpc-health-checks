@@ -1,15 +1,38 @@
-# Project
+AzureHPC Node Health Check
+=====
+Description
+-----
+AzureHPC Node Health Checks provides an automated suite of test that targets specific Azure HPC offerings. This is an extension of [LBNL Node Health Checks](https://github.com/mej/nhc). 
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+Supported Offerings
+-----
+- [NDm A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ndm-a100-v4-series)
+- [ND A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nda100-v4-series)
+- [HBv4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv4-series)
 
-As the maintainer of this project, please make a few updates:
+Minimum Requirements
+-----
+- Ubunutu 20.0, 22.04
+- AlamaLinux >= 8.6
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+Setup
+-----
+1. To install AzureHPC Node Health Checks run install script:
+   ```sudo ./install-nhc.sh```
 
+Configuration
+-------------
+This project comes with default VM SKU test configuration files that list the tests to be run. You can modify existing configuration files to suit your tesing needs. For information on modifying or creating configuration files please reference [LBNL Node Health Checks documentation](https://github.com/mej/nhc).
+
+Usage
+-----
+- Usage follows that of the LBNL NHC tests. i.e.:
+```sudo nhc -l ~/healthlog.log -t 300 -c ~/ndv4.conf``` 
+- Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
+
+### _References_ ###
+- [LBNL Node Health Checks](https://github.com/mej/nhc)
+- [Azure HPC Images](https://github.com/Azure/azhpc-images)
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a

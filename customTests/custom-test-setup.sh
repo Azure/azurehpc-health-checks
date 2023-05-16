@@ -17,8 +17,49 @@ fi
 
 mkdir -p $EXE_DIR
 
+function install_perf_test(){
+	type=$1
+	# create perf-test executables
+	if [[ "$type" == "cuda" ]]; then
+		echo -e "Building PerfTest with CUDA"
+	else
+		echo -e "Building PerfTest"
+	fi
+	
+	VERSION=4.5-0.12
+	VERSION_HASH=ge93c538
+
+	distro=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+	if [[ $distro =~ "Ubuntu" ]]; then
+		apt-get install -y libpci-dev
+	elif [[ $distro =~ "AlmaLinux" ]]; then
+		dnf install -y pciutils-devel
+	else
+		echo "OS version is not supported, Perf-test build skipped. Proceed w/ caution."
+		return 1
+	fi
+
+	pushd ${EXE_DIR}
+	wget https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
+	tar xvf perftest-${VERSION}.${VERSION_HASH}.tar.gz
+	pushd perftest-4.5
+	if [[ "$type" == "cuda" ]]; then
+		./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h
+	else
+		./autogen.sh
+		./configure
+	fi
+
+	make
+	rm ${EXE_DIR}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
+	popd
+	popd
+
+}
+
+
 #Nvidia installs
-if [ -e '/dev/nvidiactl' ]; then
+if lspci | grep -iq NVIDIA ; then
 	# CUDA BW Test Setup
 	#Test if nvcc is installed and if so install gpu-copy test.
 	if test -f "$NVCC"; then
@@ -40,38 +81,30 @@ if [ -e '/dev/nvidiactl' ]; then
   		echo "$NVCC not found. Exiting setup"
 	fi
 
-	# create perf-test executables
-	echo -e "Building PerfTest"
-	VERSION=4.5-0.12
-	VERSION_HASH=ge93c538
-	apt-get install -y libpci-dev
-	pushd ${EXE_DIR}
-	wget https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
-	tar xvf perftest-${VERSION}.${VERSION_HASH}.tar.gz
-	pushd perftest-4.5
-	./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h
-	make
-	rm ${EXE_DIR}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
-	popd
-	popd
-fi
+	install_perf_test "cuda"
 
-# Stream
-if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v clang &> /dev/null; then
-	echo -e "clang compiler found Building Stream"
-	pushd ${SRC_DIR}/stream
-	if ! [[ -f "stream.c" ]]; then 
-		wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
-	fi
-
-	if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null; then
-		make CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=$EXE_DIR
-	else
-		make CC=clang EXEC_DIR=$EXE_DIR
-	fi
-	popd
 else
-  echo "clang command not found"
+
+	install_perf_test 
+
+	# Stream
+	if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v clang &> /dev/null; then
+		echo -e "clang compiler found Building Stream"
+		pushd ${SRC_DIR}/stream
+		if ! [[ -f "stream.c" ]]; then 
+			wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
+		fi
+
+		if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null; then
+			make CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=$EXE_DIR
+		else
+			make CC=clang EXEC_DIR=$EXE_DIR
+		fi
+		popd
+	else
+		echo "clang command not found. Skipping Stream build. Add clang to PATH ENV variable and rerun script to build Stream"
+	fi
+	
 fi
 
 # copy all custom test to the nhc scripts dir
