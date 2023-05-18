@@ -96,11 +96,13 @@ else
 		fi
 
 		SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
-		if echo $SKU | grep "HX176rs"; then
+		SKU=$(echo "$SKU" | tr '[:upper:]' '[:lower:]')
+
+		if echo $SKU | grep "hx176rs" || echo $SKU | grep "hb176rs"; then
 			BUILD=ZEN4
-		elif echo $SKU | grep "HB120rs_v3"; then
+		elif echo $SKU | grep "hb120rs_v3"; then
 			BUILD=ZEN3
-		elif echo $SKU | grep "HB120rs_v2"; then
+		elif echo $SKU | grep "hb120rs_v2"; then
 			BUILD=ZEN2
 		else
 			#default to zen3 build
