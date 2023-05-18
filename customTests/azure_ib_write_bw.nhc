@@ -24,7 +24,6 @@ if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
    return 1
 fi
 sleep $SLEEP_TIME
-device_peer=$(( device+4 ))
 IB_WRITE_BW_OUT2=$( numactl --membind=0 -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $HOSTNAME)
 IB_WRITE_BW_OUT2_RC=$?
 if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
@@ -51,7 +50,7 @@ do
 done
 if [[ $ib_bandwidth < $EXP_IB_BW ]]; then
       log "$IB_WRITE_BW_OUT2"
-      die 1 "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib${device}, mlx5_ib${device_peer}, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
+      die 1 "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib0, mlx5_ib0, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
       return 1
 fi
 

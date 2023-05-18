@@ -95,10 +95,24 @@ else
 			wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
 		fi
 
-		if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null; then
-			make CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=$EXE_DIR
+		SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
+		SKU=$(echo "$SKU" | tr '[:upper:]' '[:lower:]')
+
+		if echo $SKU | grep "hx176rs" || echo $SKU | grep "hb176rs"; then
+			BUILD=ZEN4
+		elif echo $SKU | grep "hb120rs_v3"; then
+			BUILD=ZEN3
+		elif echo $SKU | grep "hb120rs_v2"; then
+			BUILD=ZEN2
 		else
-			make CC=clang EXEC_DIR=$EXE_DIR
+			#default to zen3 build
+			BUILD=ZEN3
+		fi
+
+		if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null; then
+			make $BUILD CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=$EXE_DIR
+		else
+			make $BUILD CC=clang EXEC_DIR=$EXE_DIR
 		fi
 		popd
 	else
