@@ -19,6 +19,11 @@ else
     exit 1
 fi
 
-nhc -c ./conf/$SKU.conf -l ~/logs/health.log -t 300
+log_path=$1
+if [[ -z "$EXP_PERF" ]]; then
+	log_path="./health.log"
+fi
+
+sudo nhc -c ./conf/${SKU}.conf -l $log_path -t 300
 
 exit 0
