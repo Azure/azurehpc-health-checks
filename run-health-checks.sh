@@ -24,6 +24,6 @@ if [[ -z "$EXP_PERF" ]]; then
 	log_path="./health.log"
 fi
 
-sudo nhc -c ./conf/${SKU}.conf -l $log_path -t 300
+nhc -c ./conf/${SKU}.conf -l $log_path -t 300
 
 exit 0
