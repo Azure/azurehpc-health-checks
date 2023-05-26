@@ -16,9 +16,9 @@ elif echo $SKU | grep "Standard_HBv4_176"; then
     conf_name="hbv4_176"
 else
     echo "SKU: $SKU check not currently implemented"
-    exit 0
+    exit 1
 fi
 
-sudo nhc -c ./conf/$SKU.conf -l ~/logs/health.log -t 300
+nhc -c ./conf/$SKU.conf -l ~/logs/health.log -t 300
 
 exit 0
