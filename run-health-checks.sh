@@ -2,7 +2,6 @@
 
 SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
 
-# Standard_ND96asr_v4
 if echo $SKU | grep "Standard_ND96asr_v4"; then
     conf_name="nd96asr_v4"
 elif echo $SKU | grep "Standard_ND96amsr_v4"; then
@@ -20,4 +19,4 @@ else
     return 1
 fi
 
-nhc -l ~/logs/healthlog.log -c ./conf/$SKU.conf -t 300
+nhc -l ~/logs/health.log -c ./conf/$SKU.conf -t 300
