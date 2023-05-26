@@ -4,7 +4,7 @@ SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/i
 
 if echo $SKU | grep "Standard_ND96asr_v4"; then
     conf_name="nd96asr_v4"
-elif echo $SKU | grep "Standard_ND96amsr_v4"; then
+elif echo $SKU | grep "Standard_ND96amsr_A100_v4"; then
     conf_name="nd96amsr_v4"
 elif echo $SKU | grep "Standard_ND96isr_v4"; then
     conf_name="nd96isr_v5"
@@ -15,8 +15,10 @@ elif echo $SKU | grep "Standard_HB120rs_v3"; then
 elif echo $SKU | grep "Standard_HBv4_176"; then
     conf_name="hbv4_176"
 else
-    die 1 -e "SKU: $SKU check not currently implemented"
-    return 1
+    echo "SKU: $SKU check not currently implemented"
+    exit 0
 fi
 
-nhc -l ~/logs/health.log -c ./conf/$SKU.conf -t 300
+sudo nhc -c ./conf/$SKU.conf -l ~/logs/health.log -t 300
+
+exit 0
