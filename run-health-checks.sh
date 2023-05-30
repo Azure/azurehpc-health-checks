@@ -21,9 +21,9 @@ fi
 
 log_path=$1
 if [[ -z "$EXP_PERF" ]]; then
-	log_path="./health.log"
+	log_path="~/health.log"
 fi
 
-nhc -c ./conf/${SKU}.conf -l $log_path -t 300
+sudo nhc CONFFILE=./conf/$conf_name.conf LOGFILE=$log_path TIMEOUT=300
 
 exit 0
