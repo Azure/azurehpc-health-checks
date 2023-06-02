@@ -25,5 +25,3 @@ fi
 log_path="${1:-$(pwd)/health.log}"
 
 nhc CONFFILE=./conf/$conf_name.conf LOGFILE=$log_path TIMEOUT=300
-
-exit 0
