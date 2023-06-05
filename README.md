@@ -27,8 +27,8 @@ This project comes with default VM SKU test configuration files that list the te
 Usage
 -----
 - Invoke health checks by running:
-```sudo ./run-health-checks.sh [health.log]```
-- Default log file path is the current directory.
+```sudo ./run-health-checks.sh [~/health.log]```
+- Default log file path is the current directory. If you want to use a different log file location, specify the full path.
 - Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
 
 ### _References_ ###
