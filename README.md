@@ -26,9 +26,12 @@ This project comes with default VM SKU test configuration files that list the te
 
 Usage
 -----
-- Invoke health checks by running:
+- Invoke health checks using a script that determines SKU and runs the configuration file according to SKU for you:
 ```sudo ./run-health-checks.sh [~/health.log]```
-- Default log file path is the current directory. If you want to use a different log file location, specify the full path.
+   - Default log file path is set to the current directory
+- Invoke health checks directly:
+```sudo nhc -c ./conf/"CONFNAME".conf -l ~/health.log -t 300```
+   - To use a different log file location, specify the full path.
 - Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
 
 ### _References_ ###

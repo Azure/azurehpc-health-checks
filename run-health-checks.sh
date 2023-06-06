@@ -22,6 +22,7 @@ else
     exit 1
 fi
 
-log_path="${1:-$(pwd)/health.log}"
+log_path="${1:-./health.log}"
+log_path=$(realpath "$log_path")
 
 nhc CONFFILE=./conf/$conf_name.conf LOGFILE=$log_path TIMEOUT=300
