@@ -7,17 +7,17 @@ SKU="${SKU,,}"
 if echo "$SKU" | grep -q "nd96asr_v4"; then
     conf_name="nd96asr_v4"
 elif echo "$SKU" | grep -q "nd96amsr_a100_v4"; then
-    conf_name="nd96amsr_v4"
+    conf_name="nd96amsr_a100_v4"
 elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
-    conf_name="nd96isr_v5"
+    conf_name="nd96isr_h100_v5"
 elif echo "$SKU" | grep -q "hb120rs_v2"; then
     conf_name="hb120rs_v2"
 elif echo "$SKU" | grep -q "hb120rs_v3"; then
     conf_name="hb120rs_v3"
 elif echo "$SKU" | grep -q "hb176rs_v4"; then
-    conf_name="hbv4_176"
+    conf_name="hb176rs_v4"
 elif echo "$SKU" | grep -q "hx176rs"; then
-    conf_name="hx176rs_4"
+    conf_name="hx176rs"
 else
     echo "SKU health check currently not implemented"
     exit 1
