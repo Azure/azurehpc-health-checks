@@ -19,7 +19,7 @@ elif echo "$SKU" | grep -q "hb176rs_v4"; then
 elif echo "$SKU" | grep -q "hx176rs"; then
     conf_name="hx176rs_4"
 else
-    echo "SKU health check not currently implemented"
+    echo "SKU health check currently not implemented"
     exit 1
 fi
 
