@@ -56,7 +56,7 @@ function check_cpu_stream(){
         die 1 -e "SKU: $SKU check not currently implemented"
         return 1
     fi
-    log $stream
+    log Stream Results: $stream
     
     values=(`echo $stream | awk -F 'Copy: ' '{print $2}' | awk '{print $1}'` `echo $stream | \
         awk -F 'Add: ' '{print  $2}' | awk '{print $1}'` `echo $stream | \
