@@ -45,7 +45,6 @@ function check_cpu_stream(){
         core_conf=$(get_core_conf)
         if [[ "standard_hb176rs_v4|standard_hx176rs" =~ "$SKU" ]]; then 
             NUM_THREADS=48
-
         else
             NUM_THREADS=24
         fi    
