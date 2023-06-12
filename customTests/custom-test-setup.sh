@@ -95,10 +95,12 @@ else
 			wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
 		fi
 
+
+		HB_HX_SKUS="standard_hb176rs_v4|standard_hb176-144rs_v4|standard_hb176-96rs_v4|standard_hb176-48rs_v4|standard_hb176-24rs_v4|standard_hx176rs|standard_hx176-144rs|standard_hx176-96rs|standard_hx176-48rs|standard_hx176-24rs"
 		SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
 		SKU=$(echo "$SKU" | tr '[:upper:]' '[:lower:]')
 
-		if echo $SKU | grep "hx176" || echo $SKU | grep "hb176"; then
+		if [[ "$HB_HX_SKUS" =~ "$SKU"  ]]; then
 			BUILD=ZEN4
 		elif echo $SKU | grep "hb120rs_v3"; then
 			BUILD=ZEN3
