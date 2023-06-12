@@ -13,6 +13,10 @@ function collect_nccl_allreduce_ib_loopback_data() {
    ENVIRON_VARS="-x LD_LIBRARY_PATH=/usr/local/nccl-rdma-sharp-plugins/lib:$LD_LIBRARY_PATH -x NCCL_IB_PCI_RELAXED_ORDERING=1 -x UCX_IB_PCI_RELAXED_ORDERING=on -x UCX_TLS=tcp -x UCX_NET_DEVICES=eth0 -x CUDA_DEVICE_ORDER=PCI_BUS_ID -x NCCL_SOCKET_IFNAME=eth0 -x NCCL_NET_GDR_LEVEL=5 -x NCCL_TOPO_FILE=$TOPOFILE -x NCCL_SHM_DISABLE=1 -x NCCL_P2P_DISABLE=1"
    
    log "mpirun $MPI_ARGS $ENVIRON_VARS /opt/nccl-tests/build/all_reduce_perf $NCCL_ARGS"
+
+   # ensure unloaded before use
+   source /etc/profile.d/modules.sh && module load mpi/hpcx
+
    nccl_allreduce_ib_loopback_out=$(source /etc/profile.d/modules.sh && module load mpi/hpcx && mpirun $MPI_ARGS $ENVIRON_VARS /opt/nccl-tests/build/all_reduce_perf $NCCL_ARGS)
    log "nccl_allreduce_ib_loopback_out: $nccl_allreduce_ib_loopback_out"
    nccl_allreduce_ib_loopback_out_rc=$?
