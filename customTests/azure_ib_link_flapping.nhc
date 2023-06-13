@@ -57,7 +57,7 @@ if [ "$lost_carrier_line" != "" ]; then
       echo $last_date_str > $lost_carrier_file
    fi
 else
-   dbg "No IB link flapping entry in syslog"
+   log "No IB link flapping entry in syslog"
    return 0
 fi
 }
