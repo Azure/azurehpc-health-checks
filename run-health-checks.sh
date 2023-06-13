@@ -16,13 +16,13 @@ elif echo "$SKU" | grep -q "hb120rs_v3"; then
     conf_name="hb120rs_v3"
 elif echo "$SKU" | grep -q "hb176rs_v4"; then
     conf_name="hb176rs_v4"
-elif  echo "$SKU" | grep -q "hb176-144_v4"; then
+elif  echo "$SKU" | grep -q "hb176-144rs_v4"; then
     conf_name="hb176-144rs_v4"
-elif  echo "$SKU" | grep -q "hb176-96_v4"; then
+elif  echo "$SKU" | grep -q "hb176-96rs_v4"; then
     conf_name="hb176-96rs_v4"
-elif  echo "$SKU" | grep -q "hb176-48_v4"; then
+elif  echo "$SKU" | grep -q "hb176-48rs_v4"; then
     conf_name="hb176-48rs_v4"
-elif  echo "$SKU" | grep -q "hb176-24_v4"; then
+elif  echo "$SKU" | grep -q "hb176-24rs_v4"; then
     conf_name="hb176-24rs_v4"
 elif echo "$SKU" | grep -q "hx176rs"; then
     conf_name="hx176rs"
