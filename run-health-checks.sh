@@ -32,7 +32,7 @@ elif  echo "$SKU" | grep -q "hx176-96rs"; then
     conf_name="hx176-96rs"
 elif  echo "$SKU" | grep -q "hx176-48rs"; then
     conf_name="hx176-48rs"
-elif  echo "$SKU" | grep -q "hx176-24"; then
+elif  echo "$SKU" | grep -q "hx176-24rs"; then
     conf_name="hx176-24rs"
 else
     echo "SKU health check currently not implemented"
