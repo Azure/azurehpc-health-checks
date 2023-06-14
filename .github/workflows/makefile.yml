@@ -12,16 +12,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Setup BATS
+        uses: mig4/setup-bats@v1
+        with:
+          bats-version: 1.2.1
 
-    - name: configure
-      run: ./configure
+    - name: Check out code
+      uses: actions/checkout@v3
 
-    - name: Install dependencies
-      run: make
+    # - name: Install dependencies
+    #   run: make
 
-    - name: Run check
-      run: make check
-
-    - name: Run distcheck
-      run: make distcheck
+    - name: Test Health Check Framework
+      run: bats -r .
