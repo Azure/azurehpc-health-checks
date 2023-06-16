@@ -23,5 +23,8 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: Test Script
+        run: ./testscript.sh
+
       - name: Test Health Check Framework
         run: ./unittest.bats
