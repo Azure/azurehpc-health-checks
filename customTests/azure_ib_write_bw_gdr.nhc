@@ -22,7 +22,8 @@ function check_ib_bw_gdr(){
    fi
    
    IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
-   IB_WRITE_BW_ARGS="-p 18516 -s $(( 1 * 1024 * 1024 )) -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits"
+   MESSAGE_SIZE=8388608
+   IB_WRITE_BW_ARGS="-p 18516 -s $MESSAGE_SIZE -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits"
 
    for device in {0..3};
    do
@@ -55,7 +56,7 @@ function check_ib_bw_gdr(){
       IFS=$' \t\n'
       for ((i=0; i<${#IB_WRITE_BW_OUT2_LINES[*]}; i++))
       do
-         if [[ "${IB_WRITE_BW_OUT2_LINES[$i]//1048576}" != "${IB_WRITE_BW_OUT2_LINES[$i]}" ]]; then
+         if [[ "${IB_WRITE_BW_OUT2_LINES[$i]//$MESSAGE_SIZE}" != "${IB_WRITE_BW_OUT2_LINES[$i]}" ]]; then
             LINE=( ${IB_WRITE_BW_OUT2_LINES[$i]} )
             ib_bandwidth=${LINE[3]}
             dbg "IB devices=mlx5_ib${device}, mlx5_ib${device_peer}: numa domains=${GPU_NUMA[$device]},${GPU_NUMA[$device_peer]}, Measured IB BW $ib_bandwidth Gbps"
@@ -65,8 +66,9 @@ function check_ib_bw_gdr(){
       if [[ $ib_bandwidth < $EXP_IB_BW ]]; then
          log "$IB_WRITE_BW_OUT2"
          die 1 "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib${device}, mlx5_ib${device_peer}, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
-         return 1
+	  return 1
       fi
    done
    return 0
 }
+
