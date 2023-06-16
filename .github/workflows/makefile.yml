@@ -11,16 +11,17 @@ on:
 jobs:
   build:
     name: unit tests
+
     runs-on: ubuntu-latest
+
     steps:
-      
       - name: Setup BATS
         uses: mig4/setup-bats@v1
         with:
           bats-version: 1.2.1
 
-    - name: Check out code
-      uses: actions/checkout@v3
+      - name: Check out code
+        uses: actions/checkout@v3
 
-    - name: Test Health Check Framework
-      run: ./unittest.bats
+      - name: Test Health Check Framework
+        run: ./unittest.bats
