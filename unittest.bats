@@ -2,7 +2,7 @@
 @test "Test 1" {
     run bash -c "echo 'Hello World'"
     [ "$status" -eq 0 ]
-    [ "$output" = "Hello World" ]
+    [ "$output" = "Hello" ]
 }
 
 @test "addition using bc" {
