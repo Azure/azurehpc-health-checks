@@ -2,16 +2,18 @@
 
 # Check for NVlink issues by running NCCL allreduce.
 
-MPI_ARGS_2="-np 8 --map-by ppr:8:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
+MPI_ARGS="-np 8 --map-by ppr:8:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
 
 function collect_nccl_allreduce_data() {
    TOPOFILE=$1
    MESSAGE_SIZE=$2
 
-   ENVIRON_VARS_2="-x LD_LIBRARY_PATH=/usr/local/nccl-rdma-sharp-plugins/lib:$LD_LIBRARY_PATH -x NCCL_IB_PCI_RELAXED_ORDERING=1 -x UCX_IB_PCI_RELAXED_ORDERING=on -x UCX_TLS=tcp -x UCX_NET_DEVICES=eth0 -x CUDA_DEVICE_ORDER=PCI_BUS_ID -x NCCL_SOCKET_IFNAME=eth0 -x NCCL_TOPO_FILE=$TOPOFILE"
-   NCCL_ARGS_2="-b $MESSAGE_SIZE -f 2 -g 1 -e $MESSAGE_SIZE -c 1"
+   ENVIRON_VARS="-x LD_LIBRARY_PATH=/usr/local/nccl-rdma-sharp-plugins/lib:$LD_LIBRARY_PATH -x NCCL_IB_PCI_RELAXED_ORDERING=1 -x UCX_IB_PCI_RELAXED_ORDERING=on -x UCX_TLS=tcp -x UCX_NET_DEVICES=eth0 -x CUDA_DEVICE_ORDER=PCI_BUS_ID -x NCCL_SOCKET_IFNAME=eth0 -x NCCL_TOPO_FILE=$TOPOFILE"
+   NCCL_ARGS="-b $MESSAGE_SIZE -f 2 -g 1 -e $MESSAGE_SIZE -c 1"
 
-   nccl_allreduce_out=$(source /etc/profile.d/modules.sh && module load mpi/hpcx && mpirun $MPI_ARGS_2 $ENVIRON_VARS_2 /opt/nccl-tests/build/all_reduce_perf $NCCL_ARGS_2)
+   # ensure unloaded before use
+   source /etc/profile.d/modules.sh && module -s unload mpi/hpcx
+   nccl_allreduce_out=$(source /etc/profile.d/modules.sh && module -s load mpi/hpcx && mpirun $MPI_ARGS $ENVIRON_VARS /opt/nccl-tests/build/all_reduce_perf $NCCL_ARGS)
    nccl_allreduce_out_rc=$?
    if [[ $nccl_allreduce_out_rc != 0 ]]; then
       log "nccl_allreduce_freq_out"
