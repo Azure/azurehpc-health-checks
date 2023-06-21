@@ -27,4 +27,4 @@ jobs:
         run: ./testscript.sh
 
       - name: Test Health Check Framework
-        run: ./unittest.bats
+        run: ./test/bats/bin/bats ./unittest.bats

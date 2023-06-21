@@ -10,3 +10,12 @@
 [submodule "test/libs/bats-support"]
 	path = test/libs/bats-support
 	url = https://github.com/ztombol/bats-support
+[submodule "test/bats"]
+	path = test/bats
+	url = https://github.com/bats-core/bats-core.git
+[submodule "test/test_helper/bats-support"]
+	path = test/test_helper/bats-support
+	url = https://github.com/bats-core/bats-support.git
+[submodule "test/test_helper/bats-assert"]
+	path = test/test_helper/bats-assert
+	url = https://github.com/bats-core/bats-assert.git
