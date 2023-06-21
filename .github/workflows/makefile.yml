@@ -1,0 +1,30 @@
+name: Health Checks CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: unit tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup BATS
+        uses: mig4/setup-bats@v1
+        with:
+          bats-version: 1.2.1
+
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Test Script
+        run: ./testscript.sh
+
+      - name: Test Health Check Framework
+        run: ./test/bats/bin/bats ./unittest.bats
