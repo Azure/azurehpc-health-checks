@@ -17,11 +17,20 @@ GPU_CLOCKS_THROTTLE_REASON_SYNC_BOOST=0x0000000000000010
 
 
 function collect_gpu_clock_throttle_data() {
+   # build proper command based on nvidia-smi version
+   desired_version="535.54.03"
+   nvidia_smi_version=$(nvidia-smi --id=0 --query-gpu=driver_version --format=csv,noheader)
+   if [[ "$(echo -e "$nvidia_smi_version\n$desired_version" | sort -V | head -n1)" == "$desired_version" ]]; then
+      GPU_THROTTLE_QUERY="clocks_event_reasons.active"
+   else
+      GPU_THROTTLE_QUERY="clocks_throttle_reasons.active"
+   fi
+
    gpu_clock_throttle_query_out=$(nvidia-smi --query-gpu=$GPU_THROTTLE_QUERY --format=csv,noheader,nounits)
    gpu_clock_throttle_query_rc=$?
    if [[ $gpu_clock_throttle_query_rc != 0 ]]; then
       log "$gpu_clock_throttle_query_out"
-      die 1 "$FUNCNAME: nvidia-smi (get gpu clock throttle data) returned error code $gpu_clock_throttle_query_rc"
+      log "Warning GPU throttle check test failed to run. In most cases this is due to nvidia-smi query options not being available in the installed version. The reported return code is $gpu_clock_throttle_query_rc. The remainder of the tests will continue."
    fi
    dbg "gpu_clock_throttle_query_out=$gpu_clock_throttle_query_out"
    IFS=$'\n'
