@@ -14,15 +14,16 @@ function run_ib_bw_gdr(){
    PORTARG=$3
    device=$4
    #NUMA mapping
+   MESSAGE_SIZE=8388608
    GPU_NUMA=( 0 0 0 0 0 0 0 0 )
    if [[ "$SKU" == "nd96asr_v4" || "$SKU" == "nd96amsr_v4" ]]; then
       GPU_NUMA=( 1 1 0 0 3 3 2 2 )
    elif [[ "$SKU" == "nd96isr_v5" ]]; then
       GPU_NUMA=( 0 0 0 0 1 1 1 1 )
+      MESSAGE_SIZE=16777216
    fi
 
    IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
-   MESSAGE_SIZE=8388608
    IB_WRITE_BW_ARGS="-p $PORTARG -s $MESSAGE_SIZE -x 0 -F --report_gbits"
 
    IB_WRITE_BW_OUT1=$(numactl -N ${GPU_NUMA[$device]} -m ${GPU_NUMA[$device]} $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=${device} -d mlx5_ib${device} > /dev/null &)

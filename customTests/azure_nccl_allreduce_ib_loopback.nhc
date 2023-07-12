@@ -57,5 +57,5 @@ function check_nccl_allreduce_ib_loopback() {
   done
 
   die 1 "$FUNCNAME: NCCL allreduce, BUS BW (expected >=$EXP_NCCL_ALLREDUCE_IB_LOOPBACK_BW GB/s, but measured $avg_bus_bw GB/s)"
-  return 1
+  return 0
 }
