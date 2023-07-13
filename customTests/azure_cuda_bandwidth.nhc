@@ -10,7 +10,8 @@
 #Catch error codes that may be thrown by the executable passed as the first
 #input, and if an error code is tripped throw the second input as a message
 catch_error() {
-	declare -g output=$($1)
+	declare -g output
+	output=$($1)
 	err_code=$?
 	if [ $err_code -ne 0 ]; then
 		die 1 "\t $2 $err_code" >&2
