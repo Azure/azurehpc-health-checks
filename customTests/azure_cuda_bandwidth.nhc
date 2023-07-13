@@ -22,7 +22,7 @@ catch_error() {
 
 
 function cleanup {
-    dbg "Unlocking graphics clock  before exit..."
+	dbg "Unlocking graphics clock  before exit..."
 	sudo timeout 3m nvidia-smi -rgc  > /dev/null 2>&1
 }
 
@@ -49,17 +49,17 @@ function check_cuda_bw()
 	#to be safe.
 	lock_clocks="sudo nvidia-smi -lgc 1400"
 	result=$(catch_error "$lock_clocks" "$error_smi")
-    if ! catch_error "$lock_clocks" "$error_smi"; then
-        return 0
-    fi
+	if ! catch_error "$lock_clocks" "$error_smi"; then
+		return 0
+	fi
 	#exit function to unlock clocks on exit 
 	trap cleanup EXIT
 
 	#Count the GPUs.
 	gpu_list="timeout 3m nvidia-smi --query-gpu=name --format=csv,noheader"
-    if ! catch_error "$gpu_list" "$error_smi"; then
-        return 0
-    fi
+	if ! catch_error "$gpu_list" "$error_smi"; then
+		return 0
+	fi
 	ngpus=$(echo "$output" | wc -l)
 
 	#Run device to host bandwidth test.
@@ -67,8 +67,8 @@ function check_cuda_bw()
 	error_htod="**Fail** The htod gpu_copy test failed to execute."
 	error_htod+="It exited with error code"
 	if ! catch_error "$exec_htod" "$error_htod"; then
-        return 0
-    fi
+		return 0
+	fi
 	x_htod=$(echo "$output")
 	
 	#Run host to device bandwidth test.
@@ -76,8 +76,8 @@ function check_cuda_bw()
 	error_dtoh="**Fail** The dtoh gpu_copy test failed to execute."
 	error_dtoh+="It exited with error code"
 	if ! catch_error "$exec_dtoh" "$error_dtoh"; then
-        return 0
-    fi
+		return 0
+	fi
 	x_dtoh=$(echo "$output")
 	pass=1
 
@@ -122,8 +122,8 @@ function check_cuda_bw()
 	unlock_clocks="sudo timeout 3m nvidia-smi -rgc"
 	
 	if ! catch_error "$unlock_clocks" "$error_smi"; then
-        return 0
-    fi
+		return 0
+	fi
 
 	if [ $pass -ne 1 ]; then
 		die 1 -e "\t **Fail** At least one device reported low htod or dtoh"\
