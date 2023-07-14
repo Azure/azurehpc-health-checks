@@ -45,14 +45,26 @@ function check_cuda_bw()
 	fi
 	#Count the number of gpu-name nvidia-smi outputs.
 	error_smi="**Fail** nvidia-smi failed with error code"
-	#Lock graphics clocks to 1400 to eliminate any time for the GPUs to boost.
+	#Lock graphics clocks to max freq to eliminate any time for the GPUs to boost.
 	#This likely isn't important for performance here, but we will do it anyway
 	#to be safe.
-	lock_clocks="sudo nvidia-smi -lgc 1400"
-	result=$(catch_error "$lock_clocks" "$error_smi")
-	if ! catch_error "$lock_clocks" "$error_smi"; then
-		return 0
+	SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
+	SKU="${SKU,,}"
+	lock_clocks=
+	if echo "$SKU" | grep -q "nd96asr_v4"; then
+		lock_clocks="sudo nvidia-smi -lgc 1400"
+	elif echo "$SKU" | grep -q "nd96amsr_a100_v4"; then
+		lock_clocks="sudo nvidia-smi -lgc 1400"
+	elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
+		lock_clocks="sudo nvidia-smi -lgc 2619"
 	fi
+
+	if [[ -n "$lock_clocks" ]]; then
+		if ! catch_error "$lock_clocks" "$error_smi"; then
+			return 0
+		fi
+	fi
+
 	#exit function to unlock clocks on exit 
 	trap cleanup EXIT
 
