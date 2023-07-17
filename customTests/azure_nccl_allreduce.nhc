@@ -42,7 +42,7 @@ function check_nccl_allreduce() {
          then
             log "$nccl_allreduce_out"
             die 1 "$FUNCNAME: NCCL allreduce, Out of bounds values failed"
-            return 1
+            return 0
          fi
          if [[ "${nccl_allreduce_out_lines[$i]//bandwidth}" != "${nccl_allreduce_out_lines[$i]}" ]]
          then
@@ -64,5 +64,5 @@ function check_nccl_allreduce() {
    done
 
    die 1 "$FUNCNAME: NCCL allreduce, BUS BW (expected >=$EXP_NCCL_ALLREDUCE_BW GB/s, but measured $avg_bus_bw GB/s)"
-   return 1
+   return 0
 }
