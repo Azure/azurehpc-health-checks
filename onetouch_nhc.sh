@@ -1,25 +1,7 @@
 #!/bin/bash
-
-
-#Setup tempdir along with cleanup trap
-#TEMPDIR=`mktemp -d`
-#echo "Temp directory setup at '$TEMPDIR'"
-
-cleanup() {
-   exitcode=$?
-   #rm -rf $TEMPDIR
-   echo
-   if [ $exitcode != 0 ]; then
-      echo -e "\tFAILED\n"
-   else
-      echo -e "\tSUCCESS\n"
-   fi
-}
-trap "cleanup" EXIT
-
 print_help() {
 cat << EOF  
-Usage: ./onetouch_nhc [-h] [-v|--version <git version of Az NHC>] [-c|--config <path to an NHC .conf file>] [-w|--working <path to use as the working directory>] [-o|--output <path to output the health check logs>] [-f|--force]
+Usage: ./onetouch_nhc [-h|--help] [-v|--version <git version of Az NHC>] [-c|--config <path to an NHC .conf file>] [-w|--working <path to use as the working directory>] [-o|--output <path to output the health check logs>] [-f|--force]
 Runs OneTouch Azure NHC which downloads a specific version of Azure NHC, installs pre-requisites, and executes a health check.
 
 -h, -help,          --help                  Display this help
@@ -83,36 +65,11 @@ INSTALL_SCRIPT_PATH="$AZ_NHC_DIR/install-nhc.sh"
 RUN_HEALTH_CHECKS_SCRIPT_PATH="$AZ_NHC_DIR/run-health-checks.sh"
 HEALTH_LOG_FILE_PATH="$AZ_NHC_DIR/$(hostname)-$(date +"%Y-%m-%d_%H-%M-%S")-health.log"
 
-download_az_nhc() {
-    version="$1"
-    output_dir="$2"
-
-    if [ -z $version ]; then
-        echo "A version must be provided"
-        exit 1
-    fi
-    
-    if [ -z $output_dir ]; then
-        echo "An output directory must be provided"
-        exit 1
-    fi
-
-    if [ ! $FORCE ] && [ -d $output_dir ]; then
-        if [ -f "$output_dir/install-nhc.sh" ] && [ -f "$output_dir/run-health-checks.sh" ]; then
-            echo "Version $version of AZ NHC is already downloaded at $output_dir"
-            return 0
-        fi
-    fi
-
-    archive_url="https://github.com/Azure/azurehpc-health-checks/archive/$version.tar.gz"
-    mkdir -p $output_dir
-    wget -O - $archive_url | tar -xz --strip=1 -C $output_dir
-}
-
 install_nhc() {
+    force="$1"
 
     # attempt to see if NHC is installed with all custom tests
-    NHC_INSTALLED=$(! $FORCE)
+    NHC_INSTALLED=$(! $force)
     if $NHC_INSTALLED && [ -z $(which nhc) ]; then
         echo "nhc is missing, reinstalling"
         NHC_INSTALLED=false
@@ -126,10 +83,43 @@ install_nhc() {
     if $NHC_INSTALLED; then
         echo "NHC is installed with all custom tests"
     else
+        echo "Installing NHC"
         sudo $INSTALL_SCRIPT_PATH
-        echo "Would install NHC"
     fi
 }
+
+setup_nhc() {
+    version="$1"
+    output_dir="$2"
+
+    if [ -z $version ]; then
+        echo "A version must be provided"
+        exit 1
+    fi
+    
+    if [ -z $output_dir ]; then
+        echo "An output directory must be provided"
+        exit 1
+    fi
+
+    if [ $FORCE ] && [ -d $output_dir ]; then
+        if [ -f "$output_dir/install-nhc.sh" ] && [ -f "$output_dir/run-health-checks.sh" ]; then
+            echo "Version $version of AZ NHC is already downloaded at $output_dir"
+            pushd $output_dir > /dev/null
+            install_nhc $FORCE
+            return 0
+        fi
+    fi
+
+    archive_url="https://github.com/Azure/azurehpc-health-checks/archive/$version.tar.gz"
+    mkdir -p $output_dir
+    wget -O - $archive_url | tar -xz --strip=1 -C $output_dir
+
+    # If we had to download, force re-install
+    pushd $output_dir > /dev/null
+    install_nhc true
+}
+
 
 run_health_checks() {
     log_file_path="$1"
@@ -156,15 +146,26 @@ run_health_checks() {
 
 
 # Download AZ NHC
-download_az_nhc $VERSION $AZ_NHC_DIR 1
-echo "Finished Downloading AZ NHC"
-
-pushd $AZ_NHC_DIR
-
-# Install NHC
-install_nhc
-echo "Finished NHC Install"
+echo
+setup_nhc $VERSION $AZ_NHC_DIR 1
+echo "=== Finished Setting up AZ NHC ==="
 
 # Execute Health Checks
+echo
 run_health_checks $HEALTH_LOG_FILE_PATH $CUSTOM_CONF
-echo "Finished Running Health Checks"
+echo "=== Finished Running Health Checks ===" 
+results=$(cat $HEALTH_LOG_FILE_PATH)
+
+echo
+echo "=== Overall Results ($HEALTH_LOG_FILE_PATH) ==="
+echo "$results"
+
+echo
+echo "=== Detected Errors (if any) ==="
+if grep "ERROR" $HEALTH_LOG_FILE_PATH; then
+    echo "Errors found!"
+    exit 1
+else
+    echo "No errors found!"
+    exit 0
+fi
