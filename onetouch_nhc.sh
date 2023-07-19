@@ -172,16 +172,9 @@ echo "=== Finished Running Health Checks ==="
 results=$(cat $HEALTH_LOG_FILE_PATH)
 
 echo
-echo "=== Overall Results ($HEALTH_LOG_FILE_PATH) ==="
-echo "$results"
-
-echo
 echo "=== Detected Errors (if any) ==="
 if grep "ERROR" $HEALTH_LOG_FILE_PATH; then
-    echo $(grep "ERROR" $HEALTH_LOG_FILE_PATH)
-    echo "Errors found!"
-    exit 1
+    grep "ERROR" $HEALTH_LOG_FILE_PATH | while read line; do echo "[NHC-RESULT][$(hostname)] $line"; done
 else
-    echo "No errors found!"
-    exit 0
+    echo "[NHC-RESULT][$(hostname)] Healthy"
 fi
