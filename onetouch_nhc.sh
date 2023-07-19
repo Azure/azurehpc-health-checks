@@ -1,7 +1,8 @@
 #!/bin/bash
+
 print_help() {
 cat << EOF  
-Usage: ./onetouch_nhc [-h|--help] [-v|--version <git version of Az NHC>] [-c|--config <path to an NHC .conf file>] [-w|--working <path to use as the working directory>] [-o|--output <path to output the health check logs>] [-f|--force]
+Usage: ./onetouch_nhc [-h|--help] [-v|--version <git version of Az NHC>] [-c|--config <path to an NHC .conf file>] [-w|--working <path to use as the working directory>] [-o|--output <directory path to output all log files>] [-n|--name <name of the NHC job being ran>] [-f|--force]
 Runs OneTouch Azure NHC which downloads a specific version of Azure NHC, installs pre-requisites, and executes a health check.
 
 -h, -help,          --help                  Display this help
@@ -15,8 +16,11 @@ Runs OneTouch Azure NHC which downloads a specific version of Azure NHC, install
 -w, -working,        --working              Optional path to specify as the working directory. This is where all content will be downloaded and executed from.
                                             If not specified it will default to the path "~/onetouch_nhc/"
 
--o, -output,        --output                Optional path to output the health check logs to. 
-                                            If not specified will be output to a file under the working directory with a name following the format "\$(hostname)-\$(date +"%Y-%m-%d_%H-%M-%S")-health.log".
+-o, -output,        --output                Optional directory path to output the health check, stdout, and stderr logs to. 
+                                            If not specified it will use the same as the working directory".
+
+-n, -name,          --name                  Optional name to provide for a given execution run. This impacts the names of the log files generated.
+                                            If not specified the job name will be generated with "\$(hostname)-\$(date +"%Y-%m-%d_%H-%M-%S")".
 
 -f, -force,         --force                 If set, forces the script the redownload and reinstall everything
 EOF
@@ -25,11 +29,13 @@ EOF
 # Arguments
 VERSION="main"
 WORKING_DIR=$(realpath -m "$HOME/onetouch_nhc/working")
+OUTPUT_DIR=$WORKING_DIR
+JOB_NAME="$(hostname)-$(date +"%Y-%m-%d_%H-%M-%S")"
 CUSTOM_CONF=""
 FORCE=false
 
 # Parse out arguments
-options=$(getopt -l "help,version:,config:,working:force" -o "hv:c:w:f" -a -- "$@")
+options=$(getopt -l "help,version:,config:,working:,output:,name:force" -o "hv:c:w:o:n:f" -a -- "$@")
 
 if [ $? -ne 0 ]; then
     print_help
@@ -56,6 +62,14 @@ case "$1" in
     shift
     WORKING_DIR="$(realpath -m ${1//\~/$HOME})"
     ;;
+-o|--output)
+    shift
+    OUTPUT_DIR="$(realpath -m ${1//\~/$HOME})"
+    ;;
+-n|--name)
+    shift
+    JOB_NAME="$1"
+    ;;
 -f|--force)
     FORCE=true
     ;;
@@ -70,7 +84,14 @@ done
 AZ_NHC_DIR=$(realpath -m "$WORKING_DIR/az-nhc-$VERSION")
 INSTALL_SCRIPT_PATH="$AZ_NHC_DIR/install-nhc.sh"
 RUN_HEALTH_CHECKS_SCRIPT_PATH="$AZ_NHC_DIR/run-health-checks.sh"
-HEALTH_LOG_FILE_PATH="$AZ_NHC_DIR/$(hostname)-$(date +"%Y-%m-%d_%H-%M-%S")-health.log"
+
+OUT_LOG_FILE_PATH="$OUTPUT_DIR/$JOB_NAME.out"
+ERR_LOG_FILE_PATH="$OUTPUT_DIR/$JOB_NAME.err"
+HEALTH_LOG_FILE_PATH="$OUTPUT_DIR/$JOB_NAME-health.log"
+
+# Setup redirection for the rest of the script
+mkdir -p $OUTPUT_DIR
+exec > >(tee $OUT_LOG_FILE_PATH) 2> >(tee $ERR_LOG_FILE_PATH >&2)
 
 install_nhc() {
     force=$1
@@ -162,6 +183,7 @@ run_health_checks() {
 }
 
 # Download AZ NHC
+echo "Running OneTouch NHC with Job Name $JOB_NAME"
 setup_nhc $VERSION $AZ_NHC_DIR 1
 echo "=== Finished Setting up AZ NHC ==="
 
@@ -169,12 +191,16 @@ echo "=== Finished Setting up AZ NHC ==="
 echo
 run_health_checks $HEALTH_LOG_FILE_PATH $CUSTOM_CONF
 echo "=== Finished Running Health Checks ===" 
-results=$(cat $HEALTH_LOG_FILE_PATH)
+
+echo
+echo "=== Overall Results ($HEALTH_LOG_FILE_PATH) ==="
+cat $HEALTH_LOG_FILE_PATH
 
 echo
 echo "=== Detected Errors (if any) ==="
-if grep "ERROR" $HEALTH_LOG_FILE_PATH; then
-    grep "ERROR" $HEALTH_LOG_FILE_PATH | while read line; do echo "[NHC-RESULT][$(hostname)] $line"; done
+errors=$(grep "ERROR" $HEALTH_LOG_FILE_PATH)
+if [ -n "$errors" ]; then
+    echo $errors | while read line; do echo "NHC-RESULT $(hostname) | $line"; done
 else
-    echo "[NHC-RESULT][$(hostname)] Healthy"
+    echo "NHC-RESULT $(hostname) | Healthy"
 fi
