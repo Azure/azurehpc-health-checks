@@ -87,7 +87,7 @@ RUN_HEALTH_CHECKS_SCRIPT_PATH="$AZ_NHC_DIR/run-health-checks.sh"
 
 OUT_LOG_FILE_PATH="$OUTPUT_DIR/$JOB_NAME.out"
 ERR_LOG_FILE_PATH="$OUTPUT_DIR/$JOB_NAME.err"
-HEALTH_LOG_FILE_PATH="$OUTPUT_DIR/$JOB_NAME-health.log"
+HEALTH_LOG_FILE_PATH="$OUTPUT_DIR/$JOB_NAME.health.log"
 
 # Setup redirection for the rest of the script
 mkdir -p $OUTPUT_DIR
@@ -183,7 +183,7 @@ run_health_checks() {
 }
 
 # Download AZ NHC
-echo "Running OneTouch NHC with Job Name $JOB_NAME"
+echo "Running OneTouch NHC with Job Name $JOB_NAME on host $(hostname)"
 setup_nhc $VERSION $AZ_NHC_DIR 1
 echo "=== Finished Setting up AZ NHC ==="
 
