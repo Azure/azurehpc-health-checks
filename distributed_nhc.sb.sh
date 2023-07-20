@@ -13,6 +13,7 @@ Run Azure NHC distributed onto the specified set of nodes and collects the resul
 
 Example Usage:
     sbatch -N4 ./distributed_nhc.sb.sh
+    sbatch -N4 ./distributed_nhc.sb.sh -c <commit_sha>
     ./distributed_nhc.sb.sh -F ./my_node_file
     ./distributed_nhc.sb.sh -w node1,node2,node3
     ./distributed_nhc.sb.sh -F ./my_node_file -w additonal_node1,additional_node2
@@ -43,8 +44,10 @@ expand_nodelist() {
     # aice-ndv5-iad21-000170 aice-ndv5-iad21-000201 aice-ndv5-iad21-000202 aice-ndv5-iad21-000203 aice-ndv5-iad21-000218 aice-ndv5-iad21-000219 aice-ndv5-iad21-000220
 
     # converts "aice-ndv5-iad21-[000170,000201-000203,000218-000220]"
-    # into "aice-ndv5-iad21- [000170,000201-000203,000218-000220]" # which we can then stick into an array. If we have 1 element, there were no ranges # otherwise, expand the ranges and rebuild the node names host_num_split=( $( echo $nodelist | sed -r "s/(.*)(\[.*\]).*/\1 \2/" ) )
-
+    # into "aice-ndv5-iad21- [000170,000201-000203,000218-000220]" 
+    # which we can then stick into an array. If we have 1 element, there were no ranges 
+    # otherwise, expand the ranges and rebuild the node names 
+    host_num_split=( $( echo $nodelist | sed -r "s/(.*)(\[.*\]).*/\1 \2/" ) )
     if [ ${#host_num_split[@]} -eq 1 ]; then
         echo ${host_num_split[0]}
         return
@@ -62,11 +65,9 @@ NODELIST_ARR=()
 
 # Running with SLURM
 if [ -n "$SLURM_JOB_NAME" ] && [ "$SLURM_JOB_NAME" != "interactive" ]; then
-    #srun ./onetouch_nhc.sh | grep "NHC-RESULT" | sed 's/\s*NHC-RESULT\s*//g' | sort
-    #exit 0
     NHC_JOB_NAME="$SLURM_JOB_NAME-$SLURM_JOB_ID"
     HEALTH_LOG_FILE_PATH="logs/$NHC_JOB_NAME.health.log"
-    NODELIST_ARR=( $(expand_nodelist $SLURM_NODELIST) )
+    NODELIST_ARR=( $(expand_nodelist $SLURM_JOB_NODELIST) )
     { RAW_OUTPUT=$(srun ./onetouch_nhc.sh -n $NHC_JOB_NAME $@ | tee /dev/fd/3 ); } 3>&1
 else
     # Running with Parallel SSH
