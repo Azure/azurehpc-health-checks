@@ -43,10 +43,7 @@ expand_nodelist() {
     # aice-ndv5-iad21-000170 aice-ndv5-iad21-000201 aice-ndv5-iad21-000202 aice-ndv5-iad21-000203 aice-ndv5-iad21-000218 aice-ndv5-iad21-000219 aice-ndv5-iad21-000220
 
     # converts "aice-ndv5-iad21-[000170,000201-000203,000218-000220]"
-    # into "aice-ndv5-iad21- [000170,000201-000203,000218-000220]"
-    # which we can then stick into an array. If we have 1 element, there were no ranges
-    # otherwise, expand the ranges and rebuild the node names
-    host_num_split=( $( echo $nodelist | sed -r "s/(.*)(\[.*\]).*/\1 \2/" ) )
+    # into "aice-ndv5-iad21- [000170,000201-000203,000218-000220]" # which we can then stick into an array. If we have 1 element, there were no ranges # otherwise, expand the ranges and rebuild the node names host_num_split=( $( echo $nodelist | sed -r "s/(.*)(\[.*\]).*/\1 \2/" ) )
 
     if [ ${#host_num_split[@]} -eq 1 ]; then
         echo ${host_num_split[0]}
@@ -61,6 +58,7 @@ expand_nodelist() {
 
 RAW_OUTPUT=""
 HEALTH_LOG_FILE_PATH=""
+NODELIST_ARR=()
 
 # Running with SLURM
 if [ -n "$SLURM_JOB_NAME" ] && [ "$SLURM_JOB_NAME" != "interactive" ]; then
@@ -181,9 +179,15 @@ else
 fi
 
 # Filter down to NHC-RESULTS
-NHC_RESULTS=$(echo "$RAW_OUTPUT" | grep "NHC-RESULT" | sed 's/.*NHC-RESULT\s*//g' | sort)
+NHC_RESULTS=$(echo "$RAW_OUTPUT" | grep "NHC-RESULT" | sed 's/.*NHC-RESULT\s*//g')
 
+# Identify nodes who should have reported results but didn't, these failed for some unknown reason
 nodes_with_results_arr=( $( echo "$NHC_RESULTS" | sed 's/\s*|.*//g' | tr '\n' ' ' ) )
+nodes_missing_results=(`echo ${NODELIST_ARR[@]} ${nodes_with_results_arr[@]} | tr ' ' '\n' | sort | uniq -u`)
 
-echo "$NHC_RESULTS" >> $HEALTH_LOG_FILE_PATH
-echo "$nodes_with_results" >> $HEALTH_LOG_FILE_PATH
+newline=$'\n'
+for missing_node in "${nodes_missing_results[@]}"; do
+    NHC_RESULTS+="$newline$missing_node | ERROR: No results reported"
+done
+
+echo "$NHC_RESULTS" | sort >> $HEALTH_LOG_FILE_PATH
