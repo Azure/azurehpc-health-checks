@@ -65,7 +65,7 @@ NODELIST_ARR=()
 
 # Running with SLURM
 if [ -n "$SLURM_JOB_NAME" ] && [ "$SLURM_JOB_NAME" != "interactive" ]; then
-    NHC_JOB_NAME="$SLURM_JOB_NAME-$SLURM_JOB_ID"
+    NHC_JOB_NAME="$SLURM_JOB_NAME-$SLURM_JOB_ID-$(date +'%Y-%m-%d_%H-%M-%S')"
     HEALTH_LOG_FILE_PATH="logs/$NHC_JOB_NAME.health.log"
     NODELIST_ARR=( $(expand_nodelist $SLURM_JOB_NODELIST) )
     { RAW_OUTPUT=$(srun ./onetouch_nhc.sh -n $NHC_JOB_NAME $@ | tee /dev/fd/3 ); } 3>&1
@@ -175,8 +175,7 @@ else
     echo "Running Parallel SSH Distributed NHC on:" 
     echo "${NODELIST_ARR[@]}" | tr ' ' '\n' 
     echo "======================"
-    parallel-ssh -P -t $timeout ${pssh_host_args[@]} $onetouch_nhc_path ${nhc_args[@]} 2> $error_path | tee $output_path
-    RAW_OUTPUT=$(cat $output_path)
+    RAW_OUTPUT=$(parallel-ssh -P -t $timeout ${pssh_host_args[@]} $onetouch_nhc_path ${nhc_args[@]} 3> $error_path | tee $output_path)
 fi
 
 # Filter down to NHC-RESULTS
@@ -192,3 +191,4 @@ for missing_node in "${nodes_missing_results[@]}"; do
 done
 
 echo "$NHC_RESULTS" | sort >> $HEALTH_LOG_FILE_PATH
+cat $HEALTH_LOG_FILE_PATH
