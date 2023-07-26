@@ -1,0 +1,8 @@
+#!/bin/bash
+function check_gpu_count() {
+   EXPECTED_NUM_GPU="$1"
+   gpu_count=$(nvidia-smi --list-gpus | wc -l)
+   if [ "$gpu_count" -ne "$1" ];
+     die 1 "$FUNCNAME: Expected to see $EXPECTED_NUM_GPU but found $gpu_count" 
+   fi      
+}
