@@ -4,7 +4,7 @@
 #SBATCH --job-name distributed_nhc
 #SBATCH --error="logs/%x-%j.err"
 #SBATCH --output="logs/%x-%j.out"
-#SBATCH --time 00:15:00
+#SBATCH --time 00:30:00
 
 print_help() {
 cat << EOF  
@@ -13,7 +13,7 @@ Run Azure NHC distributed onto the specified set of nodes and collects the resul
 
 Example Usage:
     sbatch -N4 ./distributed_nhc.sb.sh
-    sbatch -N4 ./distributed_nhc.sb.sh -c <commit_sha>
+    sbatch -N4 ./distributed_nhc.sb.sh -v <commit_sha>
     ./distributed_nhc.sb.sh -F ./my_node_file
     ./distributed_nhc.sb.sh -w node1,node2,node3
     ./distributed_nhc.sb.sh -F ./my_node_file -w additonal_node1,additional_node2
@@ -27,6 +27,8 @@ Example Usage:
 
 -v, -version,       --version               Optional version of Az NHC to download from git, defaults to latest from "main"
                                             Can be a branch name like "main" for the latest or a full commit hash for a specific version.
+
+-g, -git,           --git                   Optional git url to download az nhc from. Defaults to "https://github.com/Azure/azurehpc-health-checks"
 
 -c, -config,        --config                Optional path to a custom NHC config file. 
                                             If not specified the current VM SKU will be detected and the appropriate conf file will be used.
@@ -62,24 +64,28 @@ expand_nodelist() {
 RAW_OUTPUT=""
 HEALTH_LOG_FILE_PATH=""
 NODELIST_ARR=()
+onetouch_nhc_path=$(realpath -e "./onetouch_nhc.sh")
 
 # Running with SLURM
 if [ -n "$SLURM_JOB_NAME" ] && [ "$SLURM_JOB_NAME" != "interactive" ]; then
     NHC_JOB_NAME="$SLURM_JOB_NAME-$SLURM_JOB_ID-$(date +'%Y-%m-%d_%H-%M-%S')"
     HEALTH_LOG_FILE_PATH="logs/$NHC_JOB_NAME.health.log"
     NODELIST_ARR=( $(expand_nodelist $SLURM_JOB_NODELIST) )
-    { RAW_OUTPUT=$(srun ./onetouch_nhc.sh -n $NHC_JOB_NAME $@ | tee /dev/fd/3 ); } 3>&1
+
+    # verify file presence on all nodes
+    { RAW_OUTPUT=$(srun --gpus-per-node=8 $onetouch_nhc_path -n $NHC_JOB_NAME $@ | tee /dev/fd/3 ); } 3>&1
 else
     # Running with Parallel SSH
     # Arguments
     NODEFILE=""
     NODELIST=""
     GIT_VERSION=""
+    GIT_URL=""
     CUSTOM_CONF=""
     FORCE=false
 
     # Parse out arguments
-    options=$(getopt -l "help,nodefile:,nodelist:,version:,config:,force" -o "hF:w:v:c:f" -a -- "$@")
+    options=$(getopt -l "help,nodefile:,nodelist:,version:,config:,force,git" -o "hF:w:v:c:fg:" -a -- "$@")
     if [ $? -ne 0 ]; then
         print_help
         exit 1
@@ -104,6 +110,10 @@ else
     -v|--version) 
         shift
         GIT_VERSION="$1"
+        ;;
+    -g|--git) 
+        shift
+        GIT_URL="$1"
         ;;
     -c|--config) 
         shift
@@ -148,7 +158,6 @@ else
 
     # Pssh args
     timeout=900 # 15 minute timeout
-    onetouch_nhc_path=$(realpath "./onetouch_nhc.sh")
     
     pssh_host_args=()
     for node in "${NODELIST_ARR[@]}"; do
@@ -160,6 +169,10 @@ else
         nhc_args+=("-v" "$GIT_VERSION")
     fi
     
+    if [ -n "$GIT_URL" ]; then
+        nhc_args+=("-g" "$GIT_URL")
+    fi
+    
     if [ -n "$CUSTOM_CONF" ]; then
         nhc_args+=("-c" "$CUSTOM_CONF")
     fi
@@ -167,10 +180,6 @@ else
     if $FORCE ; then
         nhc_args+=("-f")
     fi
-
-
-    #output=$(parallel-ssh -P -t $timeout -h $NODEFILE $onetouch_nhc_path)
-    #echo "$output" | grep "NHC-RESULT" | sed 's/\s*NHC-RESULT\s*//g' | sed "s/.*:\s+//g" | sort > $output_path
 
     echo "Running Parallel SSH Distributed NHC on:" 
     echo "${NODELIST_ARR[@]}" | tr ' ' '\n' 

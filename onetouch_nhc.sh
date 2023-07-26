@@ -10,6 +10,8 @@ Runs OneTouch Azure NHC which downloads a specific version of Azure NHC, install
 -v, -version,       --version               Optional version of Az NHC to download from git, defaults to latest from "main"
                                             Can be a branch name like "main" for the latest or a full commit hash for a specific version.
 
+-g, -git,           --git                   Optional git url to download Az NHC from. Defaults to "https://github.com/Azure/azurehpc-health-checks"
+
 -c, -config,        --config                Optional path to a custom NHC config file. 
                                             If not specified the current VM SKU will be detected and the appropriate conf file will be used.
 
@@ -28,6 +30,7 @@ EOF
 
 # Arguments
 VERSION="main"
+GIT_URL="https://github.com/Azure/azurehpc-health-checks"
 WORKING_DIR=$(realpath -m "$HOME/onetouch_nhc/working")
 OUTPUT_DIR=$WORKING_DIR
 JOB_NAME="$(hostname)-$(date +"%Y-%m-%d_%H-%M-%S")"
@@ -35,7 +38,7 @@ CUSTOM_CONF=""
 FORCE=false
 
 # Parse out arguments
-options=$(getopt -l "help,version:,config:,working:,output:,name:force" -o "hv:c:w:o:n:f" -a -- "$@")
+options=$(getopt -l "help,version:,config:,working:,output:,name:,force,git:" -o "hv:c:w:o:n:fg:" -a -- "$@")
 
 if [ $? -ne 0 ]; then
     print_help
@@ -53,6 +56,10 @@ case "$1" in
 -v|--version) 
     shift
     VERSION="$1"
+    ;;
+-g|--git) 
+    shift
+    GIT_URL="$1"
     ;;
 -c|--config)
     shift
@@ -80,8 +87,12 @@ esac
 shift
 done
 
+# extract git info from url
+git_url_parts=($(echo "$GIT_URL" | tr '/' ' '))
+user_repo=$(echo "${git_url_parts[@]: -2:2}" | tr ' ' '_')
+
 # Define expected paths
-AZ_NHC_DIR=$(realpath -m "$WORKING_DIR/az-nhc-$VERSION")
+AZ_NHC_DIR=$(realpath -m "$WORKING_DIR/$user_repo-$VERSION")
 INSTALL_SCRIPT_PATH="$AZ_NHC_DIR/install-nhc.sh"
 RUN_HEALTH_CHECKS_SCRIPT_PATH="$AZ_NHC_DIR/run-health-checks.sh"
 
@@ -143,7 +154,7 @@ setup_nhc() {
         fi
     fi
 
-    archive_url="https://github.com/Azure/azurehpc-health-checks/archive/$version.tar.gz"
+    archive_url="$GIT_URL/archive/$version.tar.gz"
     
     mkdir -p $output_dir > /dev/null
     wget -q -O - $archive_url | tar -xz --strip=1 -C $output_dir
