@@ -43,10 +43,10 @@ function check_hw_topology() {
     TOPO_FILE="$1"
 
     if [ ! -f "$TOPO_FILE" ]; then
-        #die 1 "$FUNCNAME: Specified topology file does not exist!"
+        die 1 "$FUNCNAME: Specified topology file does not exist!"
     fi
     log "Checking topology against $TOPO_FILE"
-    expected_topo=$(load_expected_topology $TOPO_FILE)
+    expected_topo=$(load_expected_topology "$TOPO_FILE")
     expected_topo_arr=($( echo "$expected_topo" | tr '\n' ' '))
 
     actual_topo=$(get_actual_topology)
