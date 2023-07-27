@@ -1,0 +1,76 @@
+#!/bin/bash
+
+function load_expected_topology() {
+    TOPO_FILE="$1"
+
+    # Filter down to just numaids and <pci /> sections
+    filtered_topo=$(cat $TOPO_FILE | grep -o -E -e 'numaid=\"[[:digit:]]{1,}\"' -e '<pci.{1,}/>' )
+
+    # Set the initial value of numaid
+    numaid="0"
+
+    # Loop through each line of the input file
+    echo "$filtered_topo" | while read line; do
+        # Check if the line starts with "numaid"
+        if [[ $line == numaid=* ]]; then
+            # If it does, update the value of numaid
+            numaid="${line#numaid=}"
+        else
+            # If it doesn't, extract the busid and print the line with the current value of numaid
+            busid="$(echo $line | awk -F'"' '{print $2}')"
+            result="numaid=$numaid-busid=$busid"
+            result="${result//\"/}"
+            echo $result
+        fi
+    done
+}
+
+function get_actual_topology() {
+    raw_topo=$(lstopo)
+
+    numaid="0"
+    echo "$raw_topo" | while read line; do
+        if [[ $line == *"NUMANode"* ]]; then
+            numaid=$( echo "${line#*L#}" | cut -d' ' -f1)
+        elif [[ $line == *"PCI"* ]]; then
+            busid=$( echo $line | awk '{print $2}')
+            echo "numaid=$numaid-busid=$busid"
+        fi 
+    done
+}
+
+function check_hw_topology() {
+    TOPO_FILE="$1"
+
+    if [ ! -f "$TOPO_FILE" ]; then
+        die 1 "$FUNCNAME: Specified topology file does not exist!"
+    fi
+    log "Checking topology against $TOPO_FILE"
+    expected_topo=$(load_expected_topology "$TOPO_FILE")
+    expected_topo_arr=($( echo "$expected_topo" | tr '\n' ' '))
+
+    actual_topo=$(get_actual_topology)
+
+    missing_items=()
+    for item in "${expected_topo_arr[@]}"
+    do
+        if ! echo "$actual_topo" | grep -q -x "$item"; then
+            missing_items+=("$item")
+        fi
+    done
+
+    if [ ${#missing_items[@]} -ne 0 ]; then
+
+        formatted_missing=()
+        for item in "${missing_items[@]}"
+        do
+            item=$(echo $item | tr '-' '=') # change to = for awk
+            numaid=$(echo $item | awk -F'=' '{print $2}')
+            busid=$(echo $item | awk -F'=' '{print $4}')
+            formatted_missing+=(" PCI Bus $busid on NUMANode $numaid")
+        done
+
+        missing_str=$(IFS=',' ; echo "${formatted_missing[*]}")
+        die 1 "$FUNCNAME: Topology mismatch! Expected to find$missing_str" # awkward spacing to get formatting right
+    fi
+}
