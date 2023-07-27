@@ -137,7 +137,7 @@ else
     fi
 
     if [ -n "$NODELIST" ]; then
-        NODELIST_ARR+=( $(echo $NODELIST | sed "s/,/ /g") ) 
+        NODELIST_ARR+=( $(expand_nodelist $NODELIST ) )
     fi
 
     if [ ${#NODELIST_ARR[@]} -eq 0 ]; then
