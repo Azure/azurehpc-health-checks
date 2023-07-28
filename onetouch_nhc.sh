@@ -183,11 +183,13 @@ run_health_checks() {
 
     if [ -z $custom_conf ]; then
         # if no custom config is provided, let run-health-checks.sh auto-detect
+        echo "The health check has been started, it will typically take a few minutes to complete"
         sudo $RUN_HEALTH_CHECKS_SCRIPT_PATH $log_file_path
     else
         # otherwise, run it ourselves
         custom_conf=$(realpath "$custom_conf")
         echo "Running health checks using $custom_conf"
+        echo "The health check has been started, it will typically take a few minutes to complete"
         sudo nhc CONFFILE=$custom_conf LOGFILE=$log_file_path TIMEOUT=500
     fi
 

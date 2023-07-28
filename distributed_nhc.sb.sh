@@ -184,6 +184,7 @@ else
     echo "Running Parallel SSH Distributed NHC on:" 
     echo "${NODELIST_ARR[@]}" | tr ' ' '\n' 
     echo "======================"
+    echo "The health check is running, it will take a few minutes to complete."
     RAW_OUTPUT=$(parallel-ssh -P -t $timeout ${pssh_host_args[@]} $onetouch_nhc_path ${nhc_args[@]} 3> $error_path | tee $output_path)
 fi
 
