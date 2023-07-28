@@ -50,4 +50,6 @@ for health_file in health_files:
             print(f"Ingesting health results from {os.path.basename(health_file)} into {ingest_url} at {database}/{table_name}")
             ingest_client.ingest_from_dataframe(df, IngestionProperties(database, table_name))
     except FileNotFoundError:
+        if len(health_files) == 1:
+            raise
         print("Cannot find file '{health_file}', skipping...")
