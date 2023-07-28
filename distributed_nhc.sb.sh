@@ -65,6 +65,7 @@ RAW_OUTPUT=""
 HEALTH_LOG_FILE_PATH=""
 NODELIST_ARR=()
 onetouch_nhc_path=$(realpath -e "./onetouch_nhc.sh")
+nhc_start_time=$(date +%s.%N)
 
 # Running with SLURM
 if [ -n "$SLURM_JOB_NAME" ] && [ "$SLURM_JOB_NAME" != "interactive" ]; then
@@ -151,7 +152,7 @@ else
     NODELIST_ARR=( $(echo "${NODELIST_ARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )
 
     # Log file paths
-    jobname="distributed_nhc-pssh-$(date +'%Y-%m-%d_%H-%M-%S')"
+    jobname="distributed_nhc-pssh-$(date --utc +'%Y-%m-%d_%H-%M-%S')"
     HEALTH_LOG_FILE_PATH="logs/$jobname.health.log"
     output_path="logs/$jobname.out"
     error_path="logs/$jobname.err"
@@ -188,6 +189,9 @@ else
     RAW_OUTPUT=$(parallel-ssh -P -t $timeout ${pssh_host_args[@]} $onetouch_nhc_path ${nhc_args[@]} 3> $error_path | tee $output_path)
 fi
 
+nhc_end_time=$(date +%s.%N)
+nhc_duration=$(printf "%.2f" $(echo "($nhc_end_time - $nhc_start_time) / 60" | bc -l))
+
 # Filter down to NHC-RESULTS
 NHC_RESULTS=$(echo "$RAW_OUTPUT" | grep "NHC-RESULT" | sed 's/.*NHC-RESULT\s*//g')
 
@@ -201,4 +205,13 @@ for missing_node in "${nodes_missing_results[@]}"; do
 done
 
 echo "$NHC_RESULTS" | sort >> $HEALTH_LOG_FILE_PATH
+echo "======================"
 cat $HEALTH_LOG_FILE_PATH
+
+echo "======================"
+echo "NHC took $nhc_duration minutes to finish"
+echo
+echo "Exporting results to Kusto"
+kusto_export_script=$(realpath -e "./export_health_log_to_kusto.py")
+python3 $kusto_export_script $HEALTH_LOG_FILE_PATH
+echo "Ingestion queued, results take ~5 minutes to appear in Kusto"
