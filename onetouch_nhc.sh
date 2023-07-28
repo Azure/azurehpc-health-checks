@@ -190,7 +190,7 @@ run_health_checks() {
         custom_conf=$(realpath "$custom_conf")
         echo "Running health checks using $custom_conf"
         echo "The health check has been started, it will typically take a few minutes to complete"
-        sudo nhc CONFFILE=$custom_conf LOGFILE=$log_file_path TIMEOUT=500
+        sudo nhc -d -v CONFFILE=$custom_conf LOGFILE=$log_file_path TIMEOUT=500
     fi
 
 }
