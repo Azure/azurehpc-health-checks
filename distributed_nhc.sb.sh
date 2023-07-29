@@ -220,7 +220,7 @@ echo "NHC took $nhc_duration minutes to finish"
 echo
 echo "Exporting results to Kusto"
 requirements_file=$(realpath -e "./requirements.txt")
-$(pip install -r $requirements_file)
+pip install -r $requirements_file
 kusto_export_script=$(realpath -e "./export_nhc_result_to_kusto.py")
 echo "Using export script $kusto_export_script"
 python3 $kusto_export_script $HEALTH_LOG_FILE_PATH $DEBUG_LOG_FILE_PATH
