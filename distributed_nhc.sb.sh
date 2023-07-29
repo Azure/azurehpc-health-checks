@@ -63,6 +63,7 @@ expand_nodelist() {
 
 RAW_OUTPUT=""
 HEALTH_LOG_FILE_PATH=""
+DEBUG_LOG_FILE_PATH=""
 NODELIST_ARR=()
 onetouch_nhc_path=$(realpath -e "./onetouch_nhc.sh")
 nhc_start_time=$(date +%s.%N)
@@ -70,7 +71,8 @@ nhc_start_time=$(date +%s.%N)
 # Running with SLURM
 if [ -n "$SLURM_JOB_NAME" ] && [ "$SLURM_JOB_NAME" != "interactive" ]; then
     NHC_JOB_NAME="$SLURM_JOB_NAME-$SLURM_JOB_ID-$(date +'%Y-%m-%d_%H-%M-%S')"
-    HEALTH_LOG_FILE_PATH="logs/$NHC_JOB_NAME.health.log"
+    HEALTH_LOG_FILE_PATH=$(realpath -m "./logs/$NHC_JOB_NAME.health.log")
+    DEBUG_LOG_FILE_PATH=$(realpath -m "./logs/$NHC_JOB_NAME.debug.log")
     NODELIST_ARR=( $(expand_nodelist $SLURM_JOB_NODELIST) )
 
     # verify file presence on all nodes
@@ -153,7 +155,8 @@ else
 
     # Log file paths
     jobname="distributed_nhc-pssh-$(date --utc +'%Y-%m-%d_%H-%M-%S')"
-    HEALTH_LOG_FILE_PATH="logs/$jobname.health.log"
+    HEALTH_LOG_FILE_PATH=$(realpath -m "./logs/$jobname.health.log")
+    DEBUG_LOG_FILE_PATH=$(realpath -m "./logs/$jobname.debug.log")
     output_path="logs/$jobname.out"
     error_path="logs/$jobname.err"
 
@@ -194,6 +197,9 @@ nhc_duration=$(printf "%.2f" $(echo "($nhc_end_time - $nhc_start_time) / 60" | b
 
 # Filter down to NHC-RESULTS
 NHC_RESULTS=$(echo "$RAW_OUTPUT" | grep "NHC-RESULT" | sed 's/.*NHC-RESULT\s*//g')
+NHC_DEBUG=$(echo "$RAW_OUTPUT" | grep "NHC-DEBUG" | sed 's/.*NHC-DEBUG\s*//g')
+echo "Dumping NHC Debug into $DEBUG_LOG_FILE_PATH"
+echo "$NHC_DEBUG" | sort >> $DEBUG_LOG_FILE_PATH
 
 # Identify nodes who should have reported results but didn't, these failed for some unknown reason
 nodes_with_results_arr=( $( echo "$NHC_RESULTS" | sed 's/\s*|.*//g' | tr '\n' ' ' ) )
@@ -204,6 +210,7 @@ for missing_node in "${nodes_missing_results[@]}"; do
     NHC_RESULTS+="$newline$missing_node | ERROR: No results reported"
 done
 
+echo "Health report can be found into $HEALTH_LOG_FILE_PATH"
 echo "$NHC_RESULTS" | sort >> $HEALTH_LOG_FILE_PATH
 echo "======================"
 cat $HEALTH_LOG_FILE_PATH
@@ -212,6 +219,9 @@ echo "======================"
 echo "NHC took $nhc_duration minutes to finish"
 echo
 echo "Exporting results to Kusto"
-kusto_export_script=$(realpath -e "./export_health_log_to_kusto.py")
-python3 $kusto_export_script $HEALTH_LOG_FILE_PATH
+requirements_file=$(realpath -e "./requirements.txt")
+$(pip install -r $requirements_file)
+kusto_export_script=$(realpath -e "./export_nhc_result_to_kusto.py")
+echo "Using export script $kusto_export_script"
+python3 $kusto_export_script $HEALTH_LOG_FILE_PATH $DEBUG_LOG_FILE_PATH
 echo "Ingestion queued, results take ~5 minutes to appear in Kusto"

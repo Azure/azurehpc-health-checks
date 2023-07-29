@@ -206,14 +206,28 @@ run_health_checks $HEALTH_LOG_FILE_PATH $CUSTOM_CONF
 echo "=== Finished Running Health Checks ===" 
 
 echo
+echo "=== Debug Dump ==="
+debug=$(grep " DEBUG:" $HEALTH_LOG_FILE_PATH)
+echo "$debug" | while read line 
+do
+    cleaned_line=$(echo "$line" | sed 's/^\[[0-9]*\] - DEBUG:  //')
+    echo "NHC-DEBUG $(hostname) | $cleaned_line";
+done
+
+echo
 echo "=== Overall Results ($HEALTH_LOG_FILE_PATH) ==="
 cat $HEALTH_LOG_FILE_PATH
 
 echo
 echo "=== Detected Errors (if any) ==="
 errors=$(grep "ERROR" $HEALTH_LOG_FILE_PATH)
+
 if [ -n "$errors" ]; then
-    echo $errors | while read line; do echo "NHC-RESULT $(hostname) | $line"; done
+    echo "$errors" | while read line 
+    do
+        cleaned_line=$(echo "$line" | sed 's/^\[[0-9]*\] - //')
+        echo "NHC-RESULT $(hostname) | $cleaned_line";
+    done
 else
     echo "NHC-RESULT $(hostname) | Healthy"
 fi
