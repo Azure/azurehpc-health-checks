@@ -1,5 +1,4 @@
 #!/bin/bash
-
 function check_vbios_version() {
     expected_version="$1"
     uniq_vbios_versions=$(nvidia-smi -q | grep "VBIOS Version" | cut -d ':' -f 2 | sed 's/ //g' | uniq)
@@ -10,5 +9,3 @@ function check_vbios_version() {
         die 1 "$FUNCNAME: GPU VBIOS version does not match the expected '$expected_version', instead got '${uniq_vbios_versions[@]}'"
     fi
 }
-
-check_vbios_version "$1"
