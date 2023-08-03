@@ -91,6 +91,6 @@ for health_file in health_files:
 
     except FileNotFoundError:
         if len(health_files) == 1:
-            print("Cannot find file '{health_file}'")
+            print(f"Cannot find file '{health_file}'")
             raise
-        print("Cannot find file '{health_file}', skipping...")
+        print(f"Cannot find file '{health_file}', skipping...")

@@ -11,4 +11,4 @@ function check_vbios_version() {
     fi
 }
 
-check_vbios_version $1
+check_vbios_version "$1"
