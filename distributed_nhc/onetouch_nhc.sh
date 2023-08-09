@@ -118,7 +118,7 @@ install_nhc() {
         NHC_INSTALLED=false
     fi
     
-    if $NHC_INSTALLED && [[ $( diff --brief ./customTests /etc/nhc/scripts --exclude=lbnl_*.nhc --exclude=common.nhc | grep ".nhc" ) ]]; then
+    if $NHC_INSTALLED && [[ $( diff --brief ../customTests /etc/nhc/scripts --exclude=lbnl_*.nhc --exclude=common.nhc | grep ".nhc" ) ]]; then
         echo "Custom tests differ, reinstalling"
         NHC_INSTALLED=false
     fi
