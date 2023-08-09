@@ -73,7 +73,6 @@ function check_ib_bw_gdr(){
    pid_array=()
    for device in {0..3};
    do
-      echo $EXP_IB_BW $SKU ${port_numbers[$device]} $device
       run_ib_bw_gdr $EXP_IB_BW $SKU ${port_numbers[$device]} $device &
       pid_array+=($!)
    done

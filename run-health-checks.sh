@@ -39,7 +39,7 @@ elif  echo "$SKU" | grep -q "hx176-48rs"; then
 elif  echo "$SKU" | grep -q "hx176-24rs"; then
     conf_name="hx176-24rs"
 else
-    echo "SKU is currently not supported by Azure health checks." | tee -a $log_path
+    echo "The vm SKU '$SKU' is currently not supported by Azure health checks." | tee -a $log_path
     exit 0
 fi
 
