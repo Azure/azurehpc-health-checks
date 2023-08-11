@@ -25,6 +25,8 @@ Runs OneTouch Azure NHC which downloads a specific version of Azure NHC, install
                                             If not specified the job name will be generated with "\$(hostname)-\$(date +"%Y-%m-%d_%H-%M-%S")".
 
 -f, -force,         --force                 If set, forces the script the redownload and reinstall everything
+
+-V, -verbose,       --verbose               If set, enables verbose mode which will output all debug logs to stdout and the health file
 EOF
 }
 
@@ -36,9 +38,10 @@ OUTPUT_DIR=$WORKING_DIR
 JOB_NAME="$(hostname)-$(date --utc +"%Y-%m-%d_%H-%M-%S")"
 CUSTOM_CONF=""
 FORCE=false
+VERBOSE=false
 
 # Parse out arguments
-options=$(getopt -l "help,version:,config:,working:,output:,name:,force,git:" -o "hv:c:w:o:n:fg:" -a -- "$@")
+options=$(getopt -l "help,version:,config:,working:,output:,name:,force,git:,verbose:" -o "hv:c:w:o:n:fg:V" -a -- "$@")
 
 if [ $? -ne 0 ]; then
     print_help
@@ -79,6 +82,9 @@ case "$1" in
     ;;
 -f|--force)
     FORCE=true
+    ;;
+-V|--verbose)
+    VERBOSE=true
     ;;
 --)
     shift
@@ -207,23 +213,28 @@ echo "=== Finished Setting up AZ NHC ==="
 # Execute Health Checks
 echo
 run_health_checks $HEALTH_LOG_FILE_PATH $CUSTOM_CONF
+
+if [ ! -f $HEALTH_LOG_FILE_PATH ]; then
+    echo "Failed to run health checks, no log file was generated at $HEALTH_LOG_FILE_PATH"
+    echo "NHC-RESULT $(hostname) | Failed to run health checks, no log file was generated at $HEALTH_LOG_FILE_PATH";
+    exit 1
+fi
+
 echo "=== Finished Running Health Checks ===" 
 
-echo
-echo "=== Debug Dump ==="
-debug=$(grep " DEBUG:" $HEALTH_LOG_FILE_PATH)
-echo "$debug" | while read line 
-do
-    cleaned_line=$(echo "$line" | sed 's/^\[[0-9]*\] - DEBUG:  //')
-    echo "NHC-DEBUG $(hostname) | $cleaned_line";
-done
+if [ "$VERBOSE" = true ]; then
+    echo
+    echo "=== Debug Dump ==="
+    debug=$(grep " DEBUG:" $HEALTH_LOG_FILE_PATH)
+    echo "$debug" | while read line 
+    do
+        cleaned_line=$(echo "$line" | sed 's/^\[[0-9]*\] - DEBUG:  //')
+        echo "NHC-DEBUG $(hostname) | $cleaned_line";
+    done
+fi
 
 echo
-echo "=== Overall Results ($HEALTH_LOG_FILE_PATH) ==="
-cat $HEALTH_LOG_FILE_PATH
-
-echo
-echo "=== Detected Errors (if any) ==="
+echo "=== Health Report ==="
 errors=$(grep "ERROR" $HEALTH_LOG_FILE_PATH)
 
 if [ -n "$errors" ]; then
