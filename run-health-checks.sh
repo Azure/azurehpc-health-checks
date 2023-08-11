@@ -1,6 +1,10 @@
 #!/bin/bash
 
 SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
+
+log_path="${1:-./health.log}"
+log_path=$(realpath "$log_path")
+
 echo "Running health checks for $SKU SKU..."
 
 SKU="${SKU,,}"
@@ -35,11 +39,8 @@ elif  echo "$SKU" | grep -q "hx176-48rs"; then
 elif  echo "$SKU" | grep -q "hx176-24rs"; then
     conf_name="hx176-24rs"
 else
-    echo "SKU health check currently not implemented"
-    exit 1
+    echo "The vm SKU '$SKU' is currently not supported by Azure health checks." | tee -a $log_path
+    exit 0
 fi
-
-log_path="${1:-./health.log}"
-log_path=$(realpath "$log_path")
 
 nhc CONFFILE=$(dirname "${BASH_SOURCE[0]}")/conf/$conf_name.conf LOGFILE=$log_path TIMEOUT=500
