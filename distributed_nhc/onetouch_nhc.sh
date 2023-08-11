@@ -118,7 +118,7 @@ install_nhc() {
         NHC_INSTALLED=false
     fi
     
-    if $NHC_INSTALLED && [[ $( diff --brief ../customTests /etc/nhc/scripts --exclude=lbnl_*.nhc --exclude=common.nhc | grep ".nhc" ) ]]; then
+    if $NHC_INSTALLED && [[ $( diff --brief ./customTests /etc/nhc/scripts --exclude=lbnl_*.nhc --exclude=common.nhc | grep ".nhc" ) ]]; then
         echo "Custom tests differ, reinstalling"
         NHC_INSTALLED=false
     fi
@@ -181,18 +181,22 @@ run_health_checks() {
 
     log_file_path=$(realpath -m "$log_file_path")
 
-    if [ -z $custom_conf ]; then
-        # if no custom config is provided, let run-health-checks.sh auto-detect
-        echo "The health check has been started, it will typically take a few minutes to complete"
-        sudo $RUN_HEALTH_CHECKS_SCRIPT_PATH $log_file_path
-    else
-        # otherwise, run it ourselves
-        custom_conf=$(realpath "$custom_conf")
-        echo "Running health checks using $custom_conf"
-        echo "The health check has been started, it will typically take a few minutes to complete"
-        sudo nhc -d -v CONFFILE=$custom_conf LOGFILE=$log_file_path TIMEOUT=500
+    nhc_args=()
+    if [ -n "$custom_conf" ]; then
+        echo "Custom config provided, using $custom_conf"
+        custom_conf=$(realpath -e "$custom_conf")
+        nhc_args+=("-c" "$custom_conf")
     fi
 
+    if [ "$VERBOSE" = true ]; then
+        echo "Verbose mode enabled"
+        nhc_args+=("-v")
+    fi
+
+    # if no custom config is provided, let run-health-checks.sh auto-detect
+    echo sudo $RUN_HEALTH_CHECKS_SCRIPT_PATH ${nhc_args[@]} -o $log_file_path
+    echo "The health check has been started, it will typically take a few minutes to complete"
+    sudo $RUN_HEALTH_CHECKS_SCRIPT_PATH ${nhc_args[@]} -o $log_file_path
 }
 
 # Download AZ NHC
