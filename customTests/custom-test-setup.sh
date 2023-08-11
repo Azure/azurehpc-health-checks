@@ -124,6 +124,7 @@ else
 fi
 
 # copy all custom test to the nhc scripts dir
+echo "Copying *.nhc from $SRC_DIR to /etc/nhc/scripts"
 cp $SRC_DIR/*.nhc /etc/nhc/scripts
 
 exit 0
