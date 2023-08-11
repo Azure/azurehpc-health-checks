@@ -208,8 +208,11 @@ nhc_duration=$(printf "%.2f" $(echo "($nhc_end_time - $nhc_start_time) / 60" | b
 # Filter down to NHC-RESULTS
 NHC_RESULTS=$(echo "$RAW_OUTPUT" | grep "NHC-RESULT" | sed 's/.*NHC-RESULT\s*//g')
 NHC_DEBUG=$(echo "$RAW_OUTPUT" | grep "NHC-DEBUG" | sed 's/.*NHC-DEBUG\s*//g')
-echo "Dumping NHC Debug into $DEBUG_LOG_FILE_PATH"
-echo "$NHC_DEBUG" | sort >> $DEBUG_LOG_FILE_PATH
+
+if [ -n "$NHC_DEBUG" ]; then
+    echo "Dumping NHC Debug into $DEBUG_LOG_FILE_PATH"
+    echo "$NHC_DEBUG" | sort >> $DEBUG_LOG_FILE_PATH
+fi
 
 # Identify nodes who should have reported results but didn't, these failed for some unknown reason
 nodes_with_results_arr=( $( echo "$NHC_RESULTS" | sed 's/\s*|.*//g' | tr '\n' ' ' ) )

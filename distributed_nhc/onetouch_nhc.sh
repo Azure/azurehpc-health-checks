@@ -25,6 +25,8 @@ Runs OneTouch Azure NHC which downloads a specific version of Azure NHC, install
                                             If not specified the job name will be generated with "\$(hostname)-\$(date +"%Y-%m-%d_%H-%M-%S")".
 
 -f, -force,         --force                 If set, forces the script the redownload and reinstall everything
+
+-V, -verbose,       --verbose               If set, enables verbose mode which will output all debug logs to stdout and the health file
 EOF
 }
 
@@ -36,9 +38,10 @@ OUTPUT_DIR=$WORKING_DIR
 JOB_NAME="$(hostname)-$(date --utc +"%Y-%m-%d_%H-%M-%S")"
 CUSTOM_CONF=""
 FORCE=false
+VERBOSE=false
 
 # Parse out arguments
-options=$(getopt -l "help,version:,config:,working:,output:,name:,force,git:" -o "hv:c:w:o:n:fg:" -a -- "$@")
+options=$(getopt -l "help,version:,config:,working:,output:,name:,force,git:,verbose:" -o "hv:c:w:o:n:fg:V" -a -- "$@")
 
 if [ $? -ne 0 ]; then
     print_help
@@ -80,6 +83,9 @@ case "$1" in
 -f|--force)
     FORCE=true
     ;;
+-V|--verbose)
+    VERBOSE=true
+    ;;
 --)
     shift
     break;;
@@ -118,7 +124,7 @@ install_nhc() {
         NHC_INSTALLED=false
     fi
     
-    if $NHC_INSTALLED && [[ $( diff --brief ../customTests /etc/nhc/scripts --exclude=lbnl_*.nhc --exclude=common.nhc | grep ".nhc" ) ]]; then
+    if $NHC_INSTALLED && [[ $( diff --brief ./customTests /etc/nhc/scripts --exclude=lbnl_*.nhc --exclude=common.nhc | grep ".nhc" ) ]]; then
         echo "Custom tests differ, reinstalling"
         NHC_INSTALLED=false
     fi
@@ -181,18 +187,22 @@ run_health_checks() {
 
     log_file_path=$(realpath -m "$log_file_path")
 
-    if [ -z $custom_conf ]; then
-        # if no custom config is provided, let run-health-checks.sh auto-detect
-        echo "The health check has been started, it will typically take a few minutes to complete"
-        sudo $RUN_HEALTH_CHECKS_SCRIPT_PATH $log_file_path
-    else
-        # otherwise, run it ourselves
-        custom_conf=$(realpath "$custom_conf")
-        echo "Running health checks using $custom_conf"
-        echo "The health check has been started, it will typically take a few minutes to complete"
-        sudo nhc -d -v CONFFILE=$custom_conf LOGFILE=$log_file_path TIMEOUT=500
+    nhc_args=()
+    if [ -n "$custom_conf" ]; then
+        echo "Custom config provided, using $custom_conf"
+        custom_conf=$(realpath -e "$custom_conf")
+        nhc_args+=("-c" "$custom_conf")
     fi
 
+    if [ "$VERBOSE" = true ]; then
+        echo "Verbose mode enabled"
+        nhc_args+=("-v")
+    fi
+
+    # if no custom config is provided, let run-health-checks.sh auto-detect
+    echo sudo $RUN_HEALTH_CHECKS_SCRIPT_PATH ${nhc_args[@]} -o $log_file_path
+    echo "The health check has been started, it will typically take a few minutes to complete"
+    sudo $RUN_HEALTH_CHECKS_SCRIPT_PATH ${nhc_args[@]} -o $log_file_path
 }
 
 # Download AZ NHC
@@ -203,23 +213,28 @@ echo "=== Finished Setting up AZ NHC ==="
 # Execute Health Checks
 echo
 run_health_checks $HEALTH_LOG_FILE_PATH $CUSTOM_CONF
+
+if [ ! -f $HEALTH_LOG_FILE_PATH ]; then
+    echo "Failed to run health checks, no log file was generated at $HEALTH_LOG_FILE_PATH"
+    echo "NHC-RESULT $(hostname) | Failed to run health checks, no log file was generated at $HEALTH_LOG_FILE_PATH";
+    exit 1
+fi
+
 echo "=== Finished Running Health Checks ===" 
 
-echo
-echo "=== Debug Dump ==="
-debug=$(grep " DEBUG:" $HEALTH_LOG_FILE_PATH)
-echo "$debug" | while read line 
-do
-    cleaned_line=$(echo "$line" | sed 's/^\[[0-9]*\] - DEBUG:  //')
-    echo "NHC-DEBUG $(hostname) | $cleaned_line";
-done
+if [ "$VERBOSE" = true ]; then
+    echo
+    echo "=== Debug Dump ==="
+    debug=$(grep " DEBUG:" $HEALTH_LOG_FILE_PATH)
+    echo "$debug" | while read line 
+    do
+        cleaned_line=$(echo "$line" | sed 's/^\[[0-9]*\] - DEBUG:  //')
+        echo "NHC-DEBUG $(hostname) | $cleaned_line";
+    done
+fi
 
 echo
-echo "=== Overall Results ($HEALTH_LOG_FILE_PATH) ==="
-cat $HEALTH_LOG_FILE_PATH
-
-echo
-echo "=== Detected Errors (if any) ==="
+echo "=== Health Report ==="
 errors=$(grep "ERROR" $HEALTH_LOG_FILE_PATH)
 
 if [ -n "$errors" ]; then

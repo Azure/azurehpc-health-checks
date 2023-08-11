@@ -40,9 +40,12 @@ function install_perf_test(){
 	fi
 
 	pushd ${EXE_DIR}
-	wget https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
-	tar xvf perftest-${VERSION}.${VERSION_HASH}.tar.gz
-	pushd perftest-4.5
+	perftest_dir="perftest-${VERSION}"
+	mkdir -p ${EXE_DIR}/${perftest_dir}
+	archive_url="https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz"
+	wget -q -O - $archive_url | tar -xz --strip=1 -C ${EXE_DIR}/${perftest_dir} 
+
+	pushd ${perftest_dir} 
 	if [[ "$type" == "cuda" ]]; then
 		./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h
 	else
@@ -51,10 +54,8 @@ function install_perf_test(){
 	fi
 
 	make
-	rm ${EXE_DIR}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
 	popd
 	popd
-
 }
 
 
@@ -124,6 +125,7 @@ else
 fi
 
 # copy all custom test to the nhc scripts dir
+echo "Copying *.nhc from $SRC_DIR to /etc/nhc/scripts"
 cp $SRC_DIR/*.nhc /etc/nhc/scripts
 
 exit 0
