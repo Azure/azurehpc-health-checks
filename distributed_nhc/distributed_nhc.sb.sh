@@ -34,6 +34,8 @@ Example Usage:
                                             If not specified the current VM SKU will be detected and the appropriate conf file will be used.
 
 -f, -force,         --force                 If set, forces the NHC script the redownload and reinstall everything
+
+-V, -verbose,       --verbose               If set, enables verbose mode which will output all detailed debug file to stdout and a .debug.log file next to the .health.log file
 EOF
 }
 
@@ -86,9 +88,10 @@ else
     GIT_URL=""
     CUSTOM_CONF=""
     FORCE=false
+    VERBOSE=false
 
     # Parse out arguments
-    options=$(getopt -l "help,nodefile:,nodelist:,version:,config:,force,git" -o "hF:w:v:c:fg:" -a -- "$@")
+    options=$(getopt -l "help,nodefile:,nodelist:,version:,config:,force,git:,verbose" -o "hF:w:v:c:fg:V" -a -- "$@")
     if [ $? -ne 0 ]; then
         print_help
         exit 1
@@ -124,6 +127,9 @@ else
         ;;
     -f|--force)
         FORCE=true
+        ;;
+    -V|--verbose)
+        VERBOSE=true
         ;;
     --)
         shift
@@ -183,6 +189,10 @@ else
 
     if $FORCE ; then
         nhc_args+=("-f")
+    fi
+
+    if $VERBOSE ; then
+        nhc_args+=("-V")
     fi
 
     echo "Running Parallel SSH Distributed NHC on:" 
