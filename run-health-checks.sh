@@ -108,6 +108,7 @@ if [ -z "$CUSTOM_CONF" ]; then
     CUSTOM_CONF="$(dirname "${BASH_SOURCE[0]}")/conf/$conf_name.conf"
 fi
 
+CUSTOM_CONF=$(realpath -e "$CUSTOM_CONF")
 OUTPUT_PATH=$(realpath -m "$OUTPUT_PATH")
 
 nhc_args=()
