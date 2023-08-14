@@ -80,8 +80,8 @@ def parse_args():
     parser.add_argument("health_files", nargs="+", help="List of .health.log or .debug.log files to ingest")
     parser.add_argument("--ingest_url", help="Kusto ingest URL", required=True)
     parser.add_argument("--database", help="Kusto database", required=True)
-    parser.add_argument("--health_table_name", default="NodeHealthCheck" help="Kusto table name for health results")
-    parser.add_argument("--debug_table_name", default="NodeHealthCheck_Debug" help="Kusto table name for debug results")
+    parser.add_argument("--health_table_name", default="NodeHealthCheck", help="Kusto table name for health results")
+    parser.add_argument("--debug_table_name", default="NodeHealthCheck_Debug", help="Kusto table name for debug results")
     parser.add_argument("--identity", nargs="?", const=True, default=False, help="Managed Identity to use for authentication, if a client ID is provided it will be used, otherwise the system-assigned identity will be used. If --identity is not provided DefaultAzureCredentials will be used.")
     return parser.parse_args()
 
