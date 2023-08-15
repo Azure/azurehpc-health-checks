@@ -115,16 +115,6 @@ fi
 
 echo "Running in $EXECUTION_MODE mode"
 
-
-# Argument Variables
-# Kusto Export Arguments
-KUSTO_EXPORT_URL=""
-KUSTO_DATABASE=""
-KUSTO_IDENTITY="False"
-KUSTO_HEALTH_TABLE="NodeHealthCheck"
-KUSTO_DEBUG_TABLE="NodeHealthCheck_Debug"
-
-
 # These options are shared by both SLURM and PSSH
 SHARED_SHORT_OPTS="hv:c:fg:V"
 SHARED_LONG_OPTS="help,version:,git:,config:,force,verbose,kusto-export-url:,kusto-database:,kusto-identity::,kusto-health-table:,kusto-debug-table"
@@ -146,8 +136,6 @@ if [ $? -ne 0 ]; then
     print_help
     exit 1
 fi
-
-echo "Options: $options"
 
 eval set -- "$options"
 while true; do
@@ -290,7 +278,7 @@ else
     echo "${NODELIST_ARR[@]}" | tr ' ' '\n' 
     echo "======================"
     echo "The health check is running, it will take a few minutes to complete."
-    RAW_OUTPUT=$(parallel-ssh -P -t $timeout ${pssh_host_args[@]} $onetouch_nhc_path ${ONETOUCH_NHC_ARGS[@]} 3> $error_path | tee $output_path)
+    RAW_OUTPUT=$(parallel-ssh -P -t $timeout ${pssh_host_args[@]} $ONETOUCH_NHC_PATH ${ONETOUCH_NHC_ARGS[@]} 3> $error_path | tee $output_path)
 fi
 
 nhc_end_time=$(date +%s.%N)
