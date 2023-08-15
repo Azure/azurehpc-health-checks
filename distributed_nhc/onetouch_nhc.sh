@@ -32,7 +32,7 @@ EOF
 
 # Arguments
 VERSION="main"
-GIT_URL="https://github.com/mpwillia/azurehpc-health-checks"
+GIT_URL="https://github.com/Azure/azurehpc-health-checks"
 WORKING_DIR=$(realpath -m "$HOME/onetouch_nhc/working")
 OUTPUT_DIR=$WORKING_DIR
 JOB_NAME="$(hostname)-$(date --utc +"%Y-%m-%d_%H-%M-%S")"
@@ -175,7 +175,6 @@ setup_nhc() {
     install_nhc true
 }
 
-
 run_health_checks() {
     log_file_path="$1"
     custom_conf="$2"
@@ -207,7 +206,7 @@ run_health_checks() {
 
 # Download AZ NHC
 echo "Running OneTouch NHC with Job Name $JOB_NAME on host $(hostname)"
-setup_nhc $VERSION $AZ_NHC_DIR 1
+setup_nhc $VERSION $AZ_NHC_DIR
 echo "=== Finished Setting up AZ NHC ==="
 
 # Execute Health Checks

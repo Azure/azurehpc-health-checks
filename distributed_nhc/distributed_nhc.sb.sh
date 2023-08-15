@@ -17,6 +17,8 @@ Example Usage:
     ./distributed_nhc.sb.sh -F ./my_node_file
     ./distributed_nhc.sb.sh -w node1,node2,node3
     ./distributed_nhc.sb.sh -F ./my_node_file -w additonal_node1,additional_node2
+    ./distributed_nhc.sb.sh -F ./my_node_file --kusto-export-url https://ingest-mycluster.eastus.kusto.windows.net --kusto-database mydatabase --kusto-identity
+    ./distributed_nhc.sb.sh -F ./my_node_file --kusto-export-url https://ingest-mycluster.eastus.kusto.windows.net --kusto-database mydatabase --kusto-identity my_client_id
 
 -h      --help                  Display this help
 
@@ -59,13 +61,13 @@ EOF
 expand_nodelist() {
     nodelist="$1"
     # make nodelist bash "friendly" for expansion
-    # ie turn "aice-ndv5-iad21-[000170,000201-000203,000218-000220]"
-    # into "aice-ndv5-iad21-{000170,{000201..000203},{000218..000220}}"
+    # ie turn "mycluster-[000170,000201-000203,000218-000220]"
+    # into "mycluster-{000170,{000201..000203},{000218..000220}}"
     # which bash can easily expand into
-    # aice-ndv5-iad21-000170 aice-ndv5-iad21-000201 aice-ndv5-iad21-000202 aice-ndv5-iad21-000203 aice-ndv5-iad21-000218 aice-ndv5-iad21-000219 aice-ndv5-iad21-000220
+    # mycluster-000170 mycluster-000201 mycluster-000202 mycluster-000203 mycluster-000218 mycluster-000219 mycluster-000220
 
-    # converts "aice-ndv5-iad21-[000170,000201-000203,000218-000220]"
-    # into "aice-ndv5-iad21- [000170,000201-000203,000218-000220]" 
+    # converts "mycluster-[000170,000201-000203,000218-000220]"
+    # into "mycluster- [000170,000201-000203,000218-000220]" 
     # which we can then stick into an array. If we have 1 element, there were no ranges 
     # otherwise, expand the ranges and rebuild the node names 
     host_num_split=( $( echo $nodelist | sed -r "s/(.*)(\[.*\]).*/\1 \2/" ) )
@@ -297,7 +299,6 @@ echo "======================"
 echo "NHC took $nhc_duration minutes to finish"
 echo
 
-# Export to Kusto if enabled
 if [ "$KUSTO_EXPORT_ENABLED" == "True" ]; then
     # Place identity arg at the end (if specified)
     if [ "$KUSTO_IDENTITY" == "True" ]; then
