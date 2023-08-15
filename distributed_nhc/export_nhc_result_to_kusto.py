@@ -9,11 +9,6 @@ from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties
 import pandas as pd
 
-ingest_url = "https://ingest-aistresstests.centralus.kusto.windows.net"
-database = "sat13c04_stress_testdb"
-health_table_name = "NodeHealthCheck"
-debug_table_name = "NodeHealthCheck_Debug"
-
 def ingest_health_log(health_file, creds, ingest_url, database, health_table_name):
     filename_parts = os.path.basename(health_file).split("-", maxsplit=2)
     ts_str = filename_parts[2].split(".")[0]
@@ -35,10 +30,6 @@ def ingest_health_log(health_file, creds, ingest_url, database, health_table_nam
         df['RawResult'] = df.apply(lambda x: x['RawResult'].strip(), axis=1)
         df['Healthy'] = df.apply(lambda x: x['RawResult'] == "Healthy", axis=1)
         df = df[['Timestamp', 'JobName', 'Hostname', 'Healthy', 'RawResult']]
-
-        creds = ManagedIdentityCredential(
-            client_id = "16b52144-5ca5-4c25-aac5-0d3b7a4cb36d"
-        )
 
         ingest_client = QueuedIngestClient(KustoConnectionStringBuilder.with_azure_token_credential(ingest_url, creds))
         print(f"Ingesting health results from {os.path.basename(health_file)} into {ingest_url} at {database}/{health_table_name}")
@@ -65,15 +56,9 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
         df['DebugLog'] = df.apply(lambda x: x['DebugLog'].strip(), axis=1)
         df = df[['Timestamp', 'JobName', 'Hostname', 'DebugLog']]
 
-        creds = ManagedIdentityCredential(
-            client_id = "16b52144-5ca5-4c25-aac5-0d3b7a4cb36d"
-        )
-
         ingest_client = QueuedIngestClient(KustoConnectionStringBuilder.with_azure_token_credential(ingest_url, creds))
         print(f"Ingesting health results from {os.path.basename(debug_file)} into {ingest_url} at {database}/{debug_table_name}")
         ingest_client.ingest_from_dataframe(df, IngestionProperties(database, debug_table_name))
-
-health_files = sys.argv[1:]
 
 def parse_args():
     parser = ArgumentParser(description="Ingest NHC results into Kusto")
