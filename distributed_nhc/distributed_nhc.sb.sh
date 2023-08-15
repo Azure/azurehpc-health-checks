@@ -232,20 +232,6 @@ esac
 shift
 done
 
-echo "Running with the following arguments:"
-echo "OneTouch NHC Args: ${ONETOUCH_NHC_ARGS[@]}"
-echo 
-echo "Node list: ${NODELIST_ARR[@]}"
-echo 
-echo "Kusto export enabled: $KUSTO_EXPORT_ENABLED"
-echo "Kusto Args: ${KUSTO_EXPORT_ARGS[@]}"
-echo "Kusto identity: $KUSTO_IDENTITY"
-echo
-echo "The rest of the arguments are: $@"
-echo
-echo "Early exit for testing"
-echo
-
 if [ ${#NODELIST_ARR[@]} -eq 0 ]; then
     echo "No nodes provided, must provide at least one node either from a file with -F/--nodefile or as a slurm node list with -w/--nodelist"
     echo
@@ -255,9 +241,8 @@ fi
 
 NODELIST_ARR=( $(echo "${NODELIST_ARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )
 
-# Running with SLURM
 if [ $EXECUTION_MODE == "SLURM" ]; then
-    # verify file presence on all nodes
+    # Running with SLURM
     { RAW_OUTPUT=$(srun --gpus-per-node=8 $ONETOUCH_NHC_PATH -n $NHC_JOB_NAME $@ | tee /dev/fd/3 ); } 3>&1
 else
     # Running with Parallel SSH
@@ -303,7 +288,7 @@ for missing_node in "${nodes_missing_results[@]}"; do
     NHC_RESULTS+="$newline$missing_node | ERROR: No results reported"
 done
 
-echo "Health report can be found into $HEALTH_LOG_FILE_PATH"
+echo "Health report can be found in $HEALTH_LOG_FILE_PATH"
 echo "$NHC_RESULTS" | sort >> $HEALTH_LOG_FILE_PATH
 echo "======================"
 cat $HEALTH_LOG_FILE_PATH
