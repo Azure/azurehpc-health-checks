@@ -87,6 +87,7 @@ DEBUG_LOG_FILE_PATH=""
 NODELIST_ARR=()
 ONETOUCH_NHC_PATH=$(realpath -e "./onetouch_nhc.sh")
 ONETOUCH_NHC_ARGS=()
+VERBOSE="False"
 
 KUSTO_EXPORT_ENABLED="False"
 KUSTO_EXPORT_ARGS=()
@@ -190,6 +191,7 @@ case "$1" in
     ;;
 -V|--verbose)
     ONETOUCH_NHC_ARGS+=("-V")
+    VERBOSE="True"
     ;;
 # Shared Kusto Export Args
 --kusto-export-url) 
@@ -242,7 +244,7 @@ echo
 echo "The rest of the arguments are: $@"
 echo
 echo "Early exit for testing"
-exit
+echo
 
 if [ ${#NODELIST_ARR[@]} -eq 0 ]; then
     echo "No nodes provided, must provide at least one node either from a file with -F/--nodefile or as a slurm node list with -w/--nodelist"
@@ -253,10 +255,8 @@ fi
 
 NODELIST_ARR=( $(echo "${NODELIST_ARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )
 
-exit
-
 # Running with SLURM
-if [ $EXECUTION_MODE == "SLURM" ]
+if [ $EXECUTION_MODE == "SLURM" ]; then
     # verify file presence on all nodes
     { RAW_OUTPUT=$(srun --gpus-per-node=8 $ONETOUCH_NHC_PATH -n $NHC_JOB_NAME $@ | tee /dev/fd/3 ); } 3>&1
 else
@@ -286,9 +286,13 @@ nhc_duration=$(printf "%.2f" $(echo "($nhc_end_time - $nhc_start_time) / 60" | b
 
 # Filter down to NHC-RESULTS
 NHC_RESULTS=$(echo "$RAW_OUTPUT" | grep "NHC-RESULT" | sed 's/.*NHC-RESULT\s*//g')
-NHC_DEBUG=$(echo "$RAW_OUTPUT" | grep "NHC-DEBUG" | sed 's/.*NHC-DEBUG\s*//g')
-echo "Dumping NHC Debug into $DEBUG_LOG_FILE_PATH"
-echo "$NHC_DEBUG" | sort >> $DEBUG_LOG_FILE_PATH
+
+if [ "$VERBOSE" == "True" ]; then
+    # If Verbose was set, we expect NHC-DEBUG to be present 
+    NHC_DEBUG=$(echo "$RAW_OUTPUT" | grep "NHC-DEBUG" | sed 's/.*NHC-DEBUG\s*//g')
+    echo "Dumping NHC Debug into $DEBUG_LOG_FILE_PATH"
+    echo "$NHC_DEBUG" | sort >> $DEBUG_LOG_FILE_PATH
+fi
 
 # Identify nodes who should have reported results but didn't, these failed for some unknown reason
 nodes_with_results_arr=( $( echo "$NHC_RESULTS" | sed 's/\s*|.*//g' | tr '\n' ' ' ) )
@@ -309,12 +313,17 @@ echo "NHC took $nhc_duration minutes to finish"
 echo
 
 # Export to Kusto if enabled
-if [ "$KUSTO_ENABLED_ENABLED" == "True" ]; then
+if [ "$KUSTO_EXPORT_ENABLED" == "True" ]; then
     # Place identity arg at the end (if specified)
     if [ "$KUSTO_IDENTITY" == "True" ]; then
         KUSTO_EXPORT_ARGS+=("--identity")
     elif [ -n "$KUSTO_IDENTITY" ]; then
         KUSTO_EXPORT_ARGS+=("--identity" "$KUSTO_IDENTITY")
+    fi
+
+    export_files=( "$HEALTH_LOG_FILE_PATH")
+    if [ "$VERBOSE" == "True" ]; then
+        export_files+=( "$DEBUG_LOG_FILE_PATH" )
     fi
 
     echo "Exporting results to Kusto"
@@ -326,6 +335,6 @@ if [ "$KUSTO_ENABLED_ENABLED" == "True" ]; then
     # Run export script
     kusto_export_script=$(realpath -e "./export_nhc_result_to_kusto.py")
     echo "Using export script $kusto_export_script"
-    python3 $kusto_export_script ${KUSTO_EXPORT_ARGS[@]} $KUSTO_IDENTITY -- $HEALTH_LOG_FILE_PATH $DEBUG_LOG_FILE_PATH
+    python3 $kusto_export_script ${KUSTO_EXPORT_ARGS[@]} $KUSTO_IDENTITY -- ${export_files[@]}
     echo "Ingestion queued, results take ~5 minutes to appear in Kusto"
 fi

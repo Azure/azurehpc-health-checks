@@ -96,7 +96,7 @@ def get_creds(identity):
 args = parse_args()
 creds = get_creds(args.identity)
 
-print(f"Attempting to ingest: {','.join(args.health_files)}")
+print(f"Attempting to ingest: {', '.join(args.health_files)}")
 for health_file in args.health_files:
     try:
         if not os.path.exists(health_file):
