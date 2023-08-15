@@ -20,7 +20,7 @@ Run health checks on the current VM.
 EOF
 }
 
-CUSTOM_CONF=""
+CONF_FILE=""
 OUTPUT_PATH="./health.log"
 TIMEOUT=500
 VERBOSE=false
@@ -42,7 +42,7 @@ case "$1" in
     ;;
 -c|--config)
     shift
-    CUSTOM_CONF="$(realpath -e ${1//\~/$HOME})"
+    CONF_FILE="$(realpath -e ${1//\~/$HOME})"
     ;;
 -o|--output)
     shift
@@ -61,6 +61,8 @@ case "$1" in
 esac
 shift
 done
+
+OUTPUT_PATH=$(realpath -m "$OUTPUT_PATH")
 
 # If a custom configuration isn't specified, detect the VM SKU and use the appropriate conf file
 if [ -z "$CUSTOM_CONF" ]; then
@@ -101,15 +103,14 @@ if [ -z "$CUSTOM_CONF" ]; then
     elif  echo "$SKU" | grep -q "hx176-24rs"; then
         conf_name="hx176-24rs"
     else
-        echo "Health checks not supported for SKU $SKU"
-        exit 1
+        echo "The vm SKU '$SKU' is currently not supported by Azure health checks." | tee -a $OUTPUT_PATH
+        exit 0
     fi
 
-    CUSTOM_CONF="$(dirname "${BASH_SOURCE[0]}")/conf/$conf_name.conf"
+    CONF_FILE="$(dirname "${BASH_SOURCE[0]}")/conf/$conf_name.conf"
 fi
 
-CUSTOM_CONF=$(realpath -e "$CUSTOM_CONF")
-OUTPUT_PATH=$(realpath -m "$OUTPUT_PATH")
+CONF_FILE=$(realpath -e "$CONF_FILE")
 
 nhc_args=()
 if [ "$VERBOSE" = true ]; then
@@ -117,5 +118,5 @@ if [ "$VERBOSE" = true ]; then
     nhc_args+=("-d")
 fi
 
-echo "Running health checks using $CUSTOM_CONF and outputting to $OUTPUT_PATH"
-nhc ${nhc_args[@]} CONFFILE=$CUSTOM_CONF LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT
+echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
+nhc ${nhc_args[@]} CONFFILE=$CONF_FILE LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT
