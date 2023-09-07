@@ -43,4 +43,12 @@ else
     exit 0
 fi
 
-nhc CONFFILE=$(dirname "${BASH_SOURCE[0]}")/conf/$conf_name.conf LOGFILE=$log_path TIMEOUT=500
+#add accelerated network if applicable
+NHC_DIR=$(dirname "${BASH_SOURCE[0]}")
+acc_net=$(ibstatus mlx5_an0)
+acc_file="$NHC_DIR/conf/$conf_name.conf"
+if [ $? -eq 0 ] && ! grep -q 'check_hw_ib 40 mlx5_an0:1' "$acc_file"; then
+    echo -e "\n\n### Accelerate network check\n * || check_hw_ib 40 mlx5_an0:1\n * || check_hw_eth eth1">> $acc_file
+fi
+
+nhc CONFFILE=$NHC_DIR/conf/$conf_name.conf LOGFILE=$log_path TIMEOUT=500
