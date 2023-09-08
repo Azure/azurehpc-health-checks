@@ -26,7 +26,7 @@ function load_expected_topology() {
 }
 
 function get_actual_topology() {
-    raw_topo=$(lstopo)
+    raw_topo=$(lstopo-no-graphics)
 
     numaid="0"
     echo "$raw_topo" | while read line; do

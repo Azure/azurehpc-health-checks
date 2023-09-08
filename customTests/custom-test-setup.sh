@@ -124,8 +124,18 @@ else
 	
 fi
 
+# Ensure lstopo-no-graphics is installed for the azure_hw_topology_check.nhc
+distro=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+if [[ $distro =~ "Ubuntu" ]]; then
+	apt-get install -y hwloc
+elif [[ $distro =~ "AlmaLinux" ]]; then
+	dnf install -y hwloc
+else
+	echo "OS version is not supported, azure_hw_topology_check will not work."
+	return 1
+fi
+
 # copy all custom test to the nhc scripts dir
-echo "Copying *.nhc from $SRC_DIR to /etc/nhc/scripts"
 cp $SRC_DIR/*.nhc /etc/nhc/scripts
 
 exit 0
