@@ -108,6 +108,14 @@ if [ -z "$CUSTOM_CONF" ]; then
     fi
 
     CONF_FILE="$(dirname "${BASH_SOURCE[0]}")/conf/$conf_name.conf"
+
+    #add accelerated network if applicable, when using the default conf files, skip if an explicit conf file is specified
+    acc_file=$CONF_FILE
+    acc_net=$(ibstatus mlx5_an0)
+    if [ $? -eq 0 ] && ! grep -q 'check_hw_ib 40 mlx5_an0:1' "$acc_file"; then
+        echo -e "\n\n### Accelerate network check\n * || check_hw_ib 40 mlx5_an0:1\n * || check_hw_eth eth1" >> $acc_file
+    fi
+
 fi
 
 CONF_FILE=$(realpath -e "$CONF_FILE")
