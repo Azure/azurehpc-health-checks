@@ -1,0 +1,4 @@
+azure-identity
+azure-kusto-data
+azure-kusto-ingest
+pandas

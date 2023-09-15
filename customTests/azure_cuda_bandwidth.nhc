@@ -10,21 +10,21 @@
 #Catch error codes that may be thrown by the executable passed as the first
 #input, and if an error code is tripped throw the second input as a message
 catch_error() {
-	declare -g output
-	output=$($1)
-	err_code=$?
-	if [ $err_code -ne 0 ]; then
-		die 1 "\t $2 $err_code" >&2
-		return 1
-	fi
-	return 0
+    declare -g output
+    output=$($1)
+    err_code=$?
+    if [ $err_code -ne 0 ]; then
+        die 1 "\t $2 $err_code" >&2
+        return 1
+    fi
+    return 0
 
 }
 
 
 function cleanup {
-	dbg "Unlocking graphics clock  before exit..."
-	sudo timeout 3m nvidia-smi -rgc  > /dev/null 2>&1
+    dbg "Unlocking graphics clock  before exit..."
+    sudo timeout 3m nvidia-smi -rgc  > /dev/null 2>&1
 }
 
 
@@ -32,117 +32,131 @@ function cleanup {
 function check_cuda_bw()
 {
 
-	#set expected BW set to default value if argument empty
-	EXP_CUDA_BW=$1
-	if [[ -z "$EXP_CUDA_BW" ]]; then
-		EXP_CUDA_BW=24
-	fi
+    #set expected BW set to default value if argument empty
+    EXP_CUDA_BW=$1
+    if [[ -z "$EXP_CUDA_BW" ]]; then
+        EXP_CUDA_BW=24
+    fi
 
-	# location of executables, must match setup location
-	EXE_DIR=$2
-	if [[ -z "$EXE_DIR" ]]; then
-		EXE_DIR=/opt/azurehpc/test/nhc
-	fi
-	#Count the number of gpu-name nvidia-smi outputs.
-	error_smi="**Fail** nvidia-smi failed with error code"
-	#Lock graphics clocks to max freq to eliminate any time for the GPUs to boost.
-	#This likely isn't important for performance here, but we will do it anyway
-	#to be safe.
-	SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
-	SKU="${SKU,,}"
-	lock_clocks=
-	if echo "$SKU" | grep -q "nd96asr_v4"; then
-		lock_clocks="sudo nvidia-smi -lgc 1400"
-	elif echo "$SKU" | grep -q "nd96amsr_a100_v4"; then
-		lock_clocks="sudo nvidia-smi -lgc 1400"
-	elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
-		lock_clocks="sudo nvidia-smi -lgc 2619"
-	fi
+    # location of executables, must match setup location
+    EXE_DIR=$2
+    if [[ -z "$EXE_DIR" ]]; then
+        EXE_DIR=/opt/azurehpc/test/nhc
+    fi
+    #Count the number of gpu-name nvidia-smi outputs.
+    error_smi="**Fail** nvidia-smi failed with error code"
+    #Lock graphics clocks to max freq to eliminate any time for the GPUs to boost.
+    #This likely isn't important for performance here, but we will do it anyway
+    #to be safe.
+    SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
+    SKU="${SKU,,}"
+    lock_clocks=
+    if echo "$SKU" | grep -q "nd96asr_v4"; then
+        lock_clocks="sudo nvidia-smi -lgc 1400"
+    elif echo "$SKU" | grep -q "nd96amsr_a100_v4"; then
+        lock_clocks="sudo nvidia-smi -lgc 1400"
+    elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
+        lock_clocks="sudo nvidia-smi -lgc 2619"
+    fi
 
-	if [[ -n "$lock_clocks" ]]; then
-		if ! catch_error "$lock_clocks" "$error_smi"; then
-			return 0
-		fi
-	fi
+    if [[ -n "$lock_clocks" ]]; then
+        if ! catch_error "$lock_clocks" "$error_smi"; then
+            return 0
+        fi
+    fi
 
-	#exit function to unlock clocks on exit 
-	trap cleanup EXIT
+    #exit function to unlock clocks on exit 
+    trap cleanup EXIT
 
-	#Count the GPUs.
-	gpu_list="timeout 3m nvidia-smi --query-gpu=name --format=csv,noheader"
-	if ! catch_error "$gpu_list" "$error_smi"; then
-		return 0
-	fi
-	ngpus=$(echo "$output" | wc -l)
+    #Count the GPUs.
+    gpu_list="timeout 3m nvidia-smi --query-gpu=name --format=csv,noheader"
+    if ! catch_error "$gpu_list" "$error_smi"; then
+        return 0
+    fi
+    ngpus=$(echo "$output" | wc -l)
 
-	#Run device to host bandwidth test.
-	exec_htod="timeout 3m $EXE_DIR/gpu-copy --size 134217728 --htod"
-	error_htod="**Fail** The htod gpu_copy test failed to execute."
-	error_htod+="It exited with error code"
-	if ! catch_error "$exec_htod" "$error_htod"; then
-		return 0
-	fi
-	x_htod=$(echo "$output")
-	
-	#Run host to device bandwidth test.
-	exec_dtoh="timeout 3m $EXE_DIR/gpu-copy --size 134217728 --dtoh"
-	error_dtoh="**Fail** The dtoh gpu_copy test failed to execute."
-	error_dtoh+="It exited with error code"
-	if ! catch_error "$exec_dtoh" "$error_dtoh"; then
-		return 0
-	fi
-	x_dtoh=$(echo "$output")
-	pass=1
+    #Run device to host bandwidth test.
+    exec_htod="timeout 3m $EXE_DIR/gpu-copy --size 134217728 --htod"
+    error_htod="**Fail** The htod gpu_copy test failed to execute."
+    error_htod+="It exited with error code"
+    if ! catch_error "$exec_htod" "$error_htod"; then
+        return 0
+    fi
+    x_htod=$(echo "$output")
+    
+    #Run host to device bandwidth test.
+    exec_dtoh="timeout 3m $EXE_DIR/gpu-copy --size 134217728 --dtoh"
+    error_dtoh="**Fail** The dtoh gpu_copy test failed to execute."
+    error_dtoh+="It exited with error code"
+    if ! catch_error "$exec_dtoh" "$error_dtoh"; then
+        return 0
+    fi
+    x_dtoh=$(echo "$output")
+    pass=1
 
-	#Loop over all of the detected GPUs.
-	for i in $(seq 0 $((ngpus-1))); do
-		#Collect host to device bandwidths computed in each numa zone.
-		bw_htod=$(echo "$x_htod" | grep "gpu$i" | cut -d' ' -f2 | cut -d. -f1)
-		max_htodbw=0
-		min_bw=100
-		#Loop over the bandwidths observed in each numa zone and find max.
-		for bw in $bw_htod; do
-			if [ $max_htodbw -lt $bw ]; then
-				max_htodbw=$bw
-			fi
-		done
+    #Loop over all of the detected GPUs.
 
-		#Collect device to host bandwidths computed in each numa zone.
-		bw_dtoh=$(echo "$x_dtoh" | grep "gpu$i" | cut -d' ' -f2 | cut -d. -f1)
-		max_dtohbw=0
-		#Loop over bandwidths observed in each numa zone and find max.
-		for bw in $bw_dtoh; do
-			if [ $max_dtohbw -lt $bw ]; then
-				max_dtohbw=$bw
-			fi
-		done
-		#Find minimum of the htod and dtoh bandwidths.
-		if [ $max_htodbw -lt $max_dtohbw ]; then
-			min_bw=$max_htodbw
-		else
-			min_bw=$max_dtohbw
-		fi
+    low_bw_devices=()
+    for i in $(seq 0 $((ngpus-1))); do
+        #Collect host to device bandwidths computed in each numa zone.
+        bw_htod=$(echo "$x_htod" | grep "gpu$i" | cut -d' ' -f2 | cut -d. -f1)
+        max_htodbw=0
+        min_bw=100
+        #Loop over the bandwidths observed in each numa zone and find max.
+        for bw in $bw_htod; do
+            if [ $max_htodbw -lt $bw ]; then
+                max_htodbw=$bw
+            fi
+        done
+        
+        dbg "Device $i Host to Device reported bandwidth is $max_htodbw GB/s"
 
-		#If the min bandwidth is too low the test has failed.
-		if [ $min_bw -lt $EXP_CUDA_BW ]; then
-			die 1 "Bandwidth is low on device $i. Reported bandwidth is"\
-				"$min_bw GB/s."
-			pass=0
-			return 0
-		fi
-	done
-	#Unlock the graphics clock.
-	unlock_clocks="sudo timeout 3m nvidia-smi -rgc"
-	
-	if ! catch_error "$unlock_clocks" "$error_smi"; then
-		return 0
-	fi
+        #Collect device to host bandwidths computed in each numa zone.
+        bw_dtoh=$(echo "$x_dtoh" | grep "gpu$i" | cut -d' ' -f2 | cut -d. -f1)
+        max_dtohbw=0
+        #Loop over bandwidths observed in each numa zone and find max.
+        for bw in $bw_dtoh; do
+            if [ $max_dtohbw -lt $bw ]; then
+                max_dtohbw=$bw
+            fi
+        done
 
-	if [ $pass -ne 1 ]; then
-		die 1 -e "\t **Fail** At least one device reported low htod or dtoh"\
-			"bandwidth."
-		return 0
-	else
-		return 0
-	fi
+        dbg "Device $i Device to Host reported bandwidth is $max_dtohbw GB/s"
+
+        #Find minimum of the htod and dtoh bandwidths.
+        if [ $max_htodbw -lt $max_dtohbw ]; then
+            min_bw=$max_htodbw
+        else
+            min_bw=$max_dtohbw
+        fi
+
+        #If the min bandwidth is too low the test has failed.
+        if [ $min_bw -lt $EXP_CUDA_BW ]; then
+            low_bw_devices+=("$i-$min_bw")
+            pass=0
+        fi
+    done
+    #Unlock the graphics clock.
+    unlock_clocks="sudo timeout 3m nvidia-smi -rgc"
+    
+    if ! catch_error "$unlock_clocks" "$error_smi"; then
+        return 0
+    fi
+
+    if [ $pass -ne 1 ]; then
+
+        formatted_low_bw=()
+        for item in "${low_bw_devices[@]}"
+        do
+            deviceid=$(echo $item | awk -F'-' '{print $1}')
+            bw=$(echo $item | awk -F'-' '{print $2}')
+            formatted_low_bw+=(" Device $deviceid reports low bandwidth of $bw GB/s")
+        done
+
+        low_bw_str=$(IFS=',' ; echo "${formatted_low_bw[*]}")
+        die 1 "$FUNCNAME: Low bandwidth reported on one or more devices!$low_bw_str"
+        return 0
+    else
+        return 0
+    fi
 }

@@ -37,6 +37,12 @@ Usage
 ### _References_ ###
 - [LBNL Node Health Checks](https://github.com/mej/nhc)
 - [Azure HPC Images](https://github.com/Azure/azhpc-images)
+
+## Distributed NHC
+AzureHPC Node Health Checks also comes bundled with a distributed version of NHC, which is designed to run on a cluster of machines and report back to a central location. This is useful for running health checks on a large cluster with dozens or hundreds of nodes.
+
+See [Distributed NHC](./distributed-nhc/README.md) for more information.
+
 ## Contributing
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a

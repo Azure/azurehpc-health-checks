@@ -40,9 +40,12 @@ function install_perf_test(){
 	fi
 
 	pushd ${EXE_DIR}
-	wget https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
-	tar xvf perftest-${VERSION}.${VERSION_HASH}.tar.gz
-	pushd perftest-4.5
+	perftest_dir="perftest-${VERSION}"
+	mkdir -p ${EXE_DIR}/${perftest_dir}
+	archive_url="https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz"
+	wget -q -O - $archive_url | tar -xz --strip=1 -C ${EXE_DIR}/${perftest_dir} 
+
+	pushd ${perftest_dir} 
 	if [[ "$type" == "cuda" ]]; then
 		./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h
 	else
@@ -51,10 +54,8 @@ function install_perf_test(){
 	fi
 
 	make
-	rm ${EXE_DIR}/perftest-${VERSION}.${VERSION_HASH}.tar.gz
 	popd
 	popd
-
 }
 
 
@@ -121,6 +122,17 @@ else
 		echo "clang command not found. Skipping Stream build. Add clang to PATH ENV variable and rerun script to build Stream"
 	fi
 	
+fi
+
+# Ensure lstopo-no-graphics is installed for the azure_hw_topology_check.nhc
+distro=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+if [[ $distro =~ "Ubuntu" ]]; then
+	apt-get install -y hwloc
+elif [[ $distro =~ "AlmaLinux" ]]; then
+	dnf install -y hwloc
+else
+	echo "OS version is not supported, azure_hw_topology_check will not work."
+	return 1
 fi
 
 # copy all custom test to the nhc scripts dir
