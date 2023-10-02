@@ -1,5 +1,14 @@
 AzureHPC Node Health Check
 =====
+
+[![Build Status](https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework/_apis/build/status%2Fhpc-vm-health-check-framework?branchName=master)](https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework/_build/latest?definitionId=29&branchName=master)
+
+|OS Version|Status Badge|
+|----------|------------|
+|ND96asr v4|[![Build Status](https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework/_apis/build/status%2Fhpc-vm-health-check-framework?branchName=master&jobName=Run_Health_Checks)](https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework/_build/latest?definitionId=29&branchName=master)
+
+
+-----
 Description
 -----
 AzureHPC Node Health Checks provides an automated suite of test that targets specific Azure HPC offerings. This is an extension of [LBNL Node Health Checks](https://github.com/mej/nhc). 
