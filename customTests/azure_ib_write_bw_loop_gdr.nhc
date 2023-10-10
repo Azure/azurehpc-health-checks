@@ -11,8 +11,8 @@ function run_ib_bw_gdr(){
    SKU=$2
    PORTARG=$3
    device=$4
+ 
    #NUMA mapping
-
    GPU_NUMA=( 0 0 0 0 0 0 0 0 )
    if [[ "$SKU" == "nd96asr_v4" || "$SKU" == "nd96amsr_v4" ]]; then
       GPU_NUMA=( 1 1 0 0 3 3 2 2 )
@@ -36,7 +36,6 @@ function run_ib_bw_gdr(){
   sleep $SLEEP_TIME
   device_peer=$(( device ))
   IB_WRITE_BW_OUT2=$(numactl -N ${GPU_NUMA[$device_peer]} -m ${GPU_NUMA[$device_peer]} $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=${device_peer} -d mlx5_ib${device_peer} $HOSTNAME)
-  #numactl -N ${GPU_NUMA[$device_peer]} -m ${GPU_NUMA[$device_peer]} $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=${device_peer} -d mlx5_ib${device_peer} $HOSTNAME
   IB_WRITE_BW_OUT2_RC=$?
   if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
 	 NETSTAT_OUT=$(netstat -lnp | grep $PORTARG)
@@ -54,15 +53,12 @@ function run_ib_bw_gdr(){
 		LINE=( ${IB_WRITE_BW_OUT2_LINES[$i]} )
 		ib_bandwidth=${LINE[3]}
       dbg "IB devices=mlx5_ib${device}, mlx5_ib${device_peer}: numa domains=${GPU_NUMA[$device]},${GPU_NUMA[$device_peer]}, Measured IB BW $ib_bandwidth Gbps"
-      #echo  "IB devices=mlx5_ib${device}, mlx5_ib${device_peer}: numa domains=${GPU_NUMA[$device]},${GPU_NUMA[$device_peer]}, Measured IB BW $ib_bandwidth Gbps"
 		break
 	 fi
   done
   if [[ $ib_bandwidth < $EXP_IB_BW ]]; then
-	log "$IB_WRITE_BW_OUT2"
-   die 1 "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib${device}, mlx5_ib${device_peer}, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
-    #echo "$IB_WRITE_BW_OUT2"
-	 #echo "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib${device}, mlx5_ib${device_peer}, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
+	 log "$IB_WRITE_BW_OUT2"
+    die 1 "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib${device}, mlx5_ib${device_peer}, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
 	 return 1
   fi
  
@@ -82,5 +78,3 @@ function check_ib_bw_loop_gdr(){
    wait  ${pid_array[@]}
    return 0
 }
-
-#check_ib_bw_gdr 10 nd96asr_v4
