@@ -90,21 +90,30 @@ if [ -z "$CUSTOM_CONF" ]; then
 	an_rate=100
     elif  echo "$SKU" | grep -q "hb176-144rs_v4"; then
         conf_name="hb176-144rs_v4"
+	an_rate=100
     elif  echo "$SKU" | grep -q "hb176-96rs_v4"; then
         conf_name="hb176-96rs_v4"
+	an_rate=100
     elif  echo "$SKU" | grep -q "hb176-48rs_v4"; then
         conf_name="hb176-48rs_v4"
+	an_rate=100
     elif  echo "$SKU" | grep -q "hb176-24rs_v4"; then
         conf_name="hb176-24rs_v4"
+	an_rate=100
     elif echo "$SKU" | grep -q "hx176rs"; then
         conf_name="hx176rs"
+	an_rate=100
     elif  echo "$SKU" | grep -q "hx176-144rs"; then
         conf_name="hx176-144rs"
+	an_rate=100
     elif  echo "$SKU" | grep -q "hx176-96rs"; then
         conf_name="hx176-96rs"
+	an_rate=100
     elif  echo "$SKU" | grep -q "hx176-48rs"; then
+	an_rate=100
         conf_name="hx176-48rs"
     elif  echo "$SKU" | grep -q "hx176-24rs"; then
+	an_rate=100
         conf_name="hx176-24rs"
     else
         echo "The vm SKU '$SKU' is currently not supported by Azure health checks." | tee -a $OUTPUT_PATH
