@@ -80,7 +80,7 @@ if [ -z "$CUSTOM_CONF" ]; then
 	an_rate=40
     elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
         conf_name="nd96isr_h100_v5"
-	an_rate=40
+	an_rate=100
     elif echo "$SKU" | grep -q "hb120rs_v2"; then
         conf_name="hb120rs_v2"
     elif echo "$SKU" | grep -q "hb120rs_v3"; then
