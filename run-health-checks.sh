@@ -65,7 +65,7 @@ done
 OUTPUT_PATH=$(realpath -m "$OUTPUT_PATH")
 
 # If a custom configuration isn't specified, detect the VM SKU and use the appropriate conf file
-if [ -z "$CUSTOM_CONF" ]; then
+if [ -z "$CONF_FILE" ]; then
     echo "No custom conf file specified, detecting VM SKU..."
 
     SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
