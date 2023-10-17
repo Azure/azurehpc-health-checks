@@ -30,7 +30,7 @@ get_sad_path_conf(){
 happy_path(){
     echo "Running  ${FUNCNAME[0]} test"
     EXPECTED_CODE=0
-    runtest $EXPECTED_CODE
+    test=$(runtest $EXPECTED_CODE)
     result=$?
 
     if [ "$result" -eq $EXPECTED_CODE ]; then
@@ -51,10 +51,10 @@ sad_path(){
         return 1
     fi
     EXPECTED_CODE=1
-    runtest $EXPECTED_CODE "$bad_conf_file"
+    test=$(runtest $EXPECTED_CODE "$bad_conf_file")
     result=$?
-    echo $result
-    if [ "$result" -eq $EXPECTED_CODE ]; then
+  
+    if [ "$result" -eq 0 ]; then
         echo "${FUNCNAME[0]} test: Passed"
         return 0
     else
@@ -63,5 +63,18 @@ sad_path(){
     fi
 }
 
-happy_path
-sad_path
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <function_name>"
+    echo "choices: happy_path, sad_path"
+    exit 1
+fi
+
+# Determine which function to run based on the argument
+if [ "$1" == "happy_path" ]; then
+    happy_path
+elif [ "$1" == "sad_path" ]; then
+    sad_path
+else
+    echo "Invalid function name: $1"
+    exit 1
+fi
