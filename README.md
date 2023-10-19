@@ -75,7 +75,7 @@ note: The scripts for all tests can be found in the [custom test directory](./cu
 - [LBNL Node Health Checks](https://github.com/mej/nhc)
 - [Azure HPC Images](https://github.com/Azure/azhpc-images)
 
-## Contributing
+## Contributing ##
 
 This project welcomes contributions and suggestions.  Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
