@@ -245,7 +245,7 @@ NODELIST_ARR=( $(echo "${NODELIST_ARR[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' '
 
 if [ $EXECUTION_MODE == "SLURM" ]; then
     # Running with SLURM
-    { RAW_OUTPUT=$(srun --gpus-per-node=8 $ONETOUCH_NHC_PATH -n $NHC_JOB_NAME $@ | tee /dev/fd/3 ); } 3>&1
+    { RAW_OUTPUT=$(srun --gpus-per-node=8 $ONETOUCH_NHC_PATH -n $NHC_JOB_NAME ${ONETOUCH_NHC_ARGS[@]} | tee /dev/fd/3 ); } 3>&1
 else
     # Running with Parallel SSH
 
