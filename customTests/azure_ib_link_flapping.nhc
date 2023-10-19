@@ -41,7 +41,7 @@ if [ "$lost_carrier_line" != "" ]; then
          dbg "previous_stored_date_sec=$previous_stored_date_sec"
          ((diff_secs=$last_date_sec-$previous_stored_date_sec))
          dbg "IB link flap time interval= $diff_sec sec"
-         ((diff_hours=$diff/(60*60)))
+         ((diff_hours=diff/(60*60)))
          dbg "IB link flap time interval= $diff_hours hours"
 
          if [ $diff_hours -lt $TIME_INTERVAL_HOURS ]; then

@@ -8,7 +8,7 @@ SLEEP_TIME=5
 
 HOSTNAME=`hostname`
 
-function check_ib_bw(){
+function check_ib_bw_non_gdr(){
 
 EXP_IB_BW=$1
 
