@@ -101,6 +101,7 @@ user_repo=$(echo "${git_url_parts[@]: -2:2}" | tr ' ' '_')
 AZ_NHC_DIR=$(realpath -m "$WORKING_DIR/$user_repo-$VERSION")
 INSTALL_SCRIPT_PATH="$AZ_NHC_DIR/install-nhc.sh"
 RUN_HEALTH_CHECKS_SCRIPT_PATH="$AZ_NHC_DIR/run-health-checks.sh"
+CUSTOM_TESTS_PATH="$AZ_NHC_DIR/customTests"
 
 OUT_LOG_FILE_PATH="$OUTPUT_DIR/$JOB_NAME.out"
 ERR_LOG_FILE_PATH="$OUTPUT_DIR/$JOB_NAME.err"
@@ -123,10 +124,13 @@ install_nhc() {
         echo "nhc is missing, reinstalling"
         NHC_INSTALLED=false
     fi
-    
-    if $NHC_INSTALLED && [[ $( diff --brief ./customTests /etc/nhc/scripts --exclude=lbnl_*.nhc --exclude=common.nhc | grep ".nhc" ) ]]; then
-        echo "Custom tests differ, reinstalling"
-        NHC_INSTALLED=false
+
+    if $NHC_INSTALLED; then
+        DIFF_OUTPUT=$( diff -q $CUSTOM_TESTS_PATH /etc/nhc/scripts --exclude=lbnl_*.nhc --exclude=common.nhc | grep -E "^Only in $CUSTOM_TESTS_PATH:.*\.nhc" )
+        if [ -n "$DIFF_OUTPUT" ]; then
+            echo "Custom tests differ, reinstalling"
+            NHC_INSTALLED=false
+        fi
     fi
 
     if $NHC_INSTALLED; then
