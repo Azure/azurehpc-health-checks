@@ -82,6 +82,10 @@ if lspci | grep -iq NVIDIA ; then
   		echo "$NVCC not found. Exiting setup"
 	fi
 
+	#copy necessary files
+	mkdir -p /opt/azurehpc/test/azurehpc-health-checks/customTests/topofiles/
+	cp $SRC_DIR/topofiles/* /opt/azurehpc/test/azurehpc-health-checks/customTests/topofiles/
+
 	install_perf_test "cuda"
 
 else
