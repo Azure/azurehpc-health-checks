@@ -4,7 +4,7 @@ The [run_tests script](./unit-tests/run_tests.sh) can be used to run unit tests.
 
 ## Usage ##
 
-- ``` run_tests.sh < test > ```
+- ```./unit-tests/run_tests.sh < test > ```
 - test choices: happy_path, sad_path
 
 ## Expected output ##
