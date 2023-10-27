@@ -61,7 +61,7 @@ The following are Azure custom checks added to the existing NHC suite of tests:
 | check_gpu_ecc | GPU Mem Errors (ECC) |  20000000 | 20000000 | 20000000 | NA | NA |
 | check_gpu_clock_throttling | GPU Throttle codes assertion | not present | not present | not present | NA | NA |
 | check_nccl_allreduce | GPU NVLink bandwidth | 228 GB/s | 228 GB/s | 460 GB/s | NA | NA |
-| check_ib_bw_gdr | IB device (GDR) bandwidth | 180 GB/s | 180 GB/s | 380 GB/s | NA | NA |
+| check_ib_bw_gdr | IB device (GDR) bandwidth | 170 GB/s | 170 GB/s | 380 GB/s | NA | NA |
 | check_ib_bw_non_gdr | IB device (non GDR) bandwidth | NA | NA | NA | 390 GB/s | 390 GB/s |
 | check_nccl_allreduce_ib_loopback | GPU/GPU Direct RDMA(GDR) + IB device bandwidth | 18 GB/s | 18 GB/s | NA | NA | NA |
 | check_hw_topology | IB/GPU device topology/PCIE mapping | pass | pass | pass | NA | NA |
