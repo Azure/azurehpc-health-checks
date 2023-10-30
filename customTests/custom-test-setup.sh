@@ -40,7 +40,8 @@ function install_perf_test(){
 	fi
 
 	pushd ${EXE_DIR}
-	perftest_dir="perftest-4.5"
+
+	perftest_dir="perftest-"${VERSION%%-*}""
 	mkdir -p ${EXE_DIR}/${perftest_dir}
 	archive_url="https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz"
 	wget -q -O - $archive_url | tar -xz --strip=1 -C ${EXE_DIR}/${perftest_dir} 
@@ -88,11 +89,11 @@ if lspci | grep -iq NVIDIA ; then
 	mkdir -p $TOPO_PATH
 
 	if [ ! -e "$TOPO_PATH/ndv4-topo.xml" ]; then
-		cp $SRC_DIR/topofiles/ndv4-topo.xml /opt/azurehpc/test/azurehpc-health-checks/customTests/topofiles/
+		cp $SRC_DIR/topofiles/ndv4-topo.xml $TOPO_PATH
 	fi
 
 	if [ ! -e "$TOPO_PATH/ndv5-topo.xml" ]; then
-		cp $SRC_DIR/topofiles/ndv5-topo.xml /opt/azurehpc/test/azurehpc-health-checks/customTests/topofiles/
+		cp $SRC_DIR/topofiles/ndv5-topo.xml $TOPO_PATH
 	fi
 
 	install_perf_test "cuda"
