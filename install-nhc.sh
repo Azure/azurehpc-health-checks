@@ -7,7 +7,15 @@ wget -O nhc-$NHC_VERSION.tar.xz https://github.com/mej/nhc/releases/download/1.4
 tar -xf nhc-$NHC_VERSION.tar.xz
 
 pushd lbnl-nhc-$NHC_VERSION
-./configure --prefix=/usr --sysconfdir=/etc --libexecdir=/usr/libexec
+
+. /etc/os-release
+case $ID in
+  ubuntu)  
+    LIBEXEDIR=/usr/lib;;
+  *) 
+    LIBEXEDIR=/usr/libexec;;
+esac
+./configure --prefix=/usr --sysconfdir=/etc --libexecdir=$LIBEXEDIR
 
 sudo make test
 echo -e "\n"
