@@ -68,4 +68,3 @@ check_installed(){
     set -e
     [ "$result" -ne 0 ]
 }
-
