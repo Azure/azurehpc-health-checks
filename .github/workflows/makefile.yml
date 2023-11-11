@@ -1,0 +1,21 @@
+name: Health Checks CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: unit tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Test Script
+        bash: |
+          echo "hello world"
+        
