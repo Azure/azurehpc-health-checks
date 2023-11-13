@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: print contents in parent directory
-        run: ls -la ../
+      - name: print contents in directory
+        run: ls -la
 
       - name: give permissions and run testscript.sh
-        run: chmod +x ../testscript.sh && ../testscript.sh
+        run: sudo ../testscript.sh
