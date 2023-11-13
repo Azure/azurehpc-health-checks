@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: echo curr dir
-        run: pwd
+      - name: print contents in home directory
+        run: ls -a ~
 
       - name: run testscript
         run: ~/.testscript.sh
