@@ -15,6 +15,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: checkout
+        uses: actions/checkout@rajvi/healthchecks-ci
+        
       - name: print contents in parent directory
         run: ls -la ../
 
