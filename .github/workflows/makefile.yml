@@ -15,7 +15,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Test Script
-        run: |
-          echo "Running tests"
-          echo "Tests passed"
+      - name: run testscript.sh
+        run: bash testscript.sh
