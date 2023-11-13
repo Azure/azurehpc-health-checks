@@ -15,8 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: print contents in directory
-        run: ls ../..
+      - name: print contents in parent directory
+        run: ls -la ../..
 
-      - name: run testscript
-        run: ../../.testscript.sh
+      - name: run testscript in parent directory
+        run: bash ../testscript.sh
