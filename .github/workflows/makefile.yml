@@ -15,5 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: run test script in parent dir
-        run: ../testscript.sh
+      - name: echo curr dir
+        run: pwd
+
+      - name: run testscript
+        run: ~/.testscript.sh
