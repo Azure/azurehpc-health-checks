@@ -15,5 +15,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: run testscript.sh
-        run: bash testscript.sh
+      - name: run test script
+        run: ./testscript.sh
