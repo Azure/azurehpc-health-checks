@@ -15,5 +15,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: run test script
-        run: ./testscript.sh
+      - name: run test script in parent dir
+        run: ../testscript.sh
