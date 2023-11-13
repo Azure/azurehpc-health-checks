@@ -16,10 +16,8 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@rajvi/healthchecks-ci
-        
+        uses: actions/checkout@main
+
       - name: print contents in parent directory
         run: ls -la ../
-
-      - name: run script
-        run: azurehpc-health-checks/testscript.sh
+        
