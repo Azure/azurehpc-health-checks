@@ -20,4 +20,12 @@ jobs:
 
       - name: print contents in parent directory
         run: ls -la ../
-        
+      
+      - name: Trigger ADO pipeline
+        uses: Azure/pipelines@v1
+        with:
+          azure-devops-project-url: https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework/_build?definitionId=29
+          azure-devops-pipeline-id: 29
+          azure-devops-pipeline-parameters: '{"BuildNumber": "${{ github.sha }}"}'
+          azure-devops-pipeline-branch: master
+          azure-devops-pipeline-branch-token: ${{ secrets.GITHUB_TOKEN }}
