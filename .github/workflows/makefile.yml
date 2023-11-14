@@ -25,4 +25,5 @@ jobs:
         uses: Azure/pipelines@v1
         with:
           azure-devops-project-url: https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework/_build?definitionId=29
+          azure-pipeline-name: hpc-vm-health-check-framework
           azure-devops-token: ${{ secrets.GITHUB_TOKEN }}
