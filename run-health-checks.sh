@@ -123,6 +123,12 @@ if [ -z "$CONF_FILE" ]; then
         conf_name="hx176-24rs"
     elif  echo "$SKU" | grep -q "nc24rs_v3"; then
         conf_name="nc24rs_v3"
+    elif  echo "$SKU" | grep -q "nc24s_v3"; then
+        conf_name="nc24s_v3"
+    elif  echo "$SKU" | grep -q "nc12s_v3"; then
+        conf_name="nc12s_v3"
+    elif  echo "$SKU" | grep -q "nc6s_v3"; then
+        conf_name="nc6s_v3"
     else
         echo "The vm SKU '$SKU' is currently not supported by Azure health checks." | tee -a $OUTPUT_PATH
         exit 0
