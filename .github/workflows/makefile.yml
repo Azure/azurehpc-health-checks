@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - releases/*
 
 jobs:
   build:
@@ -17,6 +18,9 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@main
+
+      - name: print contents in parent directory
+        run: ls -la ../
       
       - name: Trigger ADO pipeline
         uses: Azure/pipelines@v1
@@ -24,5 +28,5 @@ jobs:
           azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
           azure-pipeline-name: 'hpc-vm-health-check-framework'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
-          azure-branch-name: 'rameht/clone-github-pr-branch'
           azure-pr-number: '${{ github.event.pull_request.number }}'
+          azure-pr-source-branch: '${{ github.event.pull_request.head.ref }}'
