@@ -34,6 +34,9 @@ function install_perf_test(){
 		apt-get install -y libpci-dev
 	elif [[ $distro =~ "AlmaLinux" ]]; then
 		dnf install -y pciutils-devel
+	elif [[ $distro =~ "CentOS" ]]; then
+		yum install -y  pciutils-devel > /dev/null
+		echo "CentOS version is not officially supported, proceed w/ caution."
 	else
 		echo "OS version is not supported, Perf-test build skipped. Proceed w/ caution."
 		return 1
@@ -144,6 +147,9 @@ if [[ $distro =~ "Ubuntu" ]]; then
 	apt-get install -y hwloc
 elif [[ $distro =~ "AlmaLinux" ]]; then
 	dnf install -y hwloc
+elif [[ $distro =~ "CentOS" ]]; then
+	yum install -y  pciutils-devel > /dev/null
+	echo "CentOS version is not officially supported, proceed w/ caution."
 else
 	echo "OS version is not supported, azure_hw_topology_check will not work."
 	return 1
