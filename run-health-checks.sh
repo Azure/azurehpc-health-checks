@@ -93,33 +93,33 @@ if [ -z "$CONF_FILE" ]; then
         conf_name="hb120rs_v3"
     elif echo "$SKU" | grep -q "hb176rs_v4"; then
         conf_name="hb176rs_v4"
-	    an_rate=100
+	an_rate=100
     elif  echo "$SKU" | grep -q "hb176-144rs_v4"; then
         conf_name="hb176-144rs_v4"
-	    an_rate=100
+	an_rate=100
     elif  echo "$SKU" | grep -q "hb176-96rs_v4"; then
         conf_name="hb176-96rs_v4"
-	    an_rate=100
+	an_rate=100
     elif  echo "$SKU" | grep -q "hb176-48rs_v4"; then
         conf_name="hb176-48rs_v4"
-	    an_rate=100
+	an_rate=100
     elif  echo "$SKU" | grep -q "hb176-24rs_v4"; then
         conf_name="hb176-24rs_v4"
-	    an_rate=100
+	an_rate=100
     elif echo "$SKU" | grep -q "hx176rs"; then
         conf_name="hx176rs"
-	    an_rate=100
+	an_rate=100
     elif  echo "$SKU" | grep -q "hx176-144rs"; then
         conf_name="hx176-144rs"
-	    an_rate=100
+	an_rate=100
     elif  echo "$SKU" | grep -q "hx176-96rs"; then
         conf_name="hx176-96rs"
-	    an_rate=100
+	an_rate=100
     elif  echo "$SKU" | grep -q "hx176-48rs"; then
-	    an_rate=100
+	an_rate=100
         conf_name="hx176-48rs"
     elif  echo "$SKU" | grep -q "hx176-24rs"; then
-	    an_rate=100
+	an_rate=100
         conf_name="hx176-24rs"
     elif  echo "$SKU" | grep -q "nc24rs_v3"; then
         conf_name="nc24rs_v3"
