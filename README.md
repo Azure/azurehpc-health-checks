@@ -11,10 +11,15 @@
 AzureHPC Node Health Checks provides an automated suite of test that targets specific Azure HPC offerings. This is an extension of [LBNL Node Health Checks](https://github.com/mej/nhc). 
 
 ## Supported Offerings ##
------
+
+- [NDm H100 v5-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nd-h100-v5-series)
 - [NDm A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ndm-a100-v4-series)
 - [ND A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nda100-v4-series)
 - [HBv4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv4-series)
+- [HX-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hx-series)
+- [HBv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv3-series)
+- [HBv2-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv2-series)
+- [NCv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ncv3-series)
 
 ## Minimum Requirements ##
 
@@ -70,6 +75,7 @@ The following are Azure custom checks added to the existing NHC suite of tests:
 
 note: The scripts for all tests can be found in the [custom test directory](./customTests/)
 
+note: not all supported SKUs are listed in the above table
 ## _References_ ##
 
 - [LBNL Node Health Checks](https://github.com/mej/nhc)

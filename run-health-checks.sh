@@ -3,7 +3,7 @@
 print_help() {
 cat << EOF
 
-Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-v|--verbose]
+Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-v|--verbose]
 Run health checks on the current VM.
 
 -h, -help,          --help                  Display this help
@@ -15,7 +15,10 @@ Run health checks on the current VM.
 
 -t, -timeout,       --timeout               Optional timeout in seconds for each health check. If not specified it will default to 500 seconds.
 
+-a, -all,     --all             Run ALL checks; don't exit on first failure.
+
 -v, -verbose,       --verbose               If set, enables verbose and debug outputs.
+
 
 EOF
 }
@@ -25,7 +28,7 @@ OUTPUT_PATH="./health.log"
 TIMEOUT=500
 VERBOSE=false
 
-options=$(getopt -l "help,config:,output:,timeout:,verbose" -o "hc:o:t:v" -a -- "$@")
+options=$(getopt -l "help,config:,output:,timeout:,all:,verbose" -o "hac:o:t:v" -a -- "$@")
 
 if [ $? -ne 0 ]; then
     print_help
@@ -54,6 +57,9 @@ case "$1" in
     ;;
 -v|--verbose)
     VERBOSE=true
+    ;;
+-a|--all)
+    RUN_ALL=true
     ;;
 --)
     shift
@@ -128,6 +134,14 @@ if [ -z "$CONF_FILE" ]; then
     elif  echo "$SKU" | grep -q "hx176-24rs"; then
 	    an_rate=100
         conf_name="hx176-24rs"
+    elif  echo "$SKU" | grep -q "nc24rs_v3"; then
+        conf_name="nc24rs_v3"
+    elif  echo "$SKU" | grep -q "nc24s_v3"; then
+        conf_name="nc24s_v3"
+    elif  echo "$SKU" | grep -q "nc12s_v3"; then
+        conf_name="nc12s_v3"
+    elif  echo "$SKU" | grep -q "nc6s_v3"; then
+        conf_name="nc6s_v3"
     else
         echo "The vm SKU '$SKU' is currently not supported by Azure health checks." | tee -a $OUTPUT_PATH
         exit 0
@@ -151,6 +165,9 @@ if [ "$VERBOSE" = true ]; then
     nhc_args+=("-v")
     nhc_args+=("-d")
 fi
+if [ "$RUN_ALL" = true ]; then
+    nhc_args+=("-a")
+fi
 
 echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
-nhc ${nhc_args[@]} CONFFILE=$CONF_FILE LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT
+nhc ${nhc_args[@]} CONFFILE=$CONF_FILE LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT 
