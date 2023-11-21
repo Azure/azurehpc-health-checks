@@ -89,6 +89,15 @@ if [ -z "$CONF_FILE" ]; then
     elif echo "$SKU" | grep -q "hb120-96rs_v3"; then
         conf_name="hb120-96rs_v3"
         an_rate=40
+    elif echo "$SKU" | grep -q "hb120-64rs_v3"; then
+        conf_name="hb120-64rs_v3"
+        an_rate=40
+    elif echo "$SKU" | grep -q "hb120-32rs_v3"; then
+        conf_name="hb120-32rs_v3"
+        an_rate=40
+    elif echo "$SKU" | grep -q "hb120-16rs_v3"; then
+        conf_name="hb120-16rs_v3"
+        an_rate=40
     elif echo "$SKU" | grep -q "hb176rs_v4"; then
         conf_name="hb176rs_v4"
 	    an_rate=100
