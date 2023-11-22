@@ -29,3 +29,4 @@ jobs:
           azure-pipeline-name: 'hpc-vm-health-check-framework'
           azure-devops-pipeline-branch: 'rameht/clone-github-pr-branch'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
+          azure-pipeline-variables: 'branchName=rameht/clone-github-pr-branch'
