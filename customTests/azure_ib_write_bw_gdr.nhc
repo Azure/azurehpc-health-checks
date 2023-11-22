@@ -78,5 +78,3 @@ function check_ib_bw_gdr(){
    wait  ${pid_array[@]}
    return 0
 }
-
-# check_ib_bw_gdr 170.0 nd96asr_v4
