@@ -73,75 +73,88 @@ OUTPUT_PATH=$(realpath -m "$OUTPUT_PATH")
 # If a custom configuration isn't specified, detect the VM SKU and use the appropriate conf file
 if [ -z "$CONF_FILE" ]; then
     echo "No custom conf file specified, detecting VM SKU..."
-
-    SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
-    echo "Running health checks for $SKU SKU..."
-
+    SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text" | sed 's/Standard_//')
     SKU="${SKU,,}"
-    if echo "$SKU" | grep -q "nd96asr_v4"; then
-        conf_name="nd96asr_v4"
-	an_rate=40
-    elif echo "$SKU" | grep -q "nd96amsr_a100_v4"; then
-        conf_name="nd96amsr_a100_v4"
-	an_rate=40
-    elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
-        conf_name="nd96isr_h100_v5"
-	an_rate=100
-    elif echo "$SKU" | grep -q "hb120rs_v2"; then
-        conf_name="hb120rs_v2"
-    elif echo "$SKU" | grep -q "hb120rs_v3"; then
-        conf_name="hb120rs_v3"
-    elif echo "$SKU" | grep -q "hb176rs_v4"; then
-        conf_name="hb176rs_v4"
-	an_rate=100
-    elif  echo "$SKU" | grep -q "hb176-144rs_v4"; then
-        conf_name="hb176-144rs_v4"
-	an_rate=100
-    elif  echo "$SKU" | grep -q "hb176-96rs_v4"; then
-        conf_name="hb176-96rs_v4"
-	an_rate=100
-    elif  echo "$SKU" | grep -q "hb176-48rs_v4"; then
-        conf_name="hb176-48rs_v4"
-	an_rate=100
-    elif  echo "$SKU" | grep -q "hb176-24rs_v4"; then
-        conf_name="hb176-24rs_v4"
-	an_rate=100
-    elif echo "$SKU" | grep -q "hx176rs"; then
-        conf_name="hx176rs"
-	an_rate=100
-    elif  echo "$SKU" | grep -q "hx176-144rs"; then
-        conf_name="hx176-144rs"
-	an_rate=100
-    elif  echo "$SKU" | grep -q "hx176-96rs"; then
-        conf_name="hx176-96rs"
-	an_rate=100
-    elif  echo "$SKU" | grep -q "hx176-48rs"; then
-	an_rate=100
-        conf_name="hx176-48rs"
-    elif  echo "$SKU" | grep -q "hx176-24rs"; then
-	an_rate=100
-        conf_name="hx176-24rs"
-    elif  echo "$SKU" | grep -q "nc24rs_v3"; then
-        conf_name="nc24rs_v3"
-    elif  echo "$SKU" | grep -q "nc24s_v3"; then
-        conf_name="nc24s_v3"
-    elif  echo "$SKU" | grep -q "nc12s_v3"; then
-        conf_name="nc12s_v3"
-    elif  echo "$SKU" | grep -q "nc6s_v3"; then
-        conf_name="nc6s_v3"
+    CONF_DIR="$(dirname "${BASH_SOURCE[0]}")/conf/"
+    CONF_FILE="$CONF_DIR/$SKU.conf"
+    if [ -e "$CONF_FILE" ]; then
+        echo "Running health checks for Standard_$SKU SKU..."
     else
-        echo "The vm SKU '$SKU' is currently not supported by Azure health checks." | tee -a $OUTPUT_PATH
+        echo "The vm SKU 'standard_$SKU' is currently not supported by Azure health checks." | tee -a $OUTPUT_PATH
         exit 0
     fi
 
-    CONF_FILE="$(dirname "${BASH_SOURCE[0]}")/conf/$conf_name.conf"
+    exit 0
+#     if echo "$SKU" | grep -q "nd96asr_v4"; then
+#         conf_name="nd96asr_v4"
+# 	an_rate=40
+#     elif echo "$SKU" | grep -q "nd96amsr_a100_v4"; then
+#         conf_name="nd96amsr_a100_v4"
+# 	an_rate=40
+#     elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
+#         conf_name="nd96isr_h100_v5"
+# 	an_rate=100
+#     elif echo "$SKU" | grep -q "hb120rs_v2"; then
+#         conf_name="hb120rs_v2"
+#     elif echo "$SKU" | grep -q "hb120rs_v3"; then
+#         conf_name="hb120rs_v3"
+#     elif echo "$SKU" | grep -q "hb176rs_v4"; then
+#         conf_name="hb176rs_v4"
+# 	an_rate=100
+#     elif  echo "$SKU" | grep -q "hb176-144rs_v4"; then
+#         conf_name="hb176-144rs_v4"
+# 	an_rate=100
+#     elif  echo "$SKU" | grep -q "hb176-96rs_v4"; then
+#         conf_name="hb176-96rs_v4"
+# 	an_rate=100
+#     elif  echo "$SKU" | grep -q "hb176-48rs_v4"; then
+#         conf_name="hb176-48rs_v4"
+# 	an_rate=100
+#     elif  echo "$SKU" | grep -q "hb176-24rs_v4"; then
+#         conf_name="hb176-24rs_v4"
+# 	an_rate=100
+#     elif echo "$SKU" | grep -q "hx176rs"; then
+#         conf_name="hx176rs"
+# 	an_rate=100
+#     elif  echo "$SKU" | grep -q "hx176-144rs"; then
+#         conf_name="hx176-144rs"
+# 	an_rate=100
+#     elif  echo "$SKU" | grep -q "hx176-96rs"; then
+#         conf_name="hx176-96rs"
+# 	an_rate=100
+#     elif  echo "$SKU" | grep -q "hx176-48rs"; then
+# 	an_rate=100
+#         conf_name="hx176-48rs"
+#     elif  echo "$SKU" | grep -q "hx176-24rs"; then
+# 	an_rate=100
+#         conf_name="hx176-24rs"
+#     elif  echo "$SKU" | grep -q "nc24rs_v3"; then
+#         conf_name="nc24rs_v3"
+#     elif  echo "$SKU" | grep -q "nc24s_v3"; then
+#         conf_name="nc24s_v3"
+#     elif  echo "$SKU" | grep -q "nc12s_v3"; then
+#         conf_name="nc12s_v3"
+#     elif  echo "$SKU" | grep -q "nc6s_v3"; then
+#         conf_name="nc6s_v3"
+#     elif  echo "$SKU" | grep -q "nc96ads_a100_v4"; then
+#         conf_name="nc96ads_a100_v4"
+#     elif  echo "$SKU" | grep -q "nc48ads_a100_v4"; then
+#         conf_name="nc48ads_a100_v4"
+#     elif  echo "$SKU" | grep -q "nc24ads_a100_v4"; then
+#         conf_name="nc24ads_a100_v4"
+#     else
+#         echo "The vm SKU '$SKU' is currently not supported by Azure health checks." | tee -a $OUTPUT_PATH
+#         exit 0
+#     fi
 
-    #add accelerated network if applicable, when using the default conf files, skip if an explicit conf file is specified
-    acc_file=$CONF_FILE
-    acc_net=$(ibstatus mlx5_an0)
-    if [ $? -eq 0 ] && [ -n "$an_rate" ] && ! grep -q 'mlx5_an0:1' "$acc_file"; then
-        echo -e "\n\n### Accelerate network check\n * || check_hw_ib $an_rate  mlx5_an0:1\n * || check_hw_eth eth1" >> $acc_file
-    fi
+#     CONF_FILE="$(dirname "${BASH_SOURCE[0]}")/conf/$conf_name.conf"
+
+#     #add accelerated network if applicable, when using the default conf files, skip if an explicit conf file is specified
+#     acc_file=$CONF_FILE
+#     acc_net=$(ibstatus mlx5_an0)
+#     if [ $? -eq 0 ] && [ -n "$an_rate" ] && ! grep -q 'mlx5_an0:1' "$acc_file"; then
+#         echo -e "\n\n### Accelerate network check\n * || check_hw_ib $an_rate  mlx5_an0:1\n * || check_hw_eth eth1" >> $acc_file
+#     fi
 
 fi
 

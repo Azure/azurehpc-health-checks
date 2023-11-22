@@ -90,14 +90,7 @@ if lspci | grep -iq NVIDIA ; then
 	TOPO_PATH=/opt/azurehpc/test/azurehpc-health-checks/customTests/topofiles
 
 	mkdir -p $TOPO_PATH
-
-	if [ ! -e "$TOPO_PATH/ndv4-topo.xml" ]; then
-		cp $SRC_DIR/topofiles/ndv4-topo.xml $TOPO_PATH
-	fi
-
-	if [ ! -e "$TOPO_PATH/ndv5-topo.xml" ]; then
-		cp $SRC_DIR/topofiles/ndv5-topo.xml $TOPO_PATH
-	fi
+	cp $SRC_DIR/topofiles/* $TOPO_PATH
 
 	install_perf_test "cuda"
 
