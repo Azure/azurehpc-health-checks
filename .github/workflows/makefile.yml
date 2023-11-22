@@ -23,10 +23,9 @@ jobs:
         run: ls -la ../
       
       - name: Trigger ADO pipeline
-        uses: Azure/pipelines@v1
+        uses: Azure/pipelines@v1.2
         with:
           azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
           azure-pipeline-name: 'hpc-vm-health-check-framework'
           azure-devops-pipeline-branch: 'rameht/clone-github-pr-branch'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
-          azure-pipeline-variables: 'branchName=rameht/clone-github-pr-branch'
