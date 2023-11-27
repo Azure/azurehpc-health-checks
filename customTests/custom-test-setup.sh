@@ -18,14 +18,9 @@ fi
 mkdir -p $EXE_DIR
 
 function install_perf_test(){
-	type=$1
 	# create perf-test executables
-	if [[ "$type" == "cuda" ]]; then
-		echo -e "Building PerfTest with CUDA"
-	else
-		echo -e "Building PerfTest"
-	fi
-	
+	echo -e "Building PerfTest"
+
 	VERSION=4.5-0.12
 	VERSION_HASH=ge93c538
 
@@ -50,12 +45,7 @@ function install_perf_test(){
 	wget -q -O - $archive_url | tar -xz --strip=1 -C ${EXE_DIR}/${perftest_dir} 
 
 	pushd ${perftest_dir} 
-	if [[ "$type" == "cuda" ]]; then
-		./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h
-	else
-		./autogen.sh
-		./configure
-	fi
+	./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h
 
 	make
 	popd
@@ -98,13 +88,7 @@ if lspci | grep -iq NVIDIA ; then
 	if [ ! -e "$TOPO_PATH/ndv5-topo.xml" ]; then
 		cp $SRC_DIR/topofiles/ndv5-topo.xml $TOPO_PATH
 	fi
-
-	install_perf_test "cuda"
-
 else
-
-	install_perf_test 
-
 	# Stream
 	if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v clang &> /dev/null; then
 		echo -e "clang compiler found Building Stream"
@@ -140,6 +124,8 @@ else
 	fi
 	
 fi
+
+install_perf_test
 
 # Ensure lstopo-no-graphics is installed for the azure_hw_topology_check.nhc
 distro=`awk -F= '/^NAME/{print $2}' /etc/os-release`
