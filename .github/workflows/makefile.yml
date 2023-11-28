@@ -28,4 +28,4 @@ jobs:
           azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
           azure-pipeline-name: 'hpc-vm-health-check-framework'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
-          azure-pipeline-variables: '{GITHUB_PR_NUMBER=${{ github.event.number }};AZ_BRANCH=rameht/clone-github-pr-branch}'
+          azure-pipeline-variables: '{GITHUB_PR_NUMBER=${{ github.event.number }};AZ_BRANCH=rameht/sg-auth}'
