@@ -22,7 +22,7 @@ function run_ib_bw_gdr(){
    MESSAGE_SIZE=8388608
 
    IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
-   IB_WRITE_BW_ARGS="-p $PORTARG -s $MESSAGE_SIZE -x 0 -F -b --report_gbits  --perform_warm_up"
+   IB_WRITE_BW_ARGS="-p $PORTARG -s $MESSAGE_SIZE -x 0 -F --report_gbits  --perform_warm_up"
 
    IB_WRITE_BW_OUT1=$(numactl -N ${GPU_NUMA[$device]} -m ${GPU_NUMA[$device]} $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=${device} -d mlx5_ib${device} > /dev/null &)
    IB_WRITE_BW_OUT1_RC=$?
