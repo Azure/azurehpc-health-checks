@@ -26,3 +26,4 @@ jobs:
           azure-pipeline-name: 'hpc-vm-health-check-framework'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
           azure-pipeline-variables: '{GITHUB_PR_NUMBER=${{ github.event.number }};AZ_BRANCH=master}'
+          
