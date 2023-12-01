@@ -77,6 +77,9 @@ function check_ib_bw_non_gdr(){
    bad_results=()
    for device in "${devices[@]}"; do
       result=$(ib_write $device)
+      if [ $? -nq 0 ]; then
+         return 1
+      fi
       dbg "IB device=$device: Measured IB BW $result Gbps"
       if [[ $result < $EXP_IB_BW ]]; then
          bad_results+=("$device:$result")
