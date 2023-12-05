@@ -80,14 +80,10 @@ if lspci | grep -iq NVIDIA ; then
 	TOPO_PATH=/opt/azurehpc/test/azurehpc-health-checks/customTests/topofiles
 
 	mkdir -p $TOPO_PATH
+	cp $SRC_DIR/topofiles/* $TOPO_PATH
 
-	if [ ! -e "$TOPO_PATH/ndv4-topo.xml" ]; then
-		cp $SRC_DIR/topofiles/ndv4-topo.xml $TOPO_PATH
-	fi
+	install_perf_test
 
-	if [ ! -e "$TOPO_PATH/ndv5-topo.xml" ]; then
-		cp $SRC_DIR/topofiles/ndv5-topo.xml $TOPO_PATH
-	fi
 else
 	# Stream
 	if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v clang &> /dev/null; then

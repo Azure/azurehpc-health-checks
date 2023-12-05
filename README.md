@@ -15,6 +15,7 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - [NDm H100 v5-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nd-h100-v5-series)
 - [NDm A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ndm-a100-v4-series)
 - [ND A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nda100-v4-series)
+- [NC A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nc-a100-v4-series)
 - [HBv4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv4-series)
 - [HX-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hx-series)
 - [HBv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv3-series)
@@ -25,6 +26,8 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 
 - Ubunutu 20.0, 22.04
 - AlamaLinux >= 8.6
+
+Note: Other distributions may work but are not supported.
 
 ## Setup ##
 
@@ -40,6 +43,7 @@ This project comes with default VM SKU test configuration files that list the te
 - Invoke health checks using a script that determines SKU and runs the configuration file according to SKU for you:
 ```sudo ./run-health-checks.sh [~/health.log]```
   - Default log file path is set to the current directory
+  - See help menu for more options
 - Invoke health checks directly:
 ```sudo nhc -c ./conf/"CONFNAME".conf -l ~/health.log -t 300```
   - To use a different log file location, specify the full path.
