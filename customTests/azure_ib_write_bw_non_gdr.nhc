@@ -88,7 +88,7 @@ function check_ib_bw_non_gdr(){
          return 1
       fi
       dbg "IB device=$device: Measured IB BW $result Gbps"
-      if (( $(echo "$result > $EXP_IB_BW" | bc -l) )); then
+      if (( $(echo "$result < $EXP_IB_BW" | bc -l) )); then
          bad_results+=("$device:$result")
       fi
    done
@@ -96,7 +96,7 @@ function check_ib_bw_non_gdr(){
       for bad_result in "${bad_results[@]}"; do
          device=$(echo "$bad_result" | cut -d ":" -f 1)
          result=$(echo "$bad_result" | cut -d ":" -f 2)
-         die 1 "$FUNCNAME: $IB_WRITE_BW, IB=$device, IB BW (expected > $EXP_IB_BW Gbps, but measured $result Gbps"
+         die 1 "$FUNCNAME: $IB_WRITE_BW, IB=$device, IB BW (expected > $EXP_IB_BW Gbps, but measured $result Gbps)"
       done
       return 1
    fi
