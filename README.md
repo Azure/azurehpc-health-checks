@@ -13,6 +13,7 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 ## Supported Offerings ##
 
 - [NDm H100 v5-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nd-h100-v5-series)
+- [NCads H100 v5-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ncads-h100-v5)
 - [NDm A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ndm-a100-v4-series)
 - [ND A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nda100-v4-series)
 - [NC A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nc-a100-v4-series)
