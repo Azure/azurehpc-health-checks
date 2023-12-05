@@ -82,7 +82,7 @@ if lspci | grep -iq NVIDIA ; then
 	mkdir -p $TOPO_PATH
 	cp $SRC_DIR/topofiles/* $TOPO_PATH
 
-	install_perf_test "cuda"
+	install_perf_test
 
 else
 	# Stream

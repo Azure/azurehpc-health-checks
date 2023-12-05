@@ -22,7 +22,6 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - [HBv2-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv2-series)
 - [NCv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ncv3-series)
 
-
 ## Minimum Requirements ##
 
 - Ubunutu 20.0, 22.04
