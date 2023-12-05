@@ -134,7 +134,7 @@ if [[ $distro =~ "Ubuntu" ]]; then
 elif [[ $distro =~ "AlmaLinux" ]]; then
 	dnf install -y hwloc
 elif [[ $distro =~ "CentOS" ]]; then
-	yum install -y  pciutils-devel > /dev/null
+	yum install -y  hwloc > /dev/null
 	echo "CentOS version is not officially supported, proceed w/ caution."
 else
 	echo "OS version is not supported, azure_hw_topology_check will not work."
