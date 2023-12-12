@@ -95,7 +95,7 @@ if [ -z "$CONF_FILE" ]; then
 
     #add accelerated network if applicable, when using the default conf files, skip if an explicit conf file is specified
     acc_file=$CONF_FILE
-    acc_net=$(ibstatus mlx5_an0)
+    acc_net=$(ibstatus mlx5_an0 2>/dev/null)
     if [ $? -eq 0 ] && [ -n "$an_rate" ] && ! grep -q 'mlx5_an0:1' "$acc_file"; then
         echo -e "\n\n### Accelerate network check\n * || check_hw_ib $an_rate  mlx5_an0:1\n * || check_hw_eth eth1" >> $acc_file
     fi

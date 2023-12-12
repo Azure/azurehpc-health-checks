@@ -3,56 +3,102 @@
 IB_WRITE_BW_EXE_PATH=/opt/azurehpc/test/nhc/perftest-4.5/ib_write_bw
 IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
 IB_WRITE_BW_DURATION=10
-IB_WRITE_BW_ARGS="-s $(( 1 * 1024 * 1024 )) -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits -d mlx5_ib0"
 SLEEP_TIME=5
-
+MSG_SIZE=1048576
 HOSTNAME=`hostname`
 
-function check_ib_bw_non_gdr(){
 
-EXP_IB_BW=$1
+function determine_devices(){
+   mapfile -t devices < <(ibstat -l)
+   devices=$(ibstat -l)
+   ib_devices=()
+   for device in "${devices[@]}"; do
+      link_layer_file="/sys/class/infiniband/${device}/ports/1/link_layer"
+      if [ -e "$link_layer_file" ]; then
+         link_layer_value=$(cat "$link_layer_file")
+         if [ "$link_layer_value" = "InfiniBand" ]; then
+            ib_devices+=("$device")
+         fi
+      fi
+   done
+   echo ${ib_devices[@]}
+   return 0
+}
 
-IB_WRITE_BW_OUT1=$( numactl --membind=0 -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS  > /dev/null &)
-IB_WRITE_BW_OUT1_RC=$?
-if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
-   log "$IB_WRITE_BW_OUT1"
-   PORT=$(echo $IB_WRITE_BW_OUT1 | grep -oP '(?<=port\s)\w+')
-   NETSTAT_OUT=$(netstat -lnp | grep $PORT)
-   log "Running: netstat -lnp | grep $PORT:"
-   log "$NETSTAT_OUT"
-   die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
-   return 1
-fi
-sleep $SLEEP_TIME
-IB_WRITE_BW_OUT2=$( numactl --membind=0 -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $HOSTNAME)
-IB_WRITE_BW_OUT2_RC=$?
-if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
-   log "$IB_WRITE_BW_OUT2"
-   PORT=$(echo $IB_WRITE_BW_OUT2 | grep -oP '(?<=port\s)\w+')
-   NETSTAT_OUT=$(netstat -lnp | grep $PORT)
-   log "Running: netstat -lnp | grep $PORT:"
-   log "$NETSTAT_OUT"
-   die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC"
-   return 1
-fi
-IFS=$'\n'
-IB_WRITE_BW_OUT2_LINES=( $IB_WRITE_BW_OUT2 )
-IFS=$' \t\n'
 
-for ((i=0; i<${#IB_WRITE_BW_OUT2_LINES[*]}; i++))
-do
-   if [[ "${IB_WRITE_BW_OUT2_LINES[$i]//1048576}" != "${IB_WRITE_BW_OUT2_LINES[$i]}" ]]; then
-      LINE=( ${IB_WRITE_BW_OUT2_LINES[$i]} )
-      ib_bandwidth=${LINE[3]}
-      dbg "IB device=mlx5_ib0: Measured IB BW $ib_bandwidth Gbps"
-      break
-   fi
-done
-if [[ $ib_bandwidth < $EXP_IB_BW ]]; then
-      log "$IB_WRITE_BW_OUT2"
-      die 1 "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib0, mlx5_ib0, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
+function ib_write(){
+
+   device=$1
+   
+   IB_WRITE_BW_ARGS="-s $MSG_SIZE -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits -d $device"
+   IB_WRITE_BW_OUT1=$( numactl --membind=0 -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS  > /dev/null &)
+   IB_WRITE_BW_OUT1_RC=$?
+   if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
+      log "$IB_WRITE_BW_OUT1"
+      PORT=$(echo $IB_WRITE_BW_OUT1 | grep -oP '(?<=port\s)\w+')
+      if [ -z "$PORT" ]; then
+         die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC, Port argument was not specified."
+      fi
+      NETSTAT_OUT=$(netstat -lnp | grep $PORT)
+      log "Running: netstat -lnp | grep $PORT:"
+      log "$NETSTAT_OUT"
+      die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
       return 1
-fi
+   fi
+   sleep $SLEEP_TIME
+   IB_WRITE_BW_OUT2=$( numactl --membind=0 -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $HOSTNAME)
+   IB_WRITE_BW_OUT2_RC=$?
+   if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
+      log "$IB_WRITE_BW_OUT2"
+      PORT=$(echo $IB_WRITE_BW_OUT2 | grep -oP '(?<=port\s)\w+')
+      if [ -z "$PORT" ]; then
+         die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC, Port argument was not specified"
+      fi
+      NETSTAT_OUT=$(netstat -lnp | grep $PORT)
+      log "Running: netstat -lnp | grep $PORT:"
+      log "$NETSTAT_OUT"
+      die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC"
+      return 1
+   fi
+   IFS=$'\n'
+   IB_WRITE_BW_OUT2_LINES=( $IB_WRITE_BW_OUT2 )
+   IFS=$' \t\n'
+ 
+   for ((i=0; i<${#IB_WRITE_BW_OUT2_LINES[*]}; i++))
+   do
+      # look for line beginning with the message size, this is where the result is
+      if [[ "${IB_WRITE_BW_OUT2_LINES[$i]//$MSG_SIZE}" != "${IB_WRITE_BW_OUT2_LINES[$i]}" ]]; then
+         LINE=( ${IB_WRITE_BW_OUT2_LINES[$i]} )
+         ib_bandwidth=${LINE[3]}
+         dbg "IB device=$device: Measured IB BW $ib_bandwidth Gbps"
+         break
+      fi
+   done
+   echo $ib_bandwidth 
+   return 0
+}
 
-return 0
+function check_ib_bw_non_gdr(){
+   EXP_IB_BW=$1
+   devices=($(determine_devices))
+   bad_results=()
+   for device in "${devices[@]}"; do
+      result=$(ib_write $device)
+      if [ $? -ne 0 ]; then
+         return 1
+      fi
+      dbg "IB device=$device: Measured IB BW $result Gbps"
+      if (( $(echo "$result < $EXP_IB_BW" | bc -l) )); then
+         bad_results+=("$device:$result")
+      fi
+   done
+   if [ ${#bad_results[@]} -gt 0 ]; then
+      for bad_result in "${bad_results[@]}"; do
+         device=$(echo "$bad_result" | cut -d ":" -f 1)
+         result=$(echo "$bad_result" | cut -d ":" -f 2)
+         die 1 "$FUNCNAME: $IB_WRITE_BW, IB=$device, IB BW (expected > $EXP_IB_BW Gbps, but measured $result Gbps)"
+      done
+      return 1
+   fi
+   return 0
 }
