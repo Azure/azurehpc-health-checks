@@ -40,7 +40,8 @@ function get_actual_topology() {
 }
 
 function check_hw_topology() {
-    TOPO_FILE="$1"
+
+    TOPO_FILE=$AZ_NHC_ROOT/topofiles
 
     if [ ! -f "$TOPO_FILE" ]; then
         die 1 "$FUNCNAME: Specified topology file does not exist!"

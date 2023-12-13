@@ -4,3 +4,4 @@ lbnl-nhc-1.4.3/
 *stream.c
 *health.log
 .vscode
+build/
