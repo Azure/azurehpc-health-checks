@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source $(dirname "${BASH_SOURCE[0]}")/aznhc_env_init.sh
+
 print_help() {
 cat << EOF
 
@@ -113,4 +115,5 @@ if [ "$RUN_ALL" = true ]; then
 fi
 
 echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
+
 nhc ${nhc_args[@]} CONFFILE=$CONF_FILE LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT 
