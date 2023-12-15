@@ -1,0 +1,194 @@
+#!/bin/bash
+
+## This script tests GPU BW using NVBandwidth and compares the results to the expected BW.
+# https://github.com/NVIDIA/nvbandwidth
+# - host to device bandwidth 
+# - device to host bandwidth 
+# - device to device bandwidth
+
+NVBW=$AZ_NHC_ROOT/bin/nvbandwidth
+H2D="host_to_device_memcpy_ce"
+D2H="device_to_host_memcpy_ce"
+P2P="device_to_device_memcpy_read_ce"
+# This array is used to store the results of the tests
+declare -A result_lines_array
+declare -A tests_map=( ["host_to_device_memcpy_ce"]="H2D" ["device_to_host_memcpy_ce"]="D2H" ["device_to_device_memcpy_read_ce"]="P2P" )
+
+function cleanup {
+    #dbg "Unlocking graphics clock  before exit..."
+    sudo timeout 3m nvidia-smi -rgc  > /dev/null 2>&1
+}
+
+#Catch error codes that may be thrown by the executable passed as the first
+#input, and if an error code is tripped throw the second input as a message
+catch_error() {
+    declare -g output
+    output=$($1)
+    err_code=$?
+    if [ $err_code -ne 0 ]; then
+        die 1 "\t $2 $err_code" >&2
+        return 1
+    fi
+    return 0
+}
+
+
+function check_nvlink_enabled(){
+    # Check if NVLINK is enabled
+    error_smi="$FUNCNAME: Failed to get NVLINK status with error code"
+    nvlink_status="nvidia-smi nvlink --status"
+    if ! catch_error "$nvlink_status" "$error_smi"; then
+        echo false
+        return 0
+    fi
+    if [ -z "$output" ]; then
+        echo false
+        return 1
+    fi
+    echo true
+    return 0
+}
+
+function evaluate_result(){
+    EXP_CUDA_BW=$1
+    EXP_P2P_BW=$2
+    GPU_COUNT=$3
+
+    for test in "${!result_lines_array[@]}"; do
+        case $test in
+            $H2D|$D2H)
+                EXP_BW=$EXP_CUDA_BW
+                ;;
+            $P2P)
+                EXP_BW=$EXP_P2P_BW
+                ;;
+            *)
+                die 1 exit "$FUNCNAME: Unknown test type $test !"
+                return 1
+                ;;
+        esac
+        
+        for lines in "${result_lines_array[$test]}"; do
+            #echo "$lines"
+            IFS=$'\n'
+            result_lines=( $lines )
+            IFS=$' \t\n'
+
+            peer_device=0
+            for ((i=0; i<${#result_lines[*]}; i++))
+            do
+                BW_VALS=$(echo "${result_lines[$i]}" | awk '{for (i=2; i<=NF; i++) print $i}')
+                gpu_device=0
+                for gpubw in $BW_VALS; do
+                    if [[ "$gpubw" == *"N/A"* ]]; then
+                        ((gpu_device++))
+                        continue
+                    fi
+                    if (( $(echo "$gpubw >= $EXP_BW" | bc -l) )); then
+                        #echo "${tests_map[$test]} test on GPU $gpu_device passed. Bandwidth $gpubw is greater than $EXP_BW"
+                        noop=0
+                    else
+                        if [ "$test" = "$P2P" ]; then
+                            echo "${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW"
+                        else
+                            #echo "${tests_map[$test]} test on GPU $gpu_device failed. Bandwidth $gpubw is less than $EXP_BW"
+                            noop=0
+                        fi
+                    fi
+                    ((gpu_device++)) 
+                done
+                ((peer_device++))
+            done
+        done
+        return 0
+    done
+    return 0
+}
+
+function check_gpu_bw()
+{
+    #set expected BW set to default value if argument empty
+    EXP_CUDA_BW=$1
+    EXP_P2P_BW=$2
+
+    if [[ -z "$EXP_CUDA_BW" || -z "$EXP_P2P_BW" ]]; then
+        die 1 exit "$FUNCNAME: Expected H2D/D2H or P2P bandwidth not set!"
+    fi
+
+    # Lock graphics clocks to max freq to eliminate any time for the GPUs to boost.
+    SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
+    SKU="${SKU,,}"
+    lock_clocks=
+    if echo "$SKU" | grep -q "nd96asr_v4"; then
+        lock_clocks="sudo nvidia-smi -lgc 1400"
+    elif echo "$SKU" | grep -q "nd96amsr_a100_v4"; then
+        lock_clocks="sudo nvidia-smi -lgc 1400"
+    elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
+        lock_clocks="sudo nvidia-smi -lgc 2619"
+    fi
+
+    error_smi="$FUNCNAME: Failed raise GPU clocks with error code"
+    if [[ -n "$lock_clocks" ]]; then
+        if ! catch_error "$lock_clocks" "$error_smi"; then
+            return 0
+        fi
+    fi
+
+    # exit function to unlock clocks on exit 
+    trap cleanup EXIT
+
+    # Count the GPUs.
+    error_smi="$FUNCNAME: Failed to get GPU Count with error code"
+    gpu_list="timeout 3m nvidia-smi --query-gpu=name --format=csv,noheader"
+    if ! catch_error "$gpu_list" "$error_smi"; then
+        return 0
+    fi
+    ngpus=$(echo "$output" | wc -l)
+
+    # Check if NVLINK is enabled and choose the right tests
+    cmd_args="$H2D $D2H"
+    if [ "$(check_nvlink_enabled)" = true ]; then
+        cmd_args="$cmd_args $P2P"
+    fi  
+    cmd="$NVBW -t $cmd_args"
+
+    error_nbw="$FUNCNAME: Failed to run NVBandwidth with error code"
+    if ! catch_error "$cmd" "$error_nbw"; then
+        return 0
+    fi
+    nvresult=$output
+    IFS=$'\n'
+    nvout=( $nvresult )
+    IFS=$' \t\n'
+
+    current_test=""
+
+    # Extract the lines for each test
+    for line in "${nvout[@]}"; do
+        if [[ $line == Running* ]]; then
+            if [ "$current_test" != "" ]; then
+                extracted_lines="$(echo "${extracted_lines}" | awk 'NR>1')"
+                result_lines_array["$current_test"]="$extracted_lines"
+            fi
+            # Set current test and remove extra spaces and dots
+            current_test="${line#Running}" && current_test="${current_test//./}" && current_test="${current_test#"${current_test%%[![:space:]]*}"}"
+            extracted_lines=""
+        fi
+
+        if [[ ! "$line" == *"memcpy"*  ]]; then
+            extracted_lines+="$line"$'\n'
+        fi
+    done
+    
+    # Save the last test's extracted lines
+    if [ "$current_test" != "" ]; then
+        extracted_lines="$(echo "${extracted_lines}" | awk 'NR>1')"
+        result_lines_array["$current_test"]="$extracted_lines"
+    fi
+
+    evaluate_result $EXP_CUDA_BW $EXP_P2P_BW
+
+    return 0
+}
+
+check_gpu_bw 23 266.7
