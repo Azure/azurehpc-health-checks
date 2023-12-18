@@ -85,14 +85,13 @@ function evaluate_result(){
                         continue
                     fi
                     if (( $(echo "$gpubw >= $EXP_BW" | bc -l) )); then
-                        #echo "${tests_map[$test]} test on GPU $gpu_device passed. Bandwidth $gpubw is greater than $EXP_BW"
-                        noop=0
+                        dbg "${tests_map[$test]} test on GPU $gpu_device passed. Bandwidth $gpubw is greater than $EXP_BW"
+
                     else
                         if [ "$test" = "$P2P" ]; then
-                            echo "${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW"
+                            die 1 "${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW"
                         else
-                            #echo "${tests_map[$test]} test on GPU $gpu_device failed. Bandwidth $gpubw is less than $EXP_BW"
-                            noop=0
+                            die 1 "${tests_map[$test]} test on GPU $gpu_device failed. Bandwidth $gpubw is less than $EXP_BW"
                         fi
                     fi
                     ((gpu_device++)) 
@@ -111,8 +110,8 @@ function check_gpu_bw()
     EXP_CUDA_BW=$1
     EXP_P2P_BW=$2
 
-    if [[ -z "$EXP_CUDA_BW" || -z "$EXP_P2P_BW" ]]; then
-        die 1 exit "$FUNCNAME: Expected H2D/D2H or P2P bandwidth not set!"
+    if [[ -z "$EXP_CUDA_BW"  ]]; then
+        die 1 exit "$FUNCNAME: Expected H2D/D2H bandwidth not set!"
     fi
 
     # Lock graphics clocks to max freq to eliminate any time for the GPUs to boost.
@@ -147,7 +146,7 @@ function check_gpu_bw()
 
     # Check if NVLINK is enabled and choose the right tests
     cmd_args="$H2D $D2H"
-    if [ "$(check_nvlink_enabled)" = true ]; then
+    if [[ "$(check_nvlink_enabled)" = true || -n "$EXP_P2P_BW" ]]; then
         cmd_args="$cmd_args $P2P"
     fi  
     cmd="$NVBW -t $cmd_args"
@@ -190,5 +189,3 @@ function check_gpu_bw()
 
     return 0
 }
-
-check_gpu_bw 23 266.7
