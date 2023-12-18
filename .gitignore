@@ -5,3 +5,6 @@ lbnl-nhc-1.4.3/
 *health.log
 .vscode
 build/
+aznhc_env_init.sh
+bin/
+docs/

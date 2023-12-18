@@ -7,18 +7,18 @@ if [[ -z "$INSTALL_DIR" ]];then
   INSTALL_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 fi
 
-INSTALL_DIR=$INSTALL_DIR/azurehpc-health-checks
-SRC_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-
-export AZ_NHC_VERSION_LOG=$INSTALL_DIR/docs/version.log
-
-if [[ -z "$INSTALL_DIR" ]];then
-	INSTALL_DIR=.
-fi
-
 if [[ -z "$CUDA_DIR" ]];then
 	CUDA_DIR=/usr/local/cuda
 fi
+
+SRC_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+# not using src directory as insatll location
+if [ $SRC_DIR != $INSTALL_DIR ]; then
+  INSTALL_DIR=$INSTALL_DIR/azurehpc-health-checks
+fi
+
+export AZ_NHC_VERSION_LOG=$INSTALL_DIR/docs/version.log
 
 function install_lbnl_nhc(){
   pushd $SRC_DIR/build
