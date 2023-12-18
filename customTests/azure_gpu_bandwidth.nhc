@@ -53,7 +53,7 @@ function evaluate_result(){
     EXP_CUDA_BW=$1
     EXP_P2P_BW=$2
     GPU_COUNT=$3
-
+    
     for test in "${!result_lines_array[@]}"; do
         case $test in
             $H2D|$D2H)

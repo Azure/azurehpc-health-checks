@@ -1,6 +1,6 @@
 #!/bin/bash
 
-source $(dirname "${BASH_SOURCE[0]}")/nhc_env_init.sh 
+source $(dirname "${BASH_SOURCE[0]}")/aznhc_env_init.sh
 
 print_help() {
 cat << EOF
