@@ -1,0 +1,28 @@
+name: Health Checks CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - releases/*
+
+jobs:
+  build:
+    name: unit tests
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@main
+
+      - name: print contents in parent directory
+        run: ls -la ../
+      
+      - name: Trigger ADO pipeline
+        uses: Azure/pipelines@v1
+        with:
+          azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
+          azure-pipeline-name: 'hpc-vm-health-check-framework'
+          azure-devops-token: '${{ secrets.ADO_TOKEN }}'
+          azure-pipeline-variables: '{GITHUB_PR_NUMBER=${{ github.event.number }};AZ_BRANCH=master}'
