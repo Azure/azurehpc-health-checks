@@ -97,6 +97,7 @@ fi
 
 # Copy over necessary files
 sudo cp $SRC_DIR/customTests/*.nhc /etc/nhc/scripts
+
 if [ $SRC_DIR != $INSTALL_DIR ]; then
   cp -r $SRC_DIR/conf/ $INSTALL_DIR
   cp -r $SRC_DIR/customTests/topofiles/ $INSTALL_DIR

@@ -11,11 +11,11 @@ H2D="host_to_device_memcpy_ce"
 D2H="device_to_host_memcpy_ce"
 P2P="device_to_device_memcpy_read_ce"
 # This array is used to store the results of the tests
-declare -A result_lines_array
-declare -A tests_map=( ["host_to_device_memcpy_ce"]="H2D" ["device_to_host_memcpy_ce"]="D2H" ["device_to_device_memcpy_read_ce"]="P2P" )
+declare -gA result_lines_array
+declare -gA tests_map=( ["host_to_device_memcpy_ce"]="H2D" ["device_to_host_memcpy_ce"]="D2H" ["device_to_device_memcpy_read_ce"]="P2P" )
 
 function cleanup {
-    #dbg "Unlocking graphics clock  before exit..."
+    dbg "Unlocking graphics clock  before exit..."
     sudo timeout 3m nvidia-smi -rgc  > /dev/null 2>&1
 }
 
@@ -31,7 +31,6 @@ catch_error() {
     fi
     return 0
 }
-
 
 function check_nvlink_enabled(){
     # Check if NVLINK is enabled
@@ -63,13 +62,12 @@ function evaluate_result(){
                 EXP_BW=$EXP_P2P_BW
                 ;;
             *)
-                die 1 exit "$FUNCNAME: Unknown test type $test !"
+                die 1 "check_gpu_bw: failed to parse results"
                 return 1
                 ;;
         esac
         
         for lines in "${result_lines_array[$test]}"; do
-            #echo "$lines"
             IFS=$'\n'
             result_lines=( $lines )
             IFS=$' \t\n'
@@ -86,12 +84,11 @@ function evaluate_result(){
                     fi
                     if (( $(echo "$gpubw >= $EXP_BW" | bc -l) )); then
                         dbg "${tests_map[$test]} test on GPU $gpu_device passed. Bandwidth $gpubw is greater than $EXP_BW"
-
                     else
                         if [ "$test" = "$P2P" ]; then
-                            die 1 "${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW"
+                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW"
                         else
-                            die 1 "${tests_map[$test]} test on GPU $gpu_device failed. Bandwidth $gpubw is less than $EXP_BW"
+                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device failed. Bandwidth $gpubw is less than $EXP_BW"
                         fi
                     fi
                     ((gpu_device++)) 
@@ -111,7 +108,7 @@ function check_gpu_bw()
     EXP_P2P_BW=$2
 
     if [[ -z "$EXP_CUDA_BW"  ]]; then
-        die 1 exit "$FUNCNAME: Expected H2D/D2H bandwidth not set!"
+        die 1 -e "$FUNCNAME: Expected H2D/D2H bandwidth not set!"
     fi
 
     # Lock graphics clocks to max freq to eliminate any time for the GPUs to boost.
@@ -186,6 +183,7 @@ function check_gpu_bw()
     fi
 
     evaluate_result $EXP_CUDA_BW $EXP_P2P_BW
-
+ 
     return 0
 }
+
