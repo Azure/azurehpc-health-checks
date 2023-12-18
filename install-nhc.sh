@@ -100,12 +100,12 @@ sudo cp $SRC_DIR/customTests/*.nhc /etc/nhc/scripts
 
 if [ $SRC_DIR != $INSTALL_DIR ]; then
   cp -r $SRC_DIR/conf/ $INSTALL_DIR
-  cp -r $SRC_DIR/customTests/topofiles/ $INSTALL_DIR
   cp -r $SRC_DIR/distributed_nhc/ $INSTALL_DIR
   cp $SRC_DIR/*.md $INSTALL_DIR/docs/
   cp $SRC_DIR/LICENSE $INSTALL_DIR/docs/
 fi
 cp $SRC_DIR/run-health-checks.sh $INSTALL_DIR
+cp -r $SRC_DIR/customTests/topofiles/ $INSTALL_DIR
 
 # Install NHC custom tests
 pushd customTests/
