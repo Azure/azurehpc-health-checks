@@ -17,9 +17,9 @@ jobs:
         uses: actions/checkout@main
       
       - name: Trigger ADO pipeline
-        uses: Azure/pipelines@v1
+        uses: Azure/pipelines@v1.2
         with:
           azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
           azure-pipeline-name: 'hpc-vm-health-check-framework'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
-          azure-pipeline-variables: '{GITHUB_PR_NUMBER=${{ github.event.number }};AZ_BRANCH=master}'
+          azure-pipeline-variables: '{"GITHUB_PR_NUMBER": ${{ github.event.number }}, "AZ_BRANCH": "master"}'
