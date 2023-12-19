@@ -15,9 +15,6 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@main
-
-      - name: print contents in parent directory
-        run: ls -la ../
       
       - name: Trigger ADO pipeline
         uses: Azure/pipelines@v1
