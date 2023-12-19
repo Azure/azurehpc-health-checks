@@ -116,4 +116,4 @@ fi
 
 echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
 
-$AZ_NHC_ROOT/bin/nhc ${nhc_args[@]} CONFFILE=$CONF_FILE LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT 
+nhc ${nhc_args[@]} CONFFILE=$CONF_FILE LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT 

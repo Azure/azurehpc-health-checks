@@ -35,7 +35,7 @@ function install_lbnl_nhc(){
     *) 
       LIBEXEDIR=/usr/libexec;;
   esac
-  ./configure --prefix=$INSTALL_DIR --sysconfdir=/etc --libexecdir=$LIBEXEDIR --sbindir=$INSTALL_DIR/bin
+  ./configure --prefix=/usr --sysconfdir=/etc --libexecdir=$LIBEXEDIR
   
   sudo make test
   echo -e "\n"
@@ -103,8 +103,8 @@ if [ $SRC_DIR != $INSTALL_DIR ]; then
   cp -r $SRC_DIR/distributed_nhc/ $INSTALL_DIR
   cp $SRC_DIR/*.md $INSTALL_DIR/docs/
   cp $SRC_DIR/LICENSE $INSTALL_DIR/docs/
+  cp $SRC_DIR/run-health-checks.sh $INSTALL_DIR
 fi
-cp $SRC_DIR/run-health-checks.sh $INSTALL_DIR
 cp -r $SRC_DIR/customTests/topofiles/ $INSTALL_DIR
 
 # Install NHC custom tests

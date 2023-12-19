@@ -62,42 +62,35 @@ function install_nvbandwidth(){
 	popd
 }
 
-#Nvidia installs
-if lspci | grep -iq NVIDIA ; then
-	install_nvbandwidth
-else
+function install_stream(){
+	STREAM_DIR=${SRC_DIR}/build/stream
+	mkdir -p $STREAM_DIR/
+	cp ${SRC_DIR}/customTests/stream/*  $STREAM_DIR
+	pushd $STREAM_DIR
+
 	# Stream
 	if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v clang &> /dev/null; then
 		echo -e "clang compiler found Building Stream"
-		pushd ${SRC_DIR}/stream
+
 		if ! [[ -f "stream.c" ]]; then 
 			wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
 		fi
-
-		HB_HX_SKUS="standard_hb176rs_v4|standard_hb176-144rs_v4|standard_hb176-96rs_v4|standard_hb176-48rs_v4|standard_hb176-24rs_v4|standard_hx176rs|standard_hx176-144rs|standard_hx176-96rs|standard_hx176-48rs|standard_hx176-24rs"
-		SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
-		SKU=$(echo "$SKU" | tr '[:upper:]' '[:lower:]')
-
-		if [[ "$HB_HX_SKUS" =~ "$SKU"  ]]; then
-			BUILD=ZEN4
-		elif echo $SKU | grep "hb120rs_v3"; then
-			BUILD=ZEN3
-		elif echo $SKU | grep "hb120rs_v2"; then
-			BUILD=ZEN2
-		else
-			#default to zen3 build
-			BUILD=ZEN3
-		fi
-
 		if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null; then
-			make $BUILD CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=$EXE_DIR
+			make all CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=$EXE_DIR
 		else
-			make $BUILD CC=clang EXEC_DIR=$EXE_DIR
+			make all CC=clang EXEC_DIR=$EXE_DIR
 		fi
 		popd
 	else
 		echo "clang command not found. Skipping Stream build. Add clang to PATH ENV variable and rerun script to build Stream"
 	fi
+}
+
+#Nvidia installs
+if lspci | grep -iq NVIDIA ; then
+	install_nvbandwidth
+else
+	install_stream
 fi
 
 install_perf_test
