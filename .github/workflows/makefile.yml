@@ -21,6 +21,5 @@ jobs:
         with:
           azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
           azure-pipeline-name: 'hpc-vm-health-check-framework'
-          azure-pipeline-variables: >-
-            {"GITHUB_PR_NUMBER": "${{ github.event.number }}", "AZ_BRANCH": "master"}
+          azure-pipeline-variables: '{"GITHUB_PR_NUMBER": "${{ github.event.number }}", "AZ_BRANCH": "master"}'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
