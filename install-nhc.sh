@@ -68,7 +68,7 @@ install_lbnl_nhc
 # Install NHC dependencies
 distro=`awk -F= '/^NAME/{print $2}' /etc/os-release`
 if [[ $distro =~ "Ubuntu" ]]; then
-  sudo apt-get install -y libpci-dev hwloc build-essential libboost-program-options-dev libssl-dev cmake
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libpci-dev hwloc build-essential libboost-program-options-dev libssl-dev cmake
 elif [[ $distro =~ "AlmaLinux" ]]; then
   sudo dnf install -y pciutils-devel hwloc openssl-devel boost-devel cmake
 elif [[ $distro =~ "CentOS" ]]; then
