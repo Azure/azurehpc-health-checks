@@ -121,7 +121,7 @@ cat > "$env_file" <<EOL
 # It is recommended to source this file in your .bashrc or .bash_profile
 # to make the NHC commands available in your shell.
 export AZ_NHC_ROOT=$INSTALL_DIR
-alias aznhc=$INSTALL_DIR/run-health-checks.sh
+alias aznhc="sudo $INSTALL_DIR/run-health-checks.sh"
 EOL
 
 chmod +x "$env_file"
