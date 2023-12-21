@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IB_WRITE_BW_EXE_PATH=/opt/azurehpc/test/nhc/perftest-4.5/ib_write_bw
+IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw
 SLEEP_TIME=5
 
 HOSTNAME=`hostname`

@@ -27,28 +27,60 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 
 - Ubunutu 20.0, 22.04
 - AlamaLinux >= 8.6
+- Cuda >= 12 (for GPU SKUs)
+- AMD Clang compiler >= 4.0.0 (Non GPU SKUs)
+- Mellanox OFED drivers (For IB related SKUs)
 
 Note: Other distributions may work but are not supported.
 
 ## Setup ##
 
 1. To install AzureHPC Node Health Checks run install script:
-   ```sudo ./install-nhc.sh```
+    - Install in the src directory (recommended): ```./install-nhc.sh```
+    - Different installation location: ```./install-nhc.sh <install path>```
+    - By default we assume CUDA is installed in /usr/local/cuda if the cuda path is different: ```./install-nhc.sh <install path> <cuda path>```
+
+2. By default following dependencies (or equivalent) will be installed:
+    - libpci-dev
+    - hwloc
+    - build-essential
+    - libboost-program-options-dev
+    - libssl-dev
+    - cmake >= 3.20
+    - NHC: https://github.com/mej/nhc
+    - Nvbandwidth: https://github.com/NVIDIA/nvbandwidth
+    - Perf-test: https://github.com/linux-rdma/perftest
+    - Stream: https://www.cs.virginia.edu/stream
+
+3. During installation 'aznhc_env_init.sh' will be generated in the install location. When sourced the follwing will be exported to the environment:
+    - AZ_NHC_ROOT=\<install directory\>
+    - aznhc=AZ_NHC_ROOT/run-health-checks.sh
+    Note: The AZ_NHC_ROOT variable is by various NHC tests. By default 'aznhc_env_init.sh' is sourced in run-health-checks.sh.
+    Note: If sourced manually the alias 'aznhc' can be used in place of 'sudo AZ_NHC_ROOT/run-health-checks.sh'
 
 ## Configuration ##
 
-This project comes with default VM SKU test configuration files that list the tests to be run. You can modify existing configuration files to suit your tesing needs. For information on modifying or creating configuration files please reference [LBNL Node Health Checks documentation](https://github.com/mej/nhc).
+This project comes with default VM SKU test configuration files that list the tests to be run. You can modify existing configuration files to suit your testing needs. For information on modifying or creating configuration files please reference [LBNL Node Health Checks documentation](https://github.com/mej/nhc).
 
 ## Usage ##
 
 - Invoke health checks using a script that determines SKU and runs the configuration file according to SKU for you:
-```sudo ./run-health-checks.sh [~/health.log]```
+```sudo ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-v|--verbose]```
   - Default log file path is set to the current directory
-  - See help menu for more options
-- Invoke health checks directly:
-```sudo nhc -c ./conf/"CONFNAME".conf -l ~/health.log -t 300```
-  - To use a different log file location, specify the full path.
-- Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
+  - See help menu for more options:
+
+    | Option        | Argument    | Description                                                                                                                                   |
+    |---------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+    | -h, --help    |             | Display this help                                                                                                                             |
+    | -c, --config  | conf file   | Optional path to a custom NHC config file. If not specified the current VM SKU will be detected and the appropriate conf file will be used.   |
+    | -o, --output  | log file    | Optional path to output the health check logs to. All directories in the path must exist. If not specified it will use output to ./health.log |
+    | -t, --timeout | n seconds   | Optional timeout in seconds for each health check. If not specified it will default to 500 seconds.                                           |
+    | -a, --all     |             | Run ALL checks; don't exit on first failure.                                                                                                  |
+    | -v, --verbose |             | If set, enables verbose and debug outputs.                                                                                                    |
+
+  - Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
+  Note: Invoke health checks directly: ```sudo nhc -c ./conf/"CONFNAME".conf -l ~/health.log -t 300```
+  Note: If 'aznhc_env_init.sh' sourced the alias 'aznhc' can be used in place of 'sudo AZ_NHC_ROOT/run-health-checks.sh'
 
 ## Distributed NHC ##
 
@@ -67,20 +99,21 @@ The following are Azure custom checks added to the existing NHC suite of tests:
 | check_gpu_count | GPU count | 8 | 8 | 8 | NA | NA |
 | check_gpu_xid | GPU XID errors | not present | not present | not present | NA | NA |
 | check_nvsmi_healthmon | Nvidia-smi GPU health check | pass | pass | pass | NA | NA |
-| check_cuda_bw | GPU DtH/HtD bandwidth | 24 GB/s | 24 GB/s | 52 GB/s | NA | NA |
+| check_gpu_bandwidth | GPU DtH/HtD bandwidth | 23 GB/s | 23 GB/s | 52 GB/s | NA | NA |
 | check_gpu_ecc | GPU Mem Errors (ECC) |  20000000 | 20000000 | 20000000 | NA | NA |
 | check_gpu_clock_throttling | GPU Throttle codes assertion | not present | not present | not present | NA | NA |
 | check_nccl_allreduce | GPU NVLink bandwidth | 228 GB/s | 228 GB/s | 460 GB/s | NA | NA |
-| check_ib_bw_gdr | IB device (GDR) bandwidth | 170 GB/s | 170 GB/s | 380 GB/s | NA | NA |
+| check_ib_bw_gdr | IB device (GDR) bandwidth | 175 GB/s | 175 GB/s | 380 GB/s | NA | NA |
 | check_ib_bw_non_gdr | IB device (non GDR) bandwidth | NA | NA | NA | 390 GB/s | 390 GB/s |
 | check_nccl_allreduce_ib_loopback | GPU/GPU Direct RDMA(GDR) + IB device bandwidth | 18 GB/s | 18 GB/s | NA | NA | NA |
 | check_hw_topology | IB/GPU device topology/PCIE mapping | pass | pass | pass | NA | NA |
-| check_ib_link_flapping | IB link flap occurence | not present | not present | not present | not present | not present |
+| check_ib_link_flapping | IB link flap occurrence  | not present | not present | not present | not present | not present |
 | check_cpu_stream | CPU compute/memory bandwidth | NA | NA | NA | 665500 MB/s | 665500 MB/s |
 
-note: The scripts for all tests can be found in the [custom test directory](./customTests/)
+Note: The scripts for all tests can be found in the [custom test directory](./customTests/)
 
-note: not all supported SKUs are listed in the above table
+Note: not all supported SKUs are listed in the above table
+
 ## _References_ ##
 
 - [LBNL Node Health Checks](https://github.com/mej/nhc)
