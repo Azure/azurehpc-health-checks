@@ -77,7 +77,7 @@ if [ -z "$CONF_FILE" ]; then
     echo "No custom conf file specified, detecting VM SKU..."
     SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text" | sed 's/Standard_//')
     SKU="${SKU,,}"
-    CONF_DIR="$(dirname "${BASH_SOURCE[0]}")/conf/"
+    CONF_DIR="$AZ_NHC_ROOT/conf/"
     CONF_FILE="$CONF_DIR/$SKU.conf"
     if [ -e "$CONF_FILE" ]; then
         echo "Running health checks for Standard_$SKU SKU..."
