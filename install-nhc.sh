@@ -75,8 +75,7 @@ elif [[ $distro =~ "CentOS" ]]; then
   sudo yum install -y  pciutils-devel hwloc openssl-devel boost-devel cmake > /dev/null
   echo "CentOS version is not officially supported, proceed w/ caution."
 else
-  echo "OS version is not supported, Perf-test build skipped. Proceed w/ caution."
-  return 1
+  echo "OS version $distro is not supported. Proceed w/ caution."
 fi
 
 # Install build tools

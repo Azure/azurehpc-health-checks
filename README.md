@@ -22,6 +22,7 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - [HBv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv3-series)
 - [HBv2-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv2-series)
 - [NCv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ncv3-series)
+- [NDv2-serries](https://learn.microsoft.com/en-us/azure/virtual-machines/ndv2-series)
 
 ## Minimum Requirements ##
 
@@ -79,8 +80,10 @@ This project comes with default VM SKU test configuration files that list the te
     | -v, --verbose |             | If set, enables verbose and debug outputs.                                                                                                    |
 
   - Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
-  Note: Invoke health checks directly: ```sudo nhc -c ./conf/"CONFNAME".conf -l ~/health.log -t 300```
-  Note: If 'aznhc_env_init.sh' sourced the alias 'aznhc' can be used in place of 'sudo AZ_NHC_ROOT/run-health-checks.sh'
+
+  Notes:
+  - Invoke health checks directly: ```sudo nhc -c ./conf/"CONFNAME".conf -l ~/health.log -t 300```
+  - If 'aznhc_env_init.sh' sourced the alias 'aznhc' can be used in place of 'sudo AZ_NHC_ROOT/run-health-checks.sh'
 
 ## Distributed NHC ##
 
@@ -97,6 +100,7 @@ The following are Azure custom checks added to the existing NHC suite of tests:
 | Check | Component Tested | nd96asr_v4 expected| nd96amsr_a100_v4 expected | nd96isr_h100_v5 expected | hx176rs expected | hb176rs_v4 expected |
 |-----|-----|-----|-----|-----|-----|-----|
 | check_gpu_count | GPU count | 8 | 8 | 8 | NA | NA |
+| check_nvlink_status | NVlink | no inactive links | no inactive links  | no inactive links  | NA | NA |
 | check_gpu_xid | GPU XID errors | not present | not present | not present | NA | NA |
 | check_nvsmi_healthmon | Nvidia-smi GPU health check | pass | pass | pass | NA | NA |
 | check_gpu_bandwidth | GPU DtH/HtD bandwidth | 23 GB/s | 23 GB/s | 52 GB/s | NA | NA |
@@ -110,9 +114,9 @@ The following are Azure custom checks added to the existing NHC suite of tests:
 | check_ib_link_flapping | IB link flap occurrence  | not present | not present | not present | not present | not present |
 | check_cpu_stream | CPU compute/memory bandwidth | NA | NA | NA | 665500 MB/s | 665500 MB/s |
 
-Note: The scripts for all tests can be found in the [custom test directory](./customTests/)
-
-Note: not all supported SKUs are listed in the above table
+Notes:
+- The scripts for all tests can be found in the [custom test directory](./customTests/)
+- Not all supported SKUs are listed in the above table
 
 ## _References_ ##
 
