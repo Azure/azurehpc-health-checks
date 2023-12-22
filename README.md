@@ -79,8 +79,10 @@ This project comes with default VM SKU test configuration files that list the te
     | -v, --verbose |             | If set, enables verbose and debug outputs.                                                                                                    |
 
   - Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
-  Note: Invoke health checks directly: ```sudo nhc -c ./conf/"CONFNAME".conf -l ~/health.log -t 300```
-  Note: If 'aznhc_env_init.sh' sourced the alias 'aznhc' can be used in place of 'sudo AZ_NHC_ROOT/run-health-checks.sh'
+
+  Notes:
+  - Invoke health checks directly: ```sudo nhc -c ./conf/"CONFNAME".conf -l ~/health.log -t 300```
+  - If 'aznhc_env_init.sh' sourced the alias 'aznhc' can be used in place of 'sudo AZ_NHC_ROOT/run-health-checks.sh'
 
 ## Distributed NHC ##
 
@@ -110,9 +112,9 @@ The following are Azure custom checks added to the existing NHC suite of tests:
 | check_ib_link_flapping | IB link flap occurrence  | not present | not present | not present | not present | not present |
 | check_cpu_stream | CPU compute/memory bandwidth | NA | NA | NA | 665500 MB/s | 665500 MB/s |
 
-Note: The scripts for all tests can be found in the [custom test directory](./customTests/)
-
-Note: not all supported SKUs are listed in the above table
+Notes:
+- The scripts for all tests can be found in the [custom test directory](./customTests/)
+- Not all supported SKUs are listed in the above table
 
 ## _References_ ##
 
