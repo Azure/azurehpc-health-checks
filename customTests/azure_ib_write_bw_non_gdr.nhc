@@ -4,7 +4,7 @@ IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw
 IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
 IB_WRITE_BW_DURATION=10
 SLEEP_TIME=5
-MSG_SIZE=1048576
+DEFAULT_MSG_SIZE=1048576
 HOSTNAME=`hostname`
 
 
@@ -25,30 +25,10 @@ function determine_devices(){
    return 0
 }
 
-function is_edr(){
-   device=$1
-   rate_result=$(ibstatus  $device | grep -i 'rate')
-   if [[ $? -ne 0 ]]; then
-      return 1
-   fi
-   if [[ "$rate_result" == *EDR* ]]; then
-      echo true
-   else
-      echo false
-   fi
-
-   return 0
-}
-
 function ib_write(){
 
    device=$1
-   check_edr=$(is_edr $device)
-   if [[ $? == 0 ]]; then
-      if [[ "$check_edr" == true ]]; then
-         MSG_SIZE=65536
-      fi
-   fi
+   MSG_SIZE=$2
 
    IB_WRITE_BW_ARGS="-s $MSG_SIZE -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits -d $device"
    IB_WRITE_BW_OUT1=$( numactl --membind=0 -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS  > /dev/null &)
@@ -101,10 +81,16 @@ function ib_write(){
 
 function check_ib_bw_non_gdr(){
    EXP_IB_BW=$1
+   MSG_SIZE=$2
+
+   if [ -z "$MSG_SIZE" ]; then
+      MSG_SIZE=$DEFAULT_MSG_SIZE
+   fi
+   
    devices=($(determine_devices))
    bad_results=()
    for device in "${devices[@]}"; do
-      result=$(ib_write $device)
+      result=$(ib_write $device $MSG_SIZE)
       if [ $? -ne 0 ]; then
          return 1
       fi
