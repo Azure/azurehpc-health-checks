@@ -14,15 +14,12 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@main
-
-      - name: print contents in parent directory
-        run: ls -la ../
+        uses: actions/checkout@v3
       
       - name: Trigger ADO pipeline
-        uses: Azure/pipelines@v1
+        uses: Azure/pipelines@v1.2
         with:
           azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
           azure-pipeline-name: 'hpc-vm-health-check-framework'
+          azure-pipeline-variables: '{ "GITHUB_PR_NUMBER": "${{ github.event.number }}" }'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
-          azure-pipeline-variables: '{GITHUB_PR_NUMBER=${{ github.event.number }};AZ_BRANCH=master}'
