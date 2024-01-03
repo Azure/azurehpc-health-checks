@@ -1,9 +1,9 @@
 #!/usr/bin/env bats
 
-NHC_DIR=$1
+NHC_DIR=$AZ_NHC_ROOT
 logpath=/tmp/nhclogfile.log
 
-if [ -z "$NHC_PATH" ]; then
+if [ -z "$NHC_DIR" ]; then
    NHC_DIR=/opt/azurehpc/test/azurehpc-health-checks/
 fi
 
@@ -30,18 +30,6 @@ get_sad_path_conf(){
     echo "$(realpath -m $relative_path)"
     return 0
 }
-
-check_installed(){
-    if [ -x "$(command -v  nhc)" ]; then
-        #echo "NHC exists."
-        echo 0
-        return 0
-    else
-        echo "NHC executable does not exist."
-        return 1
-    fi
-}
-
 
 @test "Installation check" {
     set +e
