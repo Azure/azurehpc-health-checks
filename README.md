@@ -22,6 +22,7 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - [HBv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv3-series)
 - [HBv2-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv2-series)
 - [NCv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ncv3-series)
+- [NDv2-serries](https://learn.microsoft.com/en-us/azure/virtual-machines/ndv2-series)
 
 ## Minimum Requirements ##
 
@@ -99,6 +100,7 @@ The following are Azure custom checks added to the existing NHC suite of tests:
 | Check | Component Tested | nd96asr_v4 expected| nd96amsr_a100_v4 expected | nd96isr_h100_v5 expected | hx176rs expected | hb176rs_v4 expected |
 |-----|-----|-----|-----|-----|-----|-----|
 | check_gpu_count | GPU count | 8 | 8 | 8 | NA | NA |
+| check_nvlink_status | NVlink | no inactive links | no inactive links  | no inactive links  | NA | NA |
 | check_gpu_xid | GPU XID errors | not present | not present | not present | NA | NA |
 | check_nvsmi_healthmon | Nvidia-smi GPU health check | pass | pass | pass | NA | NA |
 | check_gpu_bandwidth | GPU DtH/HtD bandwidth | 23 GB/s | 23 GB/s | 52 GB/s | NA | NA |
