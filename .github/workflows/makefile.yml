@@ -1,6 +1,9 @@
 name: Health Checks CI
 
 on:
+  push:
+    branches:
+      - '*'
   pull_request:
     branches:
       - main
@@ -23,11 +26,40 @@ jobs:
           azure-pipeline-name: 'hpc-vm-health-check-framework'
           azure-pipeline-variables: '{ "GITHUB_PR_NUMBER": "${{ github.event.number }}" }'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 14
+
+      - name: Install dependencies
+        run: npm install -g @actions/github-script
 
       - name: Report ADO Pipeline Status
         run: |
-          chmod +x ./.github/workflows/get-status.js
-          ./.github/workflows/get-status.js
-        shell: js
+          github-script <<EOF
+            const { data } = await github.actions.getWorkflowRun({
+              owner: "${{ github.repository_owner }}",
+              repo: "${{ github.event.repository.name }}",
+              run_id: ${{
+                github.event.workflow_run.id
+              }},
+            });
+
+            const conclusion = data.status === "completed" ? "success" : "failure";
+
+            await github.checks.create({
+              owner: "${{ github.repository_owner }}",
+              repo: "${{ github.event.repository.name }}",
+              name: "ADO Pipeline Check",
+              head_sha: "${{ github.sha }}",
+              status: "completed",
+              conclusion: conclusion,
+              output: {
+                title: "ADO Pipeline Status",
+                summary: "ADO Pipeline has completed",
+              },
+            });
+          EOF
         env:
-          ADO_TOKEN: ${{ secrets.ADO_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
