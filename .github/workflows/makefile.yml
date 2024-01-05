@@ -32,9 +32,6 @@ jobs:
         with:
           node-version: 14
 
-      - name: Install dependencies
-        run: npm install -g @actions/github-script
-
       - name: Report ADO Pipeline Status
         run: |
           github-script <<EOF
