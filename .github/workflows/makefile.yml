@@ -26,6 +26,9 @@ jobs:
           azure-pipeline-name: 'hpc-vm-health-check-framework'
           azure-pipeline-variables: '{ "GITHUB_PR_NUMBER": "${{ github.event.number }}", "GITHUB_SHA": "${{ github.sha}}" }'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
+      
+      - name: Echo hello world
+        run: echo "Hello world"
 
       - name: Sleep for 30 seconds
         run: sleep 30
