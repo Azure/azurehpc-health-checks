@@ -24,39 +24,11 @@ jobs:
         with:
           azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
           azure-pipeline-name: 'hpc-vm-health-check-framework'
-          azure-pipeline-variables: '{ "GITHUB_PR_NUMBER": "${{ github.event.number }}" }'
+          azure-pipeline-variables: '{ "GITHUB_PR_NUMBER": "${{ github.event.number }}", "GITHUB_SHA": "${{ github.sha}}" }'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
-        
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 14
 
-      - name: Report ADO Pipeline Status
-        run: |
-          github-script <<EOF
-            const { data } = await github.actions.getWorkflowRun({
-              owner: "${{ github.repository_owner }}",
-              repo: "${{ github.event.repository.name }}",
-              run_id: ${{
-                github.event.workflow_run.id
-              }},
-            });
-
-            const conclusion = data.status === "completed" ? "success" : "failure";
-
-            await github.checks.create({
-              owner: "${{ github.repository_owner }}",
-              repo: "${{ github.event.repository.name }}",
-              name: "ADO Pipeline Check",
-              head_sha: "${{ github.sha }}",
-              status: "completed",
-              conclusion: conclusion,
-              output: {
-                title: "ADO Pipeline Status",
-                summary: "ADO Pipeline has completed",
-              },
-            });
-          EOF
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Sleep for 30 seconds
+        run: sleep 30
+          
+      - name: echo ADO build status
+        run: echo ${{ steps.ado.outputs.url-response }}
