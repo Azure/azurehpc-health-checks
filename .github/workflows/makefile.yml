@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: unit tests
+    name: Unit tests
 
     runs-on: ubuntu-latest
 
@@ -19,19 +19,40 @@ jobs:
       - name: checkout
         uses: actions/checkout@v3
       
-      - name: Trigger ADO pipeline
+      - name: Trigger ADO pipeline with build-id output variable
+        id: ado
         uses: Azure/pipelines@v1.2
         with:
           azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
           azure-pipeline-name: 'hpc-vm-health-check-framework'
           azure-pipeline-variables: '{ "GITHUB_PR_NUMBER": "${{ github.event.number }}", "GITHUB_SHA": "${{ github.sha}}" }'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
-      
-      - name: Echo hello world
-        run: echo "Hello world"
-
-      - name: Sleep for 30 seconds
-        run: sleep 30
           
       - name: echo ADO build status
         run: echo ${{ steps.ado.outputs.url-response }}
+
+      - name: Sleep for 30 seconds
+        run: sleep 30
+
+      - name: Get status
+        run: |
+          # Wait until build finishes
+          build_status=$(get_builds_res | jq -r ".status")
+        
+          while [ "${build_status}" != "completed" ]
+          do
+              build_status=$(get_builds_res | jq -r ".status")
+            
+              echo "Build status: ${build_status}"
+              sleep 300
+          done
+          
+          build_res=$(get_builds_res | jq -r ".result")
+          echo "Build result: ${build_res}"
+          
+          # Throw an error if build fails
+          if [ "${build_res}" != "succeeded" ]
+          then
+              echo "Error! Build failed..."
+              exit 1
+          fi
