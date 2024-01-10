@@ -28,8 +28,8 @@ jobs:
           azure-pipeline-variables: '{ "GITHUB_PR_NUMBER": "${{ github.event.number }}" }'
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
           
-      - name: echo ADO build status
-        run: echo ${{ steps.ado.outputs.url-response }}
+      - name: echo output from previus step
+        run: echo ${{ steps.ado.outputs.stdout }}
 
       - name: Sleep for 30 seconds
         run: sleep 30
