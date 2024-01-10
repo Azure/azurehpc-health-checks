@@ -1,9 +1,8 @@
 #!/bin/bash
 
+source /etc/nhc/scripts/azure_common.nhc
+
 # Check for NVlink issues by running NCCL allreduce.
-
-MPI_ARGS="-np 8 --map-by ppr:8:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
-
 function collect_nccl_allreduce_data() {
    TOPOFILE=$1
    MESSAGE_SIZE=$2
@@ -12,11 +11,10 @@ function collect_nccl_allreduce_data() {
    NCCL_ARGS="-b $MESSAGE_SIZE -f 2 -g 1 -e $MESSAGE_SIZE -c 1"
 
    # ensure unloaded before use
-   source /etc/profile.d/modules.sh && module -s unload mpi/hpcx
-   nccl_allreduce_out=$(source /etc/profile.d/modules.sh && module -s load mpi/hpcx && mpirun $MPI_ARGS $ENVIRON_VARS /opt/nccl-tests/build/all_reduce_perf $NCCL_ARGS)
+   MPI_ARGS="-np 8 --map-by ppr:8:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
+   nccl_allreduce_out=$(mpirun $MPI_ARGS $ENVIRON_VARS $ALL_REDUCE_PATH $NCCL_ARGS)
    nccl_allreduce_out_rc=$?
    if [[ $nccl_allreduce_out_rc != 0 ]]; then
-      log "nccl_allreduce_freq_out"
       die 1 "$FUNCNAME: nccl_allreduce returned error code $nccl_allreduce_out_rc"
    fi
    IFS=$'\n'
@@ -32,6 +30,11 @@ function check_nccl_allreduce() {
    TOPOFILE=$3
    MESSAGE_SIZE=$4
 
+   if ! check_all_reduce_dependencies ; then
+      die 1 -e "$FUNCNAME: Missing one or more dependencies"
+      return 0
+   fi
+
    for iter in $(seq 1 $REPEATS)
    do
       collect_nccl_allreduce_data $TOPOFILE $MESSAGE_SIZE
@@ -40,7 +43,7 @@ function check_nccl_allreduce() {
       do
          if [[ "${nccl_allreduce_out_lines[$i]//FAILED}" != "${nccl_allreduce_out_lines[$i]}" ]]
          then
-            log "$nccl_allreduce_out"
+            dbg "$nccl_allreduce_out"
             die 1 "$FUNCNAME: NCCL allreduce, Out of bounds values failed"
             return 0
          fi
@@ -57,7 +60,7 @@ function check_nccl_allreduce() {
       if [[ $avg_bus_bw < $EXP_NCCL_ALLREDUCE_BW ]]
       then
          dbg "$nccl_allreduce_out"
-         log "Iteration ${iter} of ${REPEATS} failed: NCCL allreduce bandwidth $avg_bus_bw GB/s < $EXP_NCCL_ALLREDUCE_BW GB/s"
+         dbg "Iteration ${iter} of ${REPEATS} failed: NCCL allreduce bandwidth $avg_bus_bw GB/s < $EXP_NCCL_ALLREDUCE_BW GB/s"
       else
          return 0
       fi

@@ -31,6 +31,8 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - Cuda >= 12 (for GPU SKUs)
 - AMD Clang compiler >= 4.0.0 (Non GPU SKUs)
 - Mellanox OFED drivers (For IB related SKUs)
+- HPC-X MPI >= v2.11 (This needs to be sourced and added to path. Installed by default in Azure AI/HPC marketplace image)
+- [NCCL-tests](https://github.com/NVIDIA/nccl-tests) (clone and build in /opt/ or modify the env variable paths in azure_nccl_allreduce.nhc and azure_nccl_allreduce_ib_loopback.nhc). Nccl-test is installed in the Azure AI/HPC marketplace image
 
 Note: Other distributions may work but are not supported.
 

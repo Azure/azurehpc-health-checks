@@ -75,8 +75,7 @@ OUTPUT_PATH=$(realpath -m "$OUTPUT_PATH")
 # If a custom configuration isn't specified, detect the VM SKU and use the appropriate conf file
 if [ -z "$CONF_FILE" ]; then
     echo "No custom conf file specified, detecting VM SKU..."
-    SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text" | sed 's/Standard_//')
-    SKU="${SKU,,}"
+    SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text" | tr '[:upper:]' '[:lower:]' | sed 's/standard_//')
     CONF_DIR="$AZ_NHC_ROOT/conf/"
     CONF_FILE="$CONF_DIR/$SKU.conf"
     if [ -e "$CONF_FILE" ]; then
