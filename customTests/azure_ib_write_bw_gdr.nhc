@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/nhc/scripts/azure_common.nhc
+
 IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw
 SLEEP_TIME=5
 
@@ -23,6 +25,8 @@ function run_ib_bw_gdr(){
 
    IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
    IB_WRITE_BW_ARGS="-p $PORTARG -s $MESSAGE_SIZE -x 0 -F --report_gbits  --perform_warm_up"
+
+
 
    IB_WRITE_BW_OUT1=$(numactl -N ${GPU_NUMA[$device]} -m ${GPU_NUMA[$device]} $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=${device} -d mlx5_ib${device} > /dev/null &)
    IB_WRITE_BW_OUT1_RC=$?
@@ -66,6 +70,11 @@ function run_ib_bw_gdr(){
 }
 
 function check_ib_bw_gdr(){
+   GPU_FREQ=$(boost_gpu_clock)
+   if [[ $? != 0 ]]; then
+      die 1 -e "$FUNCNAME: Failed to boost GPU clocks"
+      return 0
+   fi
    EXP_IB_BW=$1
    SKU=$2
    port_numbers=(18510 18511 18512 18513 18514 18515 18516 18517 )
@@ -76,5 +85,8 @@ function check_ib_bw_gdr(){
       pid_array+=($!)
    done
    wait  ${pid_array[@]}
+
+   remove_clock_boost
+
    return 0
 }

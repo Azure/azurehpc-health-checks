@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Check for IB issues by running NCCL allreduce disabling NCCL shared memory.
-ALL_REDUCE_EXE_PATH=/opt/nccl-tests/build/all_reduce_perf
+source /etc/nhc/scripts/azure_common.nhc
 
+# Check for IB issues by running NCCL allreduce disabling NCCL shared memory.
 function collect_nccl_allreduce_ib_loopback_data() {
 
    TOPOFILE=$1
@@ -13,7 +13,7 @@ function collect_nccl_allreduce_ib_loopback_data() {
 
    # ensure unloaded before use
 
-   nccl_allreduce_ib_loopback_out=$(mpirun $MPI_ARGS $ENVIRON_VARS $ALL_REDUCE_EXE_PATH $NCCL_ARGS)
+   nccl_allreduce_ib_loopback_out=$(mpirun $MPI_ARGS $ENVIRON_VARS $ALL_REDUCE_PATH $NCCL_ARGS)
    nccl_allreduce_ib_loopback_out_rc=$?
    if [[ $nccl_allreduce_ib_loopback_out_rc != 0 ]]; then
       die 1 "$FUNCNAME: nccl_allreduce (IB loopback) returned error code $nccl_allreduce_ib_loopback_out_rc"
@@ -24,31 +24,6 @@ function collect_nccl_allreduce_ib_loopback_data() {
 
 }
 
-function check_dependencies() {
-
-   if [ ! -f $ALL_REDUCE_EXE_PATH ]; then
-      die 1 "$FUNCNAME: all reduce executable path: $ALL_REDUCE_EXE_PATH not found. Ensure nccl-tests is installed and built in."
-      return 1
-   fi
-   # attempt to source HPCX modules
-   if [ -f '/etc/profile.d/modules.sh' ] && [ -z $HPCX_DIR ] ;then
-      source /etc/profile.d/modules.sh
-      module -s try-load mpi/hpcx
-   fi
-   # check if the module was loaded and or if the HPCX_DIR is set
-   if [ -z $HPCX_DIR ]; then
-      die 1 "$FUNCNAME: HPCX_DIR is not set. Ensure HPCX is installed and sourced correctly."
-      return 1
-   elif [ ! -d $HPCX_DIR ]; then
-      die 1 "$FUNCNAME: HPCX_DIR: $HPCX_DIR not found. Ensure HPCX is installed and sourced correctly."
-      return 1
-   fi
-   if ! command -v mpirun &> /dev/null; then
-      die 1 "$FUNCNAME: mpirun not found. Ensure HPCX is installed and sourced correctly."
-      return 1
-   fi
-}
-
 function check_nccl_allreduce_ib_loopback() {
 
    EXP_NCCL_ALLREDUCE_IB_LOOPBACK_BW=$1
@@ -56,8 +31,7 @@ function check_nccl_allreduce_ib_loopback() {
    TOPOFILE=$3
    MESSAGE_SIZE=$4
 
-   check_dependencies
-   if [[ $? -ne 0 ]]; then
+   if ! check_all_reduce_dependencies ; then
       die 1 -e "$FUNCNAME: Missing one or more dependencies"
       return 0
    fi

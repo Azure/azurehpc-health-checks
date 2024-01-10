@@ -27,6 +27,6 @@ function check_nvlink_status(){
         else
             dbg "$FUNCNAME: GPU $gpu_id has all nvlinks active."
         fi
-done
+    done
 
 }

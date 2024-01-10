@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Check for NVlink issues by running NCCL allreduce.
-ALL_REDUCE_PATH=/opt/nccl-tests/build/all_reduce_perf
+source /etc/nhc/scripts/azure_common.nhc
 
+# Check for NVlink issues by running NCCL allreduce.
 function collect_nccl_allreduce_data() {
    TOPOFILE=$1
    MESSAGE_SIZE=$2
@@ -22,31 +22,6 @@ function collect_nccl_allreduce_data() {
    IFS=$' \t\n'
 }
 
-function check_dependencies() {
-   if [[ ! -f $ALL_REDUCE_PATH ]]; then
-      die 1 "$FUNCNAME: all reduce executable path: $ALL_REDUCE_PATH not found. Ensure nccl-tests is installed and built in."
-      return 1
-   fi
-   # attempt to source HPCX modules
-   if [ -f '/etc/profile.d/modules.sh' ] && [ -z $HPCX_DIR ] ;then
-      source /etc/profile.d/modules.sh
-      module -s try-load mpi/hpcx
-   fi
-
-   # check if the module was loaded and or if the HPCX_DIR is set
-   if [ -z $HPCX_DIR ]; then
-      die 1 "$FUNCNAME: HPCX_DIR is not set. Ensure HPCX is installed and sourced correctly."
-      return 1
-   elif [ ! -d $HPCX_DIR ]; then
-      die 1 "$FUNCNAME: HPCX_DIR: $HPCX_DIR not found. Ensure HPCX is installed and sourced correctly."
-      return 1
-   fi
-   if ! command -v mpirun &> /dev/null; then
-      die 1 "$FUNCNAME: mpirun not found. Ensure HPCX is installed and sourced correctly."
-      return 1
-   fi
-}
-
 function check_nccl_allreduce() {
 
    EXP_NCCL_ALLREDUCE_BW=$1
@@ -55,7 +30,7 @@ function check_nccl_allreduce() {
    TOPOFILE=$3
    MESSAGE_SIZE=$4
 
-   if ! check_dependencies ; then
+   if ! check_all_reduce_dependencies ; then
       die 1 -e "$FUNCNAME: Missing one or more dependencies"
       return 0
    fi
