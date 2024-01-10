@@ -29,7 +29,7 @@ jobs:
           azure-devops-token: '${{ secrets.ADO_TOKEN }}'
           
       - name: echo output from previus step
-        run: echo ${{ steps.ado.outputs }}
+        run: echo ${{ toJson(steps.ado.outputs) }}
 
       - name: Sleep for 30 seconds
         run: sleep 30
