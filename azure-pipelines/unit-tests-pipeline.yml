@@ -1,0 +1,128 @@
+trigger:
+- none
+
+pool:
+    name: $(agent_pool)
+
+parameters:
+  - name: is_delete_rg
+    displayName: Should Delete RG
+    type: string
+    default: "no"
+    values:
+      - "yes"
+      - "no"
+
+  - name: os_list
+    displayName: Enter Operating System/s for Validation
+    type: object
+    default:
+      - "ubuntu-hpc_22.04" #_ndv4
+      # - "ubuntu_20.04"
+      # - "alma8.7"
+
+  - name: os_version
+    displayName: Operating System Version
+    type: string
+    default: "ubuntu-hpc_22.04"
+
+  - name: create_ubuntu-hpc_22_04
+    displayName: "Create image for Ubuntu HPC 22.04"
+    type: boolean
+    default: true
+
+  - name: create_ubuntu_20_04
+    displayName: "Create image for Ubuntu 20.04"
+    type: boolean
+    default: false
+
+  - name: create_alma_8_7
+    displayName: "Create image for AlmaLinux 8.7"
+    type: boolean
+    default: false 
+
+  - name: gpu_size_option
+    displayName: GPU VM Size
+    type: string
+    default: "Standard_ND96asr_v4"
+    values:
+      - "Standard_ND96asr_v4"
+  
+  - name: hpc_size_option
+    displayName: HPC VM Size
+    type: string
+    default: "Standard_HB60rs"
+
+  - name: resource_grp_location
+    displayName: "Resource Group Location"
+    type: string
+    default: "southcentralus"
+    values: 
+      - "southcentralus"
+      - "westeurope"
+      - "eastus"
+      - "westus"
+      - "westus2"
+      - "centraluseuap"
+      - "centralus"
+
+  - name: service_connection
+    displayName: Service Connection
+    type: string
+    default: "HPCScrub1_ServiceConn"
+    values:
+      - "hpcperf1_ServiceConn"
+      - "HPCScrub1_ServiceConn"
+
+  - name: log_analytics_container
+    displayName: "Log analytics container name"
+    type: string
+    default: "image_creation_pipeline_telemetry"
+
+  - name: public_key
+    displayName: Public key to allow access to (debug purpose)
+    type: string
+    default: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCxYJxz/Uh+ZACPJTUIaYklgwYeTHgjvnkgE2EHTbPey1A0MIIOFYyMh+1kdZe7JO/eNSZvPrHTNp+nBEeT7iQOigL+5f18+fRHx9jP78+pNLuCHLHPTAHDvNZhwgul7dI1GS0q4VQUSOwD/NnxcjOrgIAKYnDhmlIBnBRl+9BX2b2c9YLIn3TJ98VAZgHg9y1RguXo8QP1EW+Lgq29YM7Q797+JYdMnPvKhxZhyKWx9lk+b+tUe7m7IyjfQ6n6ecXlH1ttybqmlBY+lniq5bVReclGqdoUaqT1O+CoHOU75L6HMRojYWu0L20p5KmLIAiw1VbaPEhjwGFQf3sq+XWj
+
+variables:
+  - name: username
+    value: hpcuser
+    
+  - name: resource_grp_name
+    value: node-health-checks-rg
+
+  - name: storage_acc_name
+    value: healthchecksstorageacc
+
+  - name: resource_grp_location
+    value: ${{ parameters.resource_grp_location }}
+
+  - name: is_delete_rg
+    value: ${{ parameters.is_delete_rg }}
+
+  - name: gpu_size_option
+    value: ${{ parameters.gpu_size_option }}
+  - name: hpc_size_option
+    value: ${{ parameters.hpc_size_option }}
+
+  - name: service_connection
+    value: ${{ parameters.service_connection }}
+
+  - name: log_analytics_container
+    value: ${{ parameters.log_analytics_container }}
+
+  - name: public_key
+    value: ${{ parameters.public_key }}
+  - ${{ if eq(parameters.service_connection, 'hpcperf1_ServiceConn') }}:
+    - name: agent_pool
+      value: 1ES-hosted-pool-perf1
+  - ${{ if eq(parameters.service_connection, 'HPCScrub1_ServiceConn') }}:
+    - name: agent_pool
+      value: 1ES-hosted-pool-scrub1
+
+jobs:
+- job: Test_Run
+  steps:
+  - script: |
+      echo hello world
+    displayName: 'Run a one-line script'
