@@ -7,7 +7,7 @@ pool:
   name: 1ES-hosted-pool-scrub1
 
 jobs:
-- job: queue_azdo
+- job: queue_ado
   timeoutInMinutes: '360'
   steps:
   - bash: |
