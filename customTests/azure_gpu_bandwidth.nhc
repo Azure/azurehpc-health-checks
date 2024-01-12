@@ -98,7 +98,6 @@ function evaluate_result(){
                 ((peer_device++))
             done
         done
-        return 0
     done
     return 0
 }
