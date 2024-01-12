@@ -8,7 +8,7 @@ function check_all_reduce_dependencies() {
       return 1
    fi
    # attempt to source HPCX modules
-   if [ -f '$HPCX_DIR/hpcx-init.sh' ]; then
+   if [ -f "$HPCX_DIR/hpcx-init.sh" ]; then
       source $HPCX_DIR/hpcx-init.sh
       hpcx_load
    fi
