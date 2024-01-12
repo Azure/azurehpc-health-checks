@@ -8,9 +8,9 @@ function check_all_reduce_dependencies() {
       return 1
    fi
    # attempt to source HPCX modules
-   if [ -f '/etc/profile.d/modules.sh' ] && [ -z $HPCX_DIR ] ;then
-      source /etc/profile.d/modules.sh
-      module -s try-load mpi/hpcx
+   if [ -f '$HPCX_DIR/hpcx-init.sh' ]; then
+      source $HPCX_DIR/hpcx-init.sh
+      hpcx_load
    fi
 
    # check if the module was loaded and or if the HPCX_DIR is set
