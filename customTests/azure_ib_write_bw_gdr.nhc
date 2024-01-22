@@ -10,26 +10,22 @@ HOSTNAME=`hostname`
 function run_ib_bw_gdr(){
 
    EXP_IB_BW=$1
-   SKU=$2
-   PORTARG=$3
-   device=$4
+   PORTARG=$2
+   device=$3
+   dev_idx=$4
  
    #NUMA mapping
-   GPU_NUMA=( 0 0 0 0 0 0 0 0 )
-   if [[ "$SKU" == "nd96asr_v4" || "$SKU" == "nd96amsr_v4" ]]; then
-      GPU_NUMA=( 1 1 0 0 3 3 2 2 )
-   elif [[ "$SKU" == "nd96isr_v5" ]]; then
-      GPU_NUMA=( 0 0 0 0 1 1 1 1 )
+   if ! numa_node=$(get_ib_numa_node "$device"); then
+      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA node"
+      return 1
    fi
-   MESSAGE_SIZE=8388608
 
+   MESSAGE_SIZE=8388608
    IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
    IB_WRITE_BW_ARGS="-p $PORTARG -s $MESSAGE_SIZE -x 0 -F --report_gbits  --perform_warm_up"
-
-
-
-   IB_WRITE_BW_OUT1=$(numactl -N ${GPU_NUMA[$device]} -m ${GPU_NUMA[$device]} $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=${device} -d mlx5_ib${device} > /dev/null &)
+   IB_WRITE_BW_OUT1=$(numactl -N $numa_node -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=$dev_idx -d $device > /dev/null &)
    IB_WRITE_BW_OUT1_RC=$?
+ 
    if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
 	 NETSTAT_OUT=$(netstat -lnp | grep $PORTARG)
 	 log "Running: netstat -lnp | grep $PORTARG:"
@@ -37,9 +33,10 @@ function run_ib_bw_gdr(){
 	 die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
 	 return 1
   fi
+  
   sleep $SLEEP_TIME
-  device_peer=$(( device ))
-  IB_WRITE_BW_OUT2=$(numactl -N ${GPU_NUMA[$device_peer]} -m ${GPU_NUMA[$device_peer]} $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=${device_peer} -d mlx5_ib${device_peer} $HOSTNAME)
+  device_peer=$device
+  IB_WRITE_BW_OUT2=$(numactl -N $numa_node  -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=$dev_idx -d $device_peer $HOSTNAME)
   IB_WRITE_BW_OUT2_RC=$?
   if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
 	 NETSTAT_OUT=$(netstat -lnp | grep $PORTARG)
@@ -56,13 +53,13 @@ function run_ib_bw_gdr(){
 	 if [[ "${IB_WRITE_BW_OUT2_LINES[$i]//$MESSAGE_SIZE}" != "${IB_WRITE_BW_OUT2_LINES[$i]}" ]]; then
 		LINE=( ${IB_WRITE_BW_OUT2_LINES[$i]} )
 		ib_bandwidth=${LINE[3]}
-      dbg "IB devices=mlx5_ib${device}, mlx5_ib${device_peer}: numa domains=${GPU_NUMA[$device]},${GPU_NUMA[$device_peer]}, Measured IB BW $ib_bandwidth Gbps"
+      dbg "IB devices=${device}, ${device_peer}: numa domains=$numa_node,$numa_node, Measured IB BW $ib_bandwidth Gbps"
 		break
 	 fi
   done
   if [[ $ib_bandwidth < $EXP_IB_BW ]]; then
 	 log "$IB_WRITE_BW_OUT2"
-    die 1 "$FUNCNAME: $IB_WRITE_BW, IB=mlx5_ib${device}, mlx5_ib${device_peer}, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
+    die 1 "$FUNCNAME: $IB_WRITE_BW, IB=$device, $device_peer, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
 	 return 1
   fi
  
@@ -76,13 +73,17 @@ function check_ib_bw_gdr(){
       return 0
    fi
    EXP_IB_BW=$1
-   SKU=$2
    port_numbers=(18510 18511 18512 18513 18514 18515 18516 18517 )
    pid_array=()
-   for device in {0..7};
+
+   #get devices
+   devices=($(determine_IB_devices))
+   dev_idx=0
+   for device in "${devices[@]}";
    do
-      run_ib_bw_gdr $EXP_IB_BW $SKU ${port_numbers[$device]} $device &
+      run_ib_bw_gdr $EXP_IB_BW ${port_numbers[$dev_idx]} $device $dev_idx &
       pid_array+=($!)
+      (( dev_idx++ ))
    done
    wait  ${pid_array[@]}
 
