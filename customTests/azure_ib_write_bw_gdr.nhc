@@ -16,7 +16,7 @@ function run_ib_bw_gdr(){
  
    #NUMA mapping
    if ! numa_node=$(get_ib_numa_node "$device"); then
-      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA node"
+      die 1 "check_ib_bw_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA node"
       return 1
    fi
 
