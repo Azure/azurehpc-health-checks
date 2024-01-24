@@ -25,6 +25,7 @@ function check_all_reduce_dependencies() {
       die 1 "$FUNCNAME: mpirun not found. Ensure HPCX is installed and sourced correctly."
       return 1
    fi
+   return 0
 }
 
 function boost_gpu_clock(){

@@ -5,10 +5,11 @@ source $(dirname "${BASH_SOURCE[0]}")/aznhc_env_init.sh
 print_help() {
 cat << EOF
 
-Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-v|--verbose]
+Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-e|--append_conf < path to conf file to be appended >] [-a|--all_tests] [-v|--verbose]
 Run health checks on the current VM.
 
 -h, -help,          --help                  Display this help
+
 -c, -config,        --config                Optional path to a custom NHC config file. 
                                             If not specified the current VM SKU will be detected and the appropriate conf file will be used.
 
@@ -17,7 +18,10 @@ Run health checks on the current VM.
 
 -t, -timeout,       --timeout               Optional timeout in seconds for each health check. If not specified it will default to 500 seconds.
 
--a, -all,     --all             Run ALL checks; don't exit on first failure.
+-e, -append_conf,   --append_conf           Append a custom conf file to the conf file being used for the test. Useful if you have a set of common
+                                            tests you want to add to the default conf files provided.
+
+-a, -all,           --all                   Run ALL checks; don't exit on first failure.
 
 -v, -verbose,       --verbose               If set, enables verbose and debug outputs.
 
@@ -30,7 +34,7 @@ OUTPUT_PATH="./health.log"
 TIMEOUT=500
 VERBOSE=false
 
-options=$(getopt -l "help,config:,output:,timeout:,all:,verbose" -o "hac:o:t:v" -a -- "$@")
+options=$(getopt -l "help,config:,output:,extend_conf:,timeout:,all:,verbose" -o "hac:o:e:t:v" -a -- "$@")
 
 if [ $? -ne 0 ]; then
     print_help
@@ -52,6 +56,10 @@ case "$1" in
 -o|--output)
     shift
     OUTPUT_PATH="$(realpath -m ${1//\~/$HOME})"
+    ;;
+-e|--append_conf)
+    shift
+    APPEND_CONF_PATH="$(realpath -m ${1//\~/$HOME})"
     ;;
 -t|--timeout)
     shift
@@ -111,6 +119,25 @@ if [ "$VERBOSE" = true ]; then
 fi
 if [ "$RUN_ALL" = true ]; then
     nhc_args+=("-a")
+fi
+
+#Appending
+
+# Concatenate the test configuration file and with one passed in by the append argument.
+# This will create a new config file with the postfix of appended.conf. The appended file path
+# Will be printed in the new file
+if [ ! -z $APPEND_CONF_PATH  ]; then
+    if [ ! -f $APPEND_CONF_PATH ]; then
+        echo "Append conf file $APPEND_CONF_PATH does not exist"
+        exit 1
+    fi
+    conf_dir=$(dirname "$CONF_FILE")
+    default_name="$(basename "$CONF_FILE" .conf)"
+    combined_conf="$conf_dir/${default_name}_appended.conf"
+    cat $CONF_FILE > $combined_conf
+    echo -e "\n\n#######################################################################\n### APPENDED Conf File $APPEND_CONF_PATH \n" >> $combined_conf
+    cat $APPEND_CONF_PATH >> $combined_conf
+    CONF_FILE=$combined_conf
 fi
 
 echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"

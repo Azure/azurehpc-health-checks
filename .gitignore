@@ -3,6 +3,7 @@ lbnl-nhc-1.4.3/
 *.deb
 *stream.c
 *health.log
+*appended.conf
 .vscode
 build/
 aznhc_env_init.sh
