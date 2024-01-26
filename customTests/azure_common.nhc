@@ -1,30 +1,26 @@
 #!/bin/bash
 
 export ALL_REDUCE_PATH=/opt/nccl-tests/build/all_reduce_perf
+export HPCX_DIR=/opt/hpcx
 
 function check_all_reduce_dependencies() {
    if [[ ! -f $ALL_REDUCE_PATH ]]; then
       die 1 "$FUNCNAME: all reduce executable path: $ALL_REDUCE_PATH not found. Ensure nccl-tests is installed and built in."
       return 1
    fi
-   # attempt to source HPCX modules
-   if [ -f '/etc/profile.d/modules.sh' ] && [ -z $HPCX_DIR ] ;then
-      source /etc/profile.d/modules.sh
-      module -s try-load mpi/hpcx
+
+   if [[ ! -z $HPCX_DIR ]]; then
+      if [[ ! -f $HPCX_DIR/hpcx-init.sh ]]; then
+         die 1 "$FUNCNAME: hpcx-init.sh not found in HPCX_DIR: $HPCX_DIR. Set/export the HPCX_DIR ENV variable to the HPCX directory."
+         return 1
+      fi
+      source $HPCX_DIR/hpcx-init.sh && hpcx_load
+   else
+      die 1 "$FUNCNAME: HPCX_DIR not set. Set/export the HPCX_DIR ENV variable to the HPCX directory."
+      return 1
    fi
 
-   # check if the module was loaded and or if the HPCX_DIR is set
-   if [ -z $HPCX_DIR ]; then
-      die 1 "$FUNCNAME: HPCX_DIR is not set. Ensure HPCX is installed and sourced correctly."
-      return 1
-   elif [ ! -d $HPCX_DIR ]; then
-      die 1 "$FUNCNAME: HPCX_DIR: $HPCX_DIR not found. Ensure HPCX is installed and sourced correctly."
-      return 1
-   fi
-   if ! command -v mpirun &> /dev/null; then
-      die 1 "$FUNCNAME: mpirun not found. Ensure HPCX is installed and sourced correctly."
-      return 1
-   fi
+   return 0
 }
 
 function boost_gpu_clock(){

@@ -11,14 +11,14 @@ if [[ -z  "$TIME_INTERVAL_HOURS" ]];then
    TIME_INTERVAL_HOURS=6
 fi
 
-OS_TYPE=$(awk -F= '/^NAME/{print $2}' /etc/os-release)
-OS_TYPE=$(echo $OS_TYPE | xargs)
-LOG_PATH=/var/log/syslog
+LOG_PATH=$2
+if [[ -z  "$LOG_PATH" ]];then
+   LOG_PATH="$AZ_NHC_ROOT/syslog"
+fi
 
-if [[ "Ubuntu" = "$OS_TYPE" ]];then
-   LOG_PATH=/var/log/syslog
-else
-   LOG_PATH=/var/log/messages
+if [[ ! -f $LOG_PATH ]]; then
+   die 1 "$FUNCNAME: kernel log $LOG_PATH not found"
+   return 1
 fi
 
 lost_carrier_file=/tmp/last_lost_carrier_date

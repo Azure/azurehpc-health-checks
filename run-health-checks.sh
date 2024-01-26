@@ -1,8 +1,9 @@
 #!/bin/bash
 
-source $(dirname "${BASH_SOURCE[0]}")/aznhc_env_init.sh
+AZ_NHC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-print_help() {
+function print_help() 
+{
 cat << EOF
 
 Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-v|--verbose]
@@ -31,7 +32,6 @@ TIMEOUT=500
 VERBOSE=false
 
 options=$(getopt -l "help,config:,output:,timeout:,all:,verbose" -o "hac:o:t:v" -a -- "$@")
-
 if [ $? -ne 0 ]; then
     print_help
     exit 1
@@ -103,7 +103,13 @@ if [ -z "$CONF_FILE" ]; then
 fi
 
 CONF_FILE=$(realpath -e "$CONF_FILE")
+if [ ! -f "$CONF_FILE" ]; then
+    echo "The conf file $CONF_FILE does not exist. Please specify a valid conf file."
+    exit 1
+fi
 
+
+# Set NHC_ARGS
 nhc_args=()
 if [ "$VERBOSE" = true ]; then
     nhc_args+=("-v")
@@ -112,7 +118,32 @@ fi
 if [ "$RUN_ALL" = true ]; then
     nhc_args+=("-a")
 fi
+NHC_ARGS=${nhc_args[@]}
+
+# get kernel log
+if [ -f /var/log/syslog ]; then
+    kernel_log=/var/log/syslog
+elif [ -f /var/log/messages ]; then
+    kernel_log=/var/log/messages
+else
+    echo "syslog or messages log was not found in /var/log proceeding without kernel log"
+fi
+
+#create log file if it doesn't exist
+if [ ! -f $OUTPUT_PATH ]; then
+    echo "Azure Healthcheck log" > $OUTPUT_PATH
+fi
 
 echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
 
-nhc ${nhc_args[@]} CONFFILE=$CONF_FILE LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT 
+DOCK_CONF_PATH="/azure-nhc/conf"
+DOCK_IMG_NAME="DOCK_IMG_NAME="aznhc.azurecr.io/nvidia-rt""
+DOCK_CONT_NAME=aznhc
+DOCKER_RUN_ARGS="--name=$DOCK_CONT_NAME --net=host  -e TIMEOUT=$TIMEOUT \
+    --rm --runtime=nvidia --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged \
+    -v /sys:/hostsys/ \
+    -v $CONF_FILE:"$DOCK_CONF_PATH/aznhc.conf" \
+    -v $OUTPUT_PATH:/azure-nhc/output/aznhc.log \
+    -v ${kernel_log}:/azure-nhc/syslog" 
+
+sudo docker run ${DOCKER_RUN_ARGS} -e NHC_ARGS="${NHC_ARGS}" "${DOCK_IMG_NAME}" bash -c '/azure-nhc/aznhc-entrypoint.sh'
