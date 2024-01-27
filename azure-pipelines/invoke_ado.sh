@@ -10,13 +10,13 @@ get_builds_res () {
     echo $builds_json
 }
 
-# Print GH PR number
-echo "PR number: $GITHUB_PR_NUMBER"
+# Print GITHUB_PR_NUMBER env variable
+echo "GITHUB_PR_NUMBER: $(GITHUB_PR_NUMBER)"
 
 # Queue PR Pipeline
 res_code=$(curl -s -w "%{response_code}\n" -o post.json -X POST "https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework/_apis/build/builds?api-version=7.2-preview.7" \
 -H "Authorization: Bearer $SYSTEM_ACCESSTOKEN" -H "Content-Type: application/json" \
---data-raw "{\"definition\": {\"id\": 29}, \"sourceBranch\": \"master\", \"parameters\": \"{\\\"GITHUB_PR_NUMBER\\\": \\\"$GITHUB_PR_NUMBER\\\"}\"}")
+--data-raw "{\"definition\": {\"id\": 29}, \"sourceBranch\": \"master\", \"parameters\": \"{\\\"GITHUB_PR_NUMBER\\\": \\\"$(GITHUB_PR_NUMBER)\\\"}\"}")
 
 if [ $res_code -ne 200 ]
 then
