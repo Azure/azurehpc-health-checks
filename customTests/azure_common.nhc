@@ -25,6 +25,7 @@ function check_all_reduce_dependencies() {
       die 1 "$FUNCNAME: mpirun not found. Ensure HPCX is installed and sourced correctly."
       return 1
    fi
+   return 0
 }
 
 function boost_gpu_clock(){
@@ -45,5 +46,87 @@ function boost_gpu_clock(){
 function remove_clock_boost(){
    # remove clock boost
    sudo timeout 3m nvidia-smi -rgc  > /dev/null
+   return 0
+}
+
+function remove_white_space(){
+   # remove white space from string
+   echo "$1" | tr -d '[:space:]'
+   return 0
+}
+
+function determine_IB_devices(){
+   ib_dir=$1
+   if [ -z "$ib_dir" ]; then
+      ib_dir="/sys/class/infiniband"
+   fi
+   if [ ! -d "$ib_dir" ]; then
+      die 1 "$FUNCNAME: IB system directory $ib_dir not found."
+      return 1
+   fi
+   mapfile -t devices < <(ibstat -l)
+   ib_devices=()
+
+   for device in "${devices[@]}"; do
+      link_layer_file="${ib_dir}/${device}/ports/1/link_layer"
+      if [ -e "$link_layer_file" ]; then
+         link_layer_value=$(cat "$link_layer_file")
+         if [ "$link_layer_value" = "InfiniBand" ]; then
+            device=$(remove_white_space "$device")
+            ib_devices+=("$device")
+         fi
+      fi
+   done
+   echo ${ib_devices[@]}
+   return 0
+}
+
+function map_IB_to_numa(){
+   ib_dir=$1
+   if [ -z "$ib_dir" ]; then
+      ib_dir="/sys/class/infiniband"
+   fi
+   if [ ! -d "$ib_dir" ]; then
+      die 1 "$FUNCNAME: IB system directory $ib_dir not found."
+      return 1
+   fi
+
+   ib_numa=()
+   ib_dev=$(determine_IB_devices "$ib_dir")
+
+   IFS=' ' read -ra ib_dev <<< "$ib_dev"
+   for device in "${ib_dev[@]}"; do
+      ib_numa+=($(cat ${ib_dir}/${device}/device/numa_node))
+   done
+   echo ${ib_numa[@]}
+   return 0
+}
+
+function get_ib_numa_node(){
+   ib_dev=$1
+   ib_dir=$2
+   if [ -z "$ib_dir" ]; then
+      ib_dir="/sys/class/infiniband"
+   fi
+   if [ ! -f "$ib_dir/$ib_dev/device/numa_node" ]; then
+      die 1 "$FUNCNAME: IB system directory $ib_dir not found."
+      return 1
+   fi
+
+   numa_node=$(cat $ib_dir/$ib_dev/device/numa_node 2>/dev/null)
+   if [ -z "$numa_node" ]; then
+      return 1
+   fi
+   echo $numa_node
+   return 0
+}
+
+function get_numa_cpu(){
+   numa=$1
+   numa_cpu=$(lscpu | grep "NUMA node$1 CPU(s):" | cut -d ":" -f 2 | cut -d "-" -f 1)
+   echo $numa_cpu
+   if [ -z "$numa_cpu" ]; then
+      return 1
+   fi
    return 0
 }
