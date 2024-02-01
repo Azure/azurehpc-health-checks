@@ -6,6 +6,7 @@ GPU_QUERY_CLOCKS="clocks.max.memory,clocks.applications.memory,clocks.max.graphi
 
 
 function collect_clocks_data() {
+   echo "Test"
 
    gpu_freq_out=$(nvidia-smi --query-gpu=$GPU_QUERY_CLOCKS --format=csv,noheader,nounits)
    gpu_freq_out_rc=$?
