@@ -143,11 +143,10 @@ if [ "$RUN_ALL" = true ]; then
     nhc_args+=("-a")
 fi
 
-#Appending
 
-# Concatenate the test configuration file and with one passed in by the append argument.
-# This will create a new config file with the postfix of appended.conf. The appended file path
-# Will be printed in the new file
+# Concatenate the test conf file with another conf file passed in by the append argument.
+# This will create a new config file with the postfix of appended.conf. 
+# The appended file path will be printed in the new file
 if [ ! -z $APPEND_CONF_PATH  ]; then
     if [ ! -f $APPEND_CONF_PATH ]; then
         echo "Append conf file $APPEND_CONF_PATH does not exist"
