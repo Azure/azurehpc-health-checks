@@ -5,7 +5,7 @@ source /etc/nhc/scripts/azure_common.nhc
 function ib_write(){
    
    # default env vars
-   IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw
+   IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw_nongdr
    IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
    IB_WRITE_BW_DURATION=10
    HOSTNAME=`hostname`
@@ -71,7 +71,7 @@ function ib_write(){
          break
       fi
    done
-   echo "bw $ib_bandwidth"
+
    if (( $(echo "$ib_bandwidth < $EXP_IB_BW" | bc -l) )); then
          die 1 "check_ib_bw_non_gdr:  IB=$device, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps)"
          return 1

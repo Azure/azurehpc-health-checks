@@ -53,6 +53,14 @@ function build_cuda_exes(){
         make
     popd
 
+    mkdir -p ${perftest_dir}_nongdr
+    archive_url=https://github.com/linux-rdma/perftest/releases/download/${PERF_TEST_VERSION}/perftest-${PERF_TEST_VERSION}.${PERF_TEST_HASH}.tar.gz 
+    wget -q -O - $archive_url | tar -xz --strip=1 -C  ${perftest_dir}_nongdr
+    pushd ${perftest_dir}_nongdr
+        ./configure
+        make
+    popd
+
     # Install NCCL
     NCCL_DOWNLOAD_URL=https://github.com/NVIDIA/nccl/archive/refs/tags/v${NCCL_VERSION}.tar.gz 
     mkdir -p nccl-${NCCL_VERSION}
@@ -78,7 +86,7 @@ pushd $parent_dir/../
 
 if [[ "$build_type" == "cuda" ]]; then
     echo "Nvidia runtime selected"
-    IMAGE=nvrt
+    IMAGE=aznhc.azurecr.io/nvrt
     DOCK_FILE=dockerfile/azure-nvrt-nhc.dockerfile
     mkdir -p $build_exe
     pushd $build_exe
@@ -101,7 +109,7 @@ else
     echo "Successfully built docker image"
     if [[ "$development" == "false" ]]; then
         echo "Removing build artifacts"
-        rm -rf build_exe
+        sudo rm -rf dockerfile/build_exe
     fi
 fi
 

@@ -3,6 +3,8 @@
 CONF_FILE=${AZ_NHC_ROOT}/conf/aznhc.conf
 OUTPUT_PATH=${AZ_NHC_ROOT}/output/aznhc.log
 
+cp ${AZ_NHC_ROOT}/customTests/*.nhc /etc/nhc/scripts/
+
 if [ -z "$TIMEOUT" ]; then
     TIMEOUT=500
 fi

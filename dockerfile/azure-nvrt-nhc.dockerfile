@@ -117,6 +117,7 @@ COPY customTests/topofiles ${AZ_NHC_ROOT}/topofiles
 # Install Perf-Test
 ARG host_perftest_dir=dockerfile/build_exe/perftest-${PERF_TEST_VERSION}
 COPY ${host_perftest_dir}/ib_write_bw ${AZ_NHC_ROOT}/bin
+COPY ${host_perftest_dir}_nongdr/ib_write_bw ${AZ_NHC_ROOT}/bin/ib_write_bw_nongdr
 
 # Install NV Bandwidth tool
 ARG host_nvbandwidth_dir=dockerfile/build_exe/nvbandwidth-${NV_BANDWIDTH_VERSION}
