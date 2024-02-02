@@ -8,21 +8,26 @@ function check_all_reduce_dependencies() {
       return 1
    fi
    # attempt to source HPCX modules
-   if [ -f '/etc/profile.d/modules.sh' ] && [ -z $HPCX_DIR ] ;then
-      source /etc/profile.d/modules.sh
-      module -s try-load mpi/hpcx
+   if [ -z $HPCX_DIR ]; then
+      hpcx=$(locate hpcx-init.sh)
+      IFS=' ' read -ra hpcx <<< "$hpcx"
+      if [ ! -f $hpcx ]; then
+         die 1 "$FUNCNAME: HPCX module not found. Ensure HPCX is installed and HPCX_DIR env variable is set."
+         return 1
+      fi
+      source $hpcx
+      hpcx_load
+   else
+      if [ ! -f $HPCX_DIR/hpcx-init.sh ]; then
+         die 1 "$FUNCNAME: HPCX file $HPCX_DIR/hpcx-init.sh not found. Ensure HPCX is installed and HPCX_DIR env variable is set."
+         return 1
+      fi
+      source $HPCX_DIR/hpcx-init.sh
+      hpcx_load
    fi
 
-   # check if the module was loaded and or if the HPCX_DIR is set
-   if [ -z $HPCX_DIR ]; then
-      die 1 "$FUNCNAME: HPCX_DIR is not set. Ensure HPCX is installed and sourced correctly."
-      return 1
-   elif [ ! -d $HPCX_DIR ]; then
-      die 1 "$FUNCNAME: HPCX_DIR: $HPCX_DIR not found. Ensure HPCX is installed and sourced correctly."
-      return 1
-   fi
    if ! command -v mpirun &> /dev/null; then
-      die 1 "$FUNCNAME: mpirun not found. Ensure HPCX is installed and sourced correctly."
+      die 1 "$FUNCNAME: mpirun not found. Ensure HPCX is installed and HPCX_DIR env variable is set."
       return 1
    fi
    return 0

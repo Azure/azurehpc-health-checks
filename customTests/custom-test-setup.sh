@@ -89,10 +89,9 @@ function install_stream(){
 #Nvidia installs
 if lspci | grep -iq NVIDIA ; then
 	install_nvbandwidth
-else
-	install_stream
 fi
 
+install_stream
 install_perf_test
 
 exit 0

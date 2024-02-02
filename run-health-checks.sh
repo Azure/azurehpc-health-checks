@@ -2,6 +2,28 @@
 
 source $(dirname "${BASH_SOURCE[0]}")/aznhc_env_init.sh
 
+if [ "$EUID" -ne 0 ]; then
+  echo "This script needs superuser privileges. Please run it with sudo."
+  exit 1
+fi
+
+function install_check(){
+    if ! command -v nhc &> /dev/null; then
+        echo "NHC is not installed. Please install NHC before running health checks."
+        exit 1
+    fi
+    # check if GPU custom test install is needed
+    if lspci | grep -iq NVIDIA ; then
+        if ! command -v $AZ_NHC_ROOT/bin/nvbandwidth &> /dev/null; then
+            echo "NVBandwidth is not installed. Please rerun nhc install script."
+            exit 1
+        fi
+    fi
+    return 0
+}
+
+install_check
+
 print_help() {
 cat << EOF
 

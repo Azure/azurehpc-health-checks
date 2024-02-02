@@ -66,14 +66,17 @@ EOL
 install_lbnl_nhc 
 
 # Install NHC dependencies
+distro_check=$( cat /etc/os-release | grep -i ID_LIKE=)
 distro=`awk -F= '/^NAME/{print $2}' /etc/os-release`
-if [[ $distro =~ "Ubuntu" ]]; then
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libpci-dev hwloc build-essential libboost-program-options-dev libssl-dev cmake
+
+if [[ $distro_check =~ "debian" ]]; then
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y libpci-dev hwloc build-essential libboost-program-options-dev libssl-dev plocate cmake
 elif [[ $distro =~ "AlmaLinux" ]]; then
-  sudo dnf install -y pciutils-devel hwloc openssl-devel boost-devel cmake
-elif [[ $distro =~ "CentOS" ]]; then
-  sudo yum install -y  pciutils-devel hwloc openssl-devel boost-devel cmake > /dev/null
-  echo "CentOS version is not officially supported, proceed w/ caution."
+  sudo dnf install -y pciutils-devel hwloc openssl-devel boost-devel mlocate cmake
+# this will attempt to install for the following os's: CentOS, RHEL, Fedora
+elif [[ $distro_check =~ "CentOS" ]] || [[ $distro_check =~ "Rhel" ]] || [[ $distro_check =~ "fedora" ]]; then
+  sudo yum install -y  pciutils-devel hwloc openssl-devel boost-devel mlocate cmake > /dev/null
+  echo "$distro version is not officially supported, proceed w/ caution."
 else
   echo "OS version $distro is not supported. Proceed w/ caution."
 fi
