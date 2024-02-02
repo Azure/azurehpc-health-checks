@@ -17,6 +17,7 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - [NDm A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ndm-a100-v4-series)
 - [ND A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nda100-v4-series)
 - [NC A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nc-a100-v4-series)
+- [ND MI300x v5-series](https://techcommunity.microsoft.com/t5/azure-high-performance-computing/azure-announces-new-ai-optimized-vm-series-featuring-amd-s/ba-p/3980770)
 - [HBv4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv4-series)
 - [HX-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hx-series)
 - [HBv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv3-series)
@@ -54,6 +55,7 @@ Note: Other distributions may work but are not supported.
     - Nvbandwidth: https://github.com/NVIDIA/nvbandwidth
     - Perf-test: https://github.com/linux-rdma/perftest
     - Stream: https://www.cs.virginia.edu/stream
+    - Rocm-bandwidth-test (AMD GPU only): https://github.com/ROCm/rocm_bandwidth_test
 
 3. During installation 'aznhc_env_init.sh' will be generated in the install location. When sourced the follwing will be exported to the environment:
     - AZ_NHC_ROOT=\<install directory\>
@@ -110,7 +112,7 @@ The following are Azure custom checks added to the existing NHC suite of tests:
 | check_gpu_ecc | GPU Mem Errors (ECC) |  20000000 | 20000000 | 20000000 | NA | NA |
 | check_gpu_clock_throttling | GPU Throttle codes assertion | not present | not present | not present | NA | NA |
 | check_nccl_allreduce | GPU NVLink bandwidth | 228 GB/s | 228 GB/s | 460 GB/s | NA | NA |
-| check_ib_bw_gdr | IB device (GDR) bandwidth | 175 GB/s | 175 GB/s | 380 GB/s | NA | NA |
+| check_ib_bw_gdr | IB device (GDR) bandwidth | 180 GB/s | 180 GB/s | 380 GB/s | NA | NA |
 | check_ib_bw_non_gdr | IB device (non GDR) bandwidth | NA | NA | NA | 390 GB/s | 390 GB/s |
 | check_nccl_allreduce_ib_loopback | GPU/GPU Direct RDMA(GDR) + IB device bandwidth | 18 GB/s | 18 GB/s | NA | NA | NA |
 | check_hw_topology | IB/GPU device topology/PCIE mapping | pass | pass | pass | NA | NA |
@@ -139,6 +141,10 @@ provided by the bot. You will only need to do this once across all repos using o
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
+### Developer Guide ###
+
+See the [Dev guide](./developer_guide.md) if you're planning on contributing to this project.
 
 ## Trademarks ##
 

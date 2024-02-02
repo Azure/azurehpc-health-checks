@@ -1,0 +1,23 @@
+#!/bin/bash
+
+source /etc/nhc/scripts/azure_common.nhc
+
+check_gpu_xgmi(){
+    # Check AMD GPU XGMI link errors
+    check_support=$(rocm-smi --showxgmierr | grep GPU)
+    if [ -z "$check_support" ]; then
+        log "check_gpu_xgmi: XGMI error count not supported"
+        return 0
+    fi
+
+    mapfile -t xgmi_errors < <(rocm-smi --showxgmierr | grep GPU | awk -F'count:' '{print $2}' | awk '{print $1}' )
+    for ((i=0; i<${#xgmi_errors[*]}; i++))
+    do
+        error=${xgmi_errors[$i]}
+        log "GPU $i has $error xgmi error(s)" 
+        if [ $error -gt 0 ]; then
+            die 1 "check_gpu_xgmi: XGMI error count: $error" on GPU $i
+            return 1
+        fi
+    done
+}

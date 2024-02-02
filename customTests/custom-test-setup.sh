@@ -34,8 +34,13 @@ function install_perf_test(){
 	archive_url="https://github.com/linux-rdma/perftest/releases/download/v${VERSION}/perftest-${VERSION}.${VERSION_HASH}.tar.gz"
 	wget -q -O - $archive_url | tar -xz --strip=1 -C  ${perftest_dir}
 
-	pushd ${perftest_dir} 
-	./configure CUDA_H_PATH=$CUDA_DIR/include/cuda.h  --exec-prefix=${INSTALL_DIR}
+	pushd ${perftest_dir}
+
+	if [ -f $CUDA_DIR/include/cuda.h  ]; then
+		./configure CUDA_H_PATH=$CUDA_DIR/include/cuda.h  --exec-prefix=${INSTALL_DIR}
+	else
+		./configure --exec-prefix=${INSTALL_DIR}
+	fi
 
 	make
 	make install
@@ -89,6 +94,14 @@ function install_stream(){
 #Nvidia installs
 if lspci | grep -iq NVIDIA ; then
 	install_nvbandwidth
+elif lspci | grep -iq AMD ; then
+	# AMD installs
+	distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release)
+	if [[ $distro =~ "Ubuntu" ]]; then
+		sudo apt install -y rocm-bandwidth-test
+	else
+		sudo yum install -y rocm-bandwidth-test
+	fi
 fi
 
 install_stream

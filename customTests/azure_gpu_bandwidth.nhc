@@ -36,7 +36,7 @@ catch_error() {
 
 function check_nvlink_enabled(){
     # Check if NVLINK is enabled
-    error_smi="$FUNCNAME: Failed to get NVLINK status with error code"
+    error_smi="check_gpu_bw: Failed to get NVLINK status with error code"
     nvlink_status="nvidia-smi nvlink --status"
     if ! catch_error "$nvlink_status" "$error_smi"; then
         echo false
@@ -50,7 +50,8 @@ function check_nvlink_enabled(){
     return 0
 }
 
-function evaluate_result(){
+function evaluate_nvBW_result(){
+    # Evaluate the results of the NVBandwidth test
     EXP_CUDA_BW=$1
     EXP_P2P_BW=$2
     GPU_COUNT=$3
@@ -102,29 +103,24 @@ function evaluate_result(){
     return 0
 }
 
-function check_gpu_bw()
+function check_nvBW_gpu_bw()
 {
-    #set expected BW set to default value if argument empty
+    # Check GPU BW using NVBandwidth
     EXP_CUDA_BW=$1
     EXP_P2P_BW=$2
 
-    if [[ -z "$EXP_CUDA_BW"  ]]; then
-        die 1 -e "$FUNCNAME: Expected H2D/D2H bandwidth not set!"
-    fi
-
     # Lock graphics clocks to max freq to eliminate any time for the GPUs to boost.
-    error_smi="$FUNCNAME: Failed raise GPU clocks with error code"
+    error_smi="check_gpu_bw: Failed raise GPU clocks with error code"
     if ! boost_gpu_clock > /dev/null 2>&1 ; then
-        die 1 -e "$FUNCNAME: $error_smi"
+        die 1 -e "check_gpu_bw: $error_smi"
         return 0
     fi
-
 
     # exit function to unlock clocks on exit 
     trap cleanup EXIT
 
     # Count the GPUs.
-    error_smi="$FUNCNAME: Failed to get GPU Count with error code"
+    error_smi="check_gpu_bw: Failed to get GPU Count with error code"
     gpu_list="timeout 3m nvidia-smi --query-gpu=name --format=csv,noheader"
     if ! catch_error "$gpu_list" "$error_smi"; then
         return 0
@@ -138,7 +134,7 @@ function check_gpu_bw()
     fi  
     cmd="$NVBW -t $cmd_args"
 
-    error_nbw="$FUNCNAME: Failed to run NVBandwidth with error code"
+    error_nbw="check_gpu_bw: Failed to run NVBandwidth with error code"
     if ! catch_error "$cmd" "$error_nbw"; then
         return 0
     fi
@@ -172,8 +168,188 @@ function check_gpu_bw()
         result_lines_array["$current_test"]="$extracted_lines"
     fi
 
-    evaluate_result $EXP_CUDA_BW $EXP_P2P_BW
+    evaluate_nvBW_result $EXP_CUDA_BW $EXP_P2P_BW
  
     return 0
 }
 
+function get_OAM_pairs(){
+    # Get OAM pairs
+    # return array where the index is the GPU id and the value is the OAM pair
+    oam_check=$(rocm-smi --showserial | grep GPU)
+
+    if [[ "$oam_check" == *"Not supported"* ]]; then
+        # return an empty line
+        echo ""
+        return 0
+    fi
+
+    mapfile -t gsn < <(rocm-smi --showserial | grep GPU | awk '{print $5}')
+
+    oam_pairs=()
+
+    for ((i=0; i<${#gsn[@]}; i++)); do
+        for ((j=0; j<${#gsn[@]}; j++))
+        do
+            if [[ $i -eq $j ]]; then
+                continue
+            else
+                if [[ "${gsn[$j]}" == *"${gsn[$i]}"* ]]; then
+                    oam_pairs+=($j)
+                fi
+            fi
+        done
+    done
+    echo "${oam_pairs[@]}"
+    # check if the array is empty
+    if [ ${#oam_pairs[@]} -eq 0 ]; then
+        echo ""
+    fi
+    return 0
+}
+
+function check_rocm_gpu_bw(){
+    # Check GPU BW using ROCm Bandwidth Test
+    exp_hd_bw=$1
+    exp_dd_bw=$2
+    exp_oam_bw=$3
+
+    if [ ! -f /opt/rocm/bin/rocm-bandwidth-test ]; then
+        die 1 "check_gpu_bw: rocm_bandwidth_test not found. Ensure ROCm is installed and sourced correctly. Check/rerun azurehpc-health-checks installation."
+        return 1
+    fi
+
+    cmd="sudo /opt/rocm/bin/rocm-bandwidth-test -a"
+    err_msg="check_gpu_bw: Failed to run rocm-bandwidth-test with error code"
+    if ! catch_error "$cmd" "$error_nbw"; then
+        return 1
+    fi
+    rocm_result=$output
+    lines=()
+    IFS=$'\n'
+    lines=( $rocm_result)
+    IFS=$' \t\n'
+
+    # Get OAM pairs
+    oam_pairs=$(get_OAM_pairs)
+    if [ -z "$oam_pairs" ]; then
+        oam_pairs=()
+    fi
+    read -a oam_pairs <<< "$oam_pairs"
+
+    device_results=()
+    declare -A devTypeIDmap # used to map a device to a type: CPU or GPU
+    CPUNum=$(lscpu | grep "Socket(s)" | awk '{print $2}')
+    store=false
+    for line in "${lines[@]}"; do
+        if [[ "$line" == *"Device: "* ]]; then
+            id=$( echo $line | awk  -F ',' '{print $1}' | awk '{print $2}' )
+            if [[ "$line" == *"GPU"* ]]; then
+                devTypeIDmap[$id]="GPU"
+            else
+                devTypeIDmap[$id]="CPU"
+            fi
+        fi
+        if [[ "$line" == *"Unidirectional copy"* ]]; then
+            store=true
+            continue
+        fi
+        if [ "$store" == true ]; then
+            device_results+=("$line")
+        fi
+    done
+
+    bad_results=()
+    for ((i=1; i<${#device_results[*]}; i++))
+    do  
+        val_list=()
+        values="${device_results[$i]}"
+        IFS=$' ' read -ra values <<< "$values"
+        id=${values[0]}
+
+        for ((devid=0; devid<$(( ${#values[*]} -1 )); devid++)) 
+        do
+            val=${values[$(( devid + 1 ))]} #offset first val
+            real_GPUID=$(( devid - CPUNum )) # offset by number of CPUs
+            cur_real_GPUID=$(( id - CPUNum )) # offset by number of CPUs for GPU being evaluated
+            dbg "ROCm Device id $id to Device id $devid: $val GB/s"
+            if ( [[ "${devTypeIDmap[$id]}" == "${devTypeIDmap[$devid]}" ]] &&  [[ "${devTypeIDmap[$devid]}" == *"CPU"* ]] ); then
+                continue
+            elif [ "${devTypeIDmap[$id]}" != "${devTypeIDmap[$devid]}" ]   ; then
+                if [[ "${devTypeIDmap[$id]}" == *"CPU"* ]]; then
+                    # htd
+                    if (( $(echo "$exp_hd_bw > $val" | bc -l) )); then
+                        bad_results+=("CPU $id to GPU $real_GPUID: Less than expectd $exp_hd_bw GB/s, result: $val GB/s")
+                    fi
+                else
+                    # dth
+                    if (( $(echo "$exp_hd_bw > $val" | bc -l) )); then
+                        bad_results+=("GPU $cur_real_GPUID to CPU $id: Less than expectd $exp_hd_bw GB/s, result: $val GB/s")
+                    fi
+                fi
+                continue
+            else
+                # d2d
+                if [ -z $oam_pairs ]; then
+                    #No OAM pairs
+                    if (( $(echo "$exp_dd_bw > $val" | bc -l) )); then
+                        bad_results+=("GPU $cur_real_GPUID to GPU $real_GPUID: Less than expectd $exp_dd_bw GB/s, result: $val GB/s")
+                    fi
+                elif [ $((oam_pairs[$cur_real_GPUID])) -eq $(($real_GPUID)) ]; then
+                    if (( $(echo "$exp_oam_bw > $val" | bc -l) )); then
+                        bad_results+=("GPU $cur_real_GPUID to GPU $real_GPUID: Less than expectd $exp_oam_bw GB/s, result: $val GB/s")
+                    fi
+                else
+                    # not an OAM pair
+                    if (( $(echo "$exp_dd_bw > $val" | bc -l) )); then
+                        bad_results+=("GPU $cur_real_GPUID to GPU $real_GPUID: Less than expectd $exp_dd_bw GB/s, result: $val GB/s")
+                    fi
+                fi
+            fi
+        done
+    done    
+
+    for bad_result in "${bad_results[@]}"; do
+        die 1 "check_gpu_bw: $bad_result"
+    done
+
+    if [ ${#bad_results[@]} -gt 0 ]; then
+        return 1
+    fi
+
+    return 0
+}
+
+function check_gpu_bw(){
+
+    if lspci | grep -iq NVIDIA ; then
+	    # Check GPU BW using NVBandwidth
+        EXP_CUDA_BW=$1
+        EXP_P2P_BW=$2
+        if [[ -z "$EXP_CUDA_BW"  ]]; then
+            die 1 -e "$FUNCNAME: Expected H2D/D2H bandwidth not set!"
+            return 0
+        fi
+        check_nvBW_gpu_bw $EXP_CUDA_BW $EXP_P2P_BW
+    elif lspci | grep -iq AMD ; then
+        # Check GPU BW using ROCm Bandwidth Test
+        EXP_AMD_HD=$1
+        EXP_AMD_DD=$2
+        EXP_AMD_OAM=$3
+
+        if [[ -z "$EXP_AMD_HD"  ]] || [[ -z "$EXP_AMD_DD"  ]]; then
+            die 1 -e "$FUNCNAME: Expected HTD/P2P/OAM P2P bandwidth not set!"
+            return 0
+        fi
+        if [[ -z "$EXP_AMD_OAM"  ]]; then
+            # set expected OAM BW to expected dtd BW if not set
+            EXP_AMD_OAM=$EXP_AMD_DD
+        fi
+
+        check_rocm_gpu_bw $EXP_AMD_HD $EXP_AMD_DD $EXP_AMD_OAM
+    else
+        die 1 -e "$FUNCNAME: No GPUs found!"
+	fi
+
+    return 0
+}

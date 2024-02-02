@@ -1,7 +1,14 @@
 #!/bin/bash
 function check_gpu_count() {
    EXPECTED_NUM_GPU="$1"
-   gpu_count=$(nvidia-smi --list-gpus | wc -l)
+   GPU_TYPE="$2"
+
+   if [ "$GPU_TYPE" == "rocm" ]; then
+      gpu_count=$(rocm-smi -l | grep 'GPU' | wc -l)
+   else
+      gpu_count=$(nvidia-smi --list-gpus | wc -l)
+   fi  
+
    if [ "$gpu_count" -ne "$1" ]; then
      die 1 "$FUNCNAME: Expected to see $EXPECTED_NUM_GPU but found $gpu_count" 
    fi      
