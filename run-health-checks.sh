@@ -1,11 +1,15 @@
 #!/bin/bash
 
-source $(dirname "${BASH_SOURCE[0]}")/aznhc_env_init.sh
+AZ_NHC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOCK_IMG_NAME="aznhc.azurecr.io/nvrt"
+DOCK_CONT_NAME=aznhc
 
-print_help() {
+
+function print_help() 
+{
 cat << EOF
 
-Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-v|--verbose]
+Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-d|--mount_dir] [-v|--verbose]
 Run health checks on the current VM.
 
 -h, -help,          --help                  Display this help
@@ -17,7 +21,10 @@ Run health checks on the current VM.
 
 -t, -timeout,       --timeout               Optional timeout in seconds for each health check. If not specified it will default to 500 seconds.
 
--a, -all,     --all             Run ALL checks; don't exit on first failure.
+-a, -all,     --all                         Run ALL checks; don't exit on first failure.
+
+-d, -mount_dir,     --mount_dir             Optional path to mount directories to the docker container. Provide single directory or comma separate directories.
+                                            All directories will have the same path but with the prefix /mnt/ added to the path within the container.
 
 -v, -verbose,       --verbose               If set, enables verbose and debug outputs.
 
@@ -30,8 +37,7 @@ OUTPUT_PATH="./health.log"
 TIMEOUT=500
 VERBOSE=false
 
-options=$(getopt -l "help,config:,output:,timeout:,all:,verbose" -o "hac:o:t:v" -a -- "$@")
-
+options=$(getopt -l "help,config:,output:,timeout:,all:,verbose" -o "hac:o:t:d:v" -a -- "$@")
 if [ $? -ne 0 ]; then
     print_help
     exit 1
@@ -56,6 +62,10 @@ case "$1" in
 -t|--timeout)
     shift
     TIMEOUT="$1"
+    ;;
+-d|--mount_dir)
+    shift
+    USER_DIRS="$1"
     ;;
 -v|--verbose)
     VERBOSE=true
@@ -103,7 +113,13 @@ if [ -z "$CONF_FILE" ]; then
 fi
 
 CONF_FILE=$(realpath -e "$CONF_FILE")
+if [ ! -f "$CONF_FILE" ]; then
+    echo "The conf file $CONF_FILE does not exist. Please specify a valid conf file."
+    exit 1
+fi
 
+
+# Set NHC_ARGS
 nhc_args=()
 if [ "$VERBOSE" = true ]; then
     nhc_args+=("-v")
@@ -112,7 +128,48 @@ fi
 if [ "$RUN_ALL" = true ]; then
     nhc_args+=("-a")
 fi
+NHC_ARGS=${nhc_args[@]}
+
+# get kernel log
+if [ -f /var/log/syslog ]; then
+    kernel_log=/var/log/syslog
+elif [ -f /var/log/messages ]; then
+    kernel_log=/var/log/messages
+else
+    echo "syslog or messages log was not found in /var/log proceeding without kernel log"
+fi
+
+# create log file if it doesn't exist
+if [ ! -f $OUTPUT_PATH ]; then
+    echo "Azure Healthcheck log" > $OUTPUT_PATH
+fi
+
+# mount additional directories
+ADDITIONAL_MNTS=""
+if [ -n "$USER_DIRS" ]; then
+    for dir in $(echo $USER_DIRS | tr "," "\n"); do
+        if [ -d "$dir" ]; then
+            ADDITIONAL_MNTS+=" -v $dir:/mnt/$dir"
+        else
+            echo "Directory $dir does not exist, skipping"
+        fi
+    done
+fi
 
 echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
 
-nhc ${nhc_args[@]} CONFFILE=$CONF_FILE LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT 
+if lspci | grep -iq NVIDIA ; then
+    NVIDIA_RT="--runtime=nvidia"
+fi
+
+WORKING_DIR="/azure-nhc"
+DOCK_CONF_PATH="$WORKING_DIR/conf"
+DOCKER_RUN_ARGS="--name=$DOCK_CONT_NAME --net=host  -e TIMEOUT=$TIMEOUT \
+    --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged \
+    -v /sys:/hostsys/ \
+    -v $CONF_FILE:"$DOCK_CONF_PATH/aznhc.conf" \
+    -v $OUTPUT_PATH:$WORKING_DIR/output/aznhc.log \
+    -v ${kernel_log}:$WORKING_DIR/syslog
+    -v ${AZ_NHC_ROOT}/customTests:$WORKING_DIR/customTests"
+
+sudo docker run ${DOCKER_RUN_ARGS} -e NHC_ARGS="${NHC_ARGS}" "${DOCK_IMG_NAME}" bash -c "$WORKING_DIR/aznhc-entrypoint.sh"

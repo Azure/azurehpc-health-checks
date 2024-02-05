@@ -1,37 +1,32 @@
 #!/bin/bash
 
-IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw
-IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
-IB_WRITE_BW_DURATION=10
-SLEEP_TIME=5
-DEFAULT_MSG_SIZE=1048576
-HOSTNAME=`hostname`
-
-
-function determine_devices(){
-   mapfile -t devices < <(ibstat -l)
-   devices=$(ibstat -l)
-   ib_devices=()
-   for device in "${devices[@]}"; do
-      link_layer_file="/sys/class/infiniband/${device}/ports/1/link_layer"
-      if [ -e "$link_layer_file" ]; then
-         link_layer_value=$(cat "$link_layer_file")
-         if [ "$link_layer_value" = "InfiniBand" ]; then
-            ib_devices+=("$device")
-         fi
-      fi
-   done
-   echo ${ib_devices[@]}
-   return 0
-}
+source /etc/nhc/scripts/azure_common.nhc
 
 function ib_write(){
+   
+   # default env vars
+   IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw_nongdr
+   IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
+   IB_WRITE_BW_DURATION=10
+   HOSTNAME=`hostname`
+   SLEEP_TIME=5
 
    device=$1
    MSG_SIZE=$2
+   EXP_IB_BW=$3
 
-   IB_WRITE_BW_ARGS="-s $MSG_SIZE -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits -d $device"
-   IB_WRITE_BW_OUT1=$( numactl --membind=0 -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS  > /dev/null &)
+   if ! numa_node=$(get_ib_numa_node "$device"); then
+      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA node"
+      return 1
+   fi
+   if ! numa_core=$(get_numa_cpu "$numa_node"); then
+      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA core"
+      return 1
+   fi
+
+   IB_WRITE_BW_ARGS="-s $MSG_SIZE -D ${IB_WRITE_BW_DURATION} -x 0 -F --report_gbits --perform_warm_up -d $device -q 2"
+   IB_WRITE_BW_OUT1=$( numactl --membind=$numa_node -C $numa_core  $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS  > /dev/null &)
+
    IB_WRITE_BW_OUT1_RC=$?
    if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
       log "$IB_WRITE_BW_OUT1"
@@ -47,7 +42,8 @@ function ib_write(){
       return 1
    fi
    sleep $SLEEP_TIME
-   IB_WRITE_BW_OUT2=$( numactl --membind=0 -c 0 $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $HOSTNAME)
+   IB_WRITE_BW_OUT2=$( numactl --membind=$numa_node -C $(( numa_core + 1 )) $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $HOSTNAME)
+
    IB_WRITE_BW_OUT2_RC=$?
    if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
       log "$IB_WRITE_BW_OUT2"
@@ -75,38 +71,30 @@ function ib_write(){
          break
       fi
    done
-   echo $ib_bandwidth 
+
+   if (( $(echo "$ib_bandwidth < $EXP_IB_BW" | bc -l) )); then
+         die 1 "check_ib_bw_non_gdr:  IB=$device, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps)"
+         return 1
+   fi
+   dbg "$FUNCNAME: IB device=$device: Measured IB BW $ib_bandwidth Gbps"
    return 0
 }
 
 function check_ib_bw_non_gdr(){
+   DEFAULT_MSG_SIZE=1048576
+
    EXP_IB_BW=$1
    MSG_SIZE=$2
 
    if [ -z "$MSG_SIZE" ]; then
       MSG_SIZE=$DEFAULT_MSG_SIZE
    fi
+   #get devices
+   devices=($(determine_IB_devices))
 
-   devices=($(determine_devices))
-   bad_results=()
    for device in "${devices[@]}"; do
-      result=$(ib_write $device $MSG_SIZE)
-      if [ $? -ne 0 ]; then
-         return 1
-      fi
-      dbg "IB device=$device: Measured IB BW $result Gbps"
-      if (( $(echo "$result < $EXP_IB_BW" | bc -l) )); then
-         bad_results+=("$device:$result")
-      fi
+      ib_write $device $MSG_SIZE $EXP_IB_BW
    done
 
-   if [ ${#bad_results[@]} -gt 0 ]; then
-      for bad_result in "${bad_results[@]}"; do
-         device=$(echo "$bad_result" | cut -d ":" -f 1)
-         result=$(echo "$bad_result" | cut -d ":" -f 2)
-         die 1 "$FUNCNAME: $IB_WRITE_BW, IB=$device, IB BW (expected > $EXP_IB_BW Gbps, but measured $result Gbps)"
-      done
-      return 1
-   fi
    return 0
 }

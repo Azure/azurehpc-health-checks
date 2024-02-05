@@ -57,7 +57,7 @@ function check_cpu_stream(){
 
 	# location of executables, must match setup location
 	if [[  ! -d "$EXE_DIR" ]]; then
-		die 1 -e "check_cpu_stream: Failed to find the directory $EXE_DIR. Ensure to source the aznhc_env_init.sh file or check installation"
+		die 1 -e "check_cpu_stream: Failed to find the executable directory $EXE_DIR."
         return 0
 	fi
 
