@@ -102,10 +102,9 @@ elif lspci | grep -iq AMD ; then
 	else
 		sudo yum install -y rocm-bandwidth-test
 	fi
-else
-	install_stream
 fi
 
+install_stream
 install_perf_test
 
 exit 0

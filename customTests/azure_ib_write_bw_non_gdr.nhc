@@ -71,7 +71,7 @@ function ib_write(){
          break
       fi
    done
-   echo "bw $ib_bandwidth"
+
    if (( $(echo "$ib_bandwidth < $EXP_IB_BW" | bc -l) )); then
          die 1 "check_ib_bw_non_gdr:  IB=$device, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps)"
          return 1

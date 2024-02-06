@@ -70,18 +70,19 @@ This project comes with default VM SKU test configuration files that list the te
 ## Usage ##
 
 - Invoke health checks using a script that determines SKU and runs the configuration file according to SKU for you:
-```sudo ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-v|--verbose]```
+```sudo ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-e|--append_conf < path to conf file to be appended >] [-a|--all_tests] [-v|--verbose]```
   - Default log file path is set to the current directory
   - See help menu for more options:
 
-    | Option        | Argument    | Description                                                                                                                                   |
-    |---------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-    | -h, --help    |             | Display this help                                                                                                                             |
-    | -c, --config  | conf file   | Optional path to a custom NHC config file. If not specified the current VM SKU will be detected and the appropriate conf file will be used.   |
-    | -o, --output  | log file    | Optional path to output the health check logs to. All directories in the path must exist. If not specified it will use output to ./health.log |
-    | -t, --timeout | n seconds   | Optional timeout in seconds for each health check. If not specified it will default to 500 seconds.                                           |
-    | -a, --all     |             | Run ALL checks; don't exit on first failure.                                                                                                  |
-    | -v, --verbose |             | If set, enables verbose and debug outputs.                                                                                                    |
+    | Option            | Argument    | Description                                                                                                                                   |
+    |-------------------|-------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+    | -h, --help        |             | Display this help                                                                                                                             |
+    | -c, --config      | conf file   | Optional path to a custom NHC config file. If not specified the current VM SKU will be detected and the appropriate conf file will be used.   |
+    | -o, --output      | log file    | Optional path to output the health check logs to. All directories in the path must exist. If not specified it will use output to ./health.log |
+    | -t, --timeout     | n seconds   | Optional timeout in seconds for each health check. If not specified it will default to 500 seconds.                                           |
+    | -e, --append_conf | conf file   | Append a custom conf file to the conf file being used for the test. Useful if you have a set of common tests you want to add to the default conf files provided. |
+    | -a, --all         |             | Run ALL checks; don't exit on first failure.                                                                                                  |
+    | -v, --verbose     |             | If set, enables verbose and debug outputs.                                                                                                    |
 
   - Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
 
