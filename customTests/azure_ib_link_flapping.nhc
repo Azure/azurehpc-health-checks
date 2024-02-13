@@ -17,8 +17,8 @@ if [[ -z  "$LOG_PATH" ]];then
 fi
 
 if [[ ! -f $LOG_PATH ]]; then
-   die 1 "$FUNCNAME: kernel log $LOG_PATH not found"
-   return 1
+   log "$FUNCNAME: kernel log $LOG_PATH not found. IB Link flapping test skipped."
+   return 0
 fi
 
 lost_carrier_file=/tmp/last_lost_carrier_date

@@ -97,10 +97,12 @@ RUN cd /tmp && \
 RUN mkdir -p ${AZ_NHC_ROOT}/bin
 RUN mkdir -p ${AZ_NHC_ROOT}/conf
 RUN mkdir -p ${AZ_NHC_ROOT}/output
+RUN mkdir -p ${AZ_NHC_ROOT}/default
 
 # Copy necessary files
 COPY customTests/*.nhc /etc/nhc/scripts/
 COPY customTests/topofiles ${AZ_NHC_ROOT}/topofiles
+COPY conf ${AZ_NHC_ROOT}/default/conf
 
 # Install stream 
 RUN mkdir -p /tmp/stream
@@ -122,7 +124,6 @@ COPY ${host_perftest_dir}_nongdr/ib_write_bw ${AZ_NHC_ROOT}/bin/ib_write_bw_nong
 # Install NV Bandwidth tool
 ARG host_nvbandwidth_dir=dockerfile/build_exe/nvbandwidth-${NV_BANDWIDTH_VERSION}
 COPY ${host_nvbandwidth_dir}/nvbandwidth ${AZ_NHC_ROOT}/bin
-
 
 # Copy entrypoint script
 COPY dockerfile/aznhc-entrypoint.sh ${AZ_NHC_ROOT}

@@ -24,9 +24,10 @@ function check_nvlink_status(){
             # Extract and display the information about inactive links
             inactive_links=$(echo "$nvlink_output" | grep "Link" | grep "<inactive>" | sed 's/Link \([0-9]*\): <inactive>/Link \1: Inactive/')
             die 1 "$FUNCNAME: GPU $gpu_id has nvlinks inactive: $inactive_links"
+            return 1
         else
             dbg "$FUNCNAME: GPU $gpu_id has all nvlinks active."
         fi
     done
-
+    return 0
 }
