@@ -1,17 +1,23 @@
 # Unit Test Scripts #
 
-The [run_tests script](./unit-tests/run_tests.sh) can be used to run unit tests. It requires the name of the function/test to be performed as an argument. It will run the test and report a Passed/Failed result.
+The [run_tests script](./unit-tests/run_tests.sh) can be used to run unit tests. The unit test use [Bash Automated Testing System](https://github.com/bats-core/bats-core) or bats for short.
+
+The run script will attempt to install bats if it is not found.
 
 ## Usage ##
 
-- ```./unit-tests/run_tests.sh < test > ```
-- test choices: happy_path, sad_path
+- ```./unit-tests/run_tests.sh```
 
 ## Expected output ##
 
-The output indicates what test is running and the status of that test.
+The output should be similar to the snippet below.
 
 ``` bash
-Running  happy_path test
-happy_path test: Passed
+NHC_DIR not set. Using default: /home/rafsalas/azurehpc-health-checks
+ ✓ Docker image pull check 
+ ✓ Docker image ls check 
+ ✓ Default checks Pass (Happy Path) 
+ ✓ Checks adjusted to fail (Sad Path) 
+
+4 tests, 0 failures
 ```

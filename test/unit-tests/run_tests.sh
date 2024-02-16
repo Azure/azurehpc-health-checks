@@ -1,80 +1,28 @@
 #!/bin/bash
 
-source $(dirname "${BASH_SOURCE[0]}")/basic_tests.sh
-
-
-get_sad_path_conf(){
-    SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
-    SKU="${SKU,,}"
-    if echo "$SKU" | grep -q "nd96asr_v4"; then
-        conf_name="nd96asr_v4"
-    elif echo "$SKU" | grep -q "nd96amsr_a100_v4"; then
-        conf_name="nd96amsr_a100_v4"
-    elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
-        conf_name="nd96isr_h100_v5"
-    elif echo "$SKU" | grep -q "hb176rs_v4"; then
-        conf_name="hb176rs_v4"
-    elif echo "$SKU" | grep -q "hx176rs"; then
-        conf_name="hx176rs"
+# Install bats if necessary
+if ! command -v bats &> /dev/null; then
+    echo "Bats not found. Attempting to install..."
+    distro=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+    if [[ $distro_check =~ "debian" ]]; then
+        sudo apt-get install -y bats
     else
-        echo "Unit-test for this SKU $SKU is not supported" 
-        return 1
+        sudo yum install epel-release
+        sudo yum install -y bats
     fi
-    relative_path="$(dirname "${BASH_SOURCE[0]}")/../bad_test_confs/$conf_name.conf"
-    echo "$(realpath -m $relative_path)"
-    return 0
-}
-
-
-#happy path
-happy_path(){
-    echo "Running  ${FUNCNAME[0]} test"
-    EXPECTED_CODE=0
-    test=$(runtest $EXPECTED_CODE)
-    result=$?
-
-    if [ "$result" -eq $EXPECTED_CODE ]; then
-        echo "${FUNCNAME[0]} test: Passed"
-        return 0
-    else
-        echo "${FUNCNAME[0]} test: Failed"
-        return 1
-    fi
-}
-
-#sad path
-sad_path(){
-    echo "Running  ${FUNCNAME[0]} test"
-    bad_conf_file=$(get_sad_path_conf)
-    if [[ "$bad_conf_file" == *"not supported"* ]]; then
-        echo "${FUNCNAME[0]} test: Failed"
-        return 1
-    fi
-    EXPECTED_CODE=1
-    test=$(runtest $EXPECTED_CODE "$bad_conf_file")
-    result=$?
-  
-    if [ "$result" -eq 0 ]; then
-        echo "${FUNCNAME[0]} test: Passed"
-        return 0
-    else
-        echo "${FUNCNAME[0]} test: Failed"
-        return 1
-    fi
-}
-
-if [ $# -ne 1 ]; then
-    echo "Usage: $0 <function_name>"
-    echo "choices: happy_path, sad_path"
-    exit 1
 fi
 
-# Determine which function to run based on the argument
-if [ "$1" == "happy_path" ]; then
-    happy_path
-elif [ "$1" == "sad_path" ]; then
-    sad_path
-else
-    echo "Invalid function name: $1"
-    exit 1
+NHC_DIR=$1
+
+script_path="$(realpath "$0")"
+parent_dir="$(dirname "$script_path")"
+if [ -z "$NHC_DIR" ]; then
+    NHC_DIR="$(realpath "$parent_dir/../..")"
+    echo "NHC_DIR not set. Using default: $NHC_DIR"
 fi
+
+export NHC_DIR
+
+bats --pretty ${parent_dir}/bats-unit-tests.sh
+
+exit 0
