@@ -86,7 +86,11 @@ function evaluate_nvBW_result(){
                         continue
                     fi
                     if (( $(echo "$gpubw >= $EXP_BW" | bc -l) )); then
-                        dbg "${tests_map[$test]} test on GPU $gpu_device passed. Bandwidth $gpubw is greater than $EXP_BW"
+                        if [ "$test" = "$P2P" ]; then
+                            dbg "${tests_map[$test]}_GPU_${gpu_device}_${peer_device}: $gpubw"
+                        else
+                            dbg "${tests_map[$test]}_GPU_${gpu_device}: $gpubw"
+                        fi
                     else
                         if [ "$test" = "$P2P" ]; then
                             die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW"
