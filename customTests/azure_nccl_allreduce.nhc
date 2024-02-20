@@ -52,11 +52,10 @@ function check_nccl_allreduce() {
             IFS=$' \t\n'
             nccl_allreduce_out_line=( ${nccl_allreduce_out_lines[$i]} )
             avg_bus_bw=${nccl_allreduce_out_line[5]}
-            dbg "Measured Avg NCCL allreduce bus BW $avg_bus_bw GB/s (expected >=$EXP_NCCL_ALLREDUCE_BW GB/s)"
             break
          fi
       done
-
+      dbg "nccl_all_red: $avg_bus_bw  GB/s"
       if [[ $avg_bus_bw < $EXP_NCCL_ALLREDUCE_BW ]]
       then
          dbg "$nccl_allreduce_out"

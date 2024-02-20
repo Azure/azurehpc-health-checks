@@ -53,10 +53,10 @@ function run_ib_bw_gdr(){
 	 if [[ "${IB_WRITE_BW_OUT2_LINES[$i]//$MESSAGE_SIZE}" != "${IB_WRITE_BW_OUT2_LINES[$i]}" ]]; then
 		LINE=( ${IB_WRITE_BW_OUT2_LINES[$i]} )
 		ib_bandwidth=${LINE[3]}
-      dbg "IB devices=${device}, ${device_peer}: numa domains=$numa_node,$numa_node, Measured IB BW $ib_bandwidth Gbps"
 		break
 	 fi
   done
+  dbg "ib_write_lb_${device}: $ib_bandwidth Gbps"
   if [[ $ib_bandwidth < $EXP_IB_BW ]]; then
 	 log "$IB_WRITE_BW_OUT2"
     die 1 "$FUNCNAME: $IB_WRITE_BW, IB=$device, $device_peer, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
