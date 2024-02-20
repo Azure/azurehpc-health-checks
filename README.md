@@ -17,61 +17,39 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - [NDm A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ndm-a100-v4-series)
 - [ND A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nda100-v4-series)
 - [NC A100 v4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nc-a100-v4-series)
-- [ND MI300x v5-series](https://techcommunity.microsoft.com/t5/azure-high-performance-computing/azure-announces-new-ai-optimized-vm-series-featuring-amd-s/ba-p/3980770)
 - [HBv4-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv4-series)
 - [HX-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hx-series)
 - [HBv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv3-series)
 - [HBv2-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv2-series)
-- [NCv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ncv3-series)
 - [NDv2-serries](https://learn.microsoft.com/en-us/azure/virtual-machines/ndv2-series)
 
 ## Minimum Requirements ##
 
-- Ubunutu 20.0, 22.04
-- AlamaLinux >= 8.6
-- Cuda >= 12 (for GPU SKUs)
-- AMD Clang compiler >= 4.0.0 (Non GPU SKUs)
-- Mellanox OFED drivers (For IB related SKUs)
-- HPC-X MPI >= v2.11 (This needs to be sourced and added to path. Installed by default in Azure AI/HPC marketplace image)
-- [NCCL-tests](https://github.com/NVIDIA/nccl-tests) (clone and build in /opt/ or modify the env variable paths in azure_nccl_allreduce.nhc and azure_nccl_allreduce_ib_loopback.nhc). Nccl-test is installed in the Azure AI/HPC marketplace image
+- Docker 24.0.7
+- sudo access
+- Supported SKU
 
 Note: Other distributions may work but are not supported.
 
 ## Setup ##
 
-1. To install AzureHPC Node Health Checks run install script:
-    - Install in the src directory (recommended): ```./install-nhc.sh```
-    - Different installation location: ```./install-nhc.sh <install path>```
-    - By default we assume CUDA is installed in /usr/local/cuda if the cuda path is different: ```./install-nhc.sh <install path> <cuda path>```
+Az NHC (Azure Health Checks) uses a docker container to run the health checks. This makes setup rather easy:
 
-2. By default following dependencies (or equivalent) will be installed:
-    - libpci-dev
-    - hwloc
-    - build-essential
-    - libboost-program-options-dev
-    - libssl-dev
-    - cmake >= 3.20
-    - NHC: https://github.com/mej/nhc
-    - Nvbandwidth: https://github.com/NVIDIA/nvbandwidth
-    - Perf-test: https://github.com/linux-rdma/perftest
-    - Stream: https://www.cs.virginia.edu/stream
-    - Rocm-bandwidth-test (AMD GPU only): https://github.com/ROCm/rocm_bandwidth_test
-
-3. During installation 'aznhc_env_init.sh' will be generated in the install location. When sourced the follwing will be exported to the environment:
-    - AZ_NHC_ROOT=\<install directory\>
-    - aznhc=AZ_NHC_ROOT/run-health-checks.sh
-    Note: The AZ_NHC_ROOT variable is by various NHC tests. By default 'aznhc_env_init.sh' is sourced in run-health-checks.sh.
-    Note: If sourced manually the alias 'aznhc' can be used in place of 'sudo AZ_NHC_ROOT/run-health-checks.sh'
+1. Pull the image down using [pull script](./dockerfile/pull-image-acr.sh): ```sudo ./dockerfile/pull-image-acr.sh```
+2. Verify you have the image: ```sudo docker container ls```
 
 ## Configuration ##
 
-This project comes with default VM SKU test configuration files that list the tests to be run. You can modify existing configuration files to suit your testing needs. For information on modifying or creating configuration files please reference [LBNL Node Health Checks documentation](https://github.com/mej/nhc).
+This project comes with default VM SKU test configuration files that list the tests to be run. You can modify existing configuration files to suit your testing needs. For information on modifying or creating configuration files please reference:
+
+- [Developer Guide](./developer_guide.md)
+- [LBNL Node Health Checks documentation](https://github.com/mej/nhc).
 
 ## Usage ##
 
 - Invoke health checks using a script that determines SKU and runs the configuration file according to SKU for you:
 ```sudo ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-v|--verbose]```
-  - Default log file path is set to the current directory
+
   - See help menu for more options:
 
     | Option        | Argument    | Description                                                                                                                                   |
@@ -83,11 +61,8 @@ This project comes with default VM SKU test configuration files that list the te
     | -a, --all     |             | Run ALL checks; don't exit on first failure.                                                                                                  |
     | -v, --verbose |             | If set, enables verbose and debug outputs.                                                                                                    |
 
-  - Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the timing to 300 seconds but this may vary from machine to machine.
-
-  Notes:
-  - Invoke health checks directly: ```sudo nhc -c ./conf/"CONFNAME".conf -l ~/health.log -t 300```
-  - If 'aznhc_env_init.sh' sourced the alias 'aznhc' can be used in place of 'sudo AZ_NHC_ROOT/run-health-checks.sh'
+  - Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the time out to 500 seconds but this may vary from machine to machine.
+  - For other methods on launching Az NHC see [Az NHC docker documentation](./dockerfile/README.MD)
 
 ## Distributed NHC ##
 
@@ -119,8 +94,17 @@ The following are Azure custom checks added to the existing NHC suite of tests:
 | check_cpu_stream | CPU compute/memory bandwidth | NA | NA | NA | 665500 MB/s | 665500 MB/s |
 
 Notes:
+
 - The scripts for all tests can be found in the [custom test directory](./customTests/)
 - Not all supported SKUs are listed in the above table
+
+## Legacy Releases ##
+
+Azure NHC has recently changed to using docker containerization to allow for broader use. Due to this some features and supported SKUs may only be available on legacy releases and the Legacy branch.
+
+Releases tagged less than v0.3.0 are considered legacy.
+
+
 
 ## _References_ ##
 

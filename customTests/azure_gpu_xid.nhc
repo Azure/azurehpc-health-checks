@@ -14,8 +14,8 @@ function check_gpu_xid()
    fi
 
    if [[ ! -f $kernel_log ]]; then
-      die 1 "$FUNCNAME: $kernel_log not found"
-      return 1
+      log "$FUNCNAME: $kernel_log not found. Skipping GPU Xid error test."
+      return 0
    fi
    # check for any xid errors
    grep -q "Xid" $kernel_log

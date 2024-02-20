@@ -1,18 +1,20 @@
 #!/bin/bash
 
-DOCK_IMG_NAME="aznhc.azurecr.io/nvidia-rt"
-REPO_USERNAME="az-nhc-tok"
-vaultName="aznhc-kv"
-secretName="az-nhc-tok"
-resourceGroupName="azure-nhc-resources"
-managedIdentityID="335a45e3-ba51-4c7a-b3f7-2e109f488cee"
-subscriptionId="75c5e023-db83-4675-8531-fd0150c82176"
+# Choices are: cuda or rocm Runtime
+build_type=$1
 
-az login --identity -u "$managedIdentityID"
-az account set --subscription "$subscriptionId"
+if [[ -z "$build_type" ]]; then
+    build_type="cuda"
+fi
 
-secretValue=$(az keyvault secret show --vault-name "$vaultName" --name "$secretName" --query "value" --output tsv)
-echo $secretValue
-sudo docker login aznhc.azurecr.io --password $secretValue --username $REPO_USERNAME 
+if [[ "$build_type" == "cuda" ]]; then
+    DOCK_IMG_NAME="aznhc.azurecr.io/nvrt"
+elif [[ "$build_type" == "rocm" ]]; then
+    echo Rocm is not supported yet but coming soon
+    exit 1
+else
+    echo "Please specify a build type: cuda or rocm"
+    exit 1
+fi
 
 sudo docker pull $DOCK_IMG_NAME

@@ -109,14 +109,15 @@ function check_cpu_stream(){
         die 1 -e "SKU: $SKU check not currently implemented"
         return 1
     fi
-    log Stream Results: $stream
-    
     values=(`echo $stream | awk -F 'Copy: ' '{print $2}' | awk '{print $1}'` `echo $stream | \
         awk -F 'Add: ' '{print  $2}' | awk '{print $1}'` `echo $stream | \
         awk -F 'Scale: ' '{print $2}' | awk '{print $1}'` `echo $stream | awk -F 'Triad: ' '{print $2}' | awk '{print $1}'`)
-
-    for result in $values
+    result_labels=("Copy" "Add" "Scale" "Triad")
+    length=${#values[@]}
+    for ((i = 0; i < length; i++));
     do
+        result=${values[$i]}
+        dbg stream_${result_labels[$i]}: $result
         if (( $(echo "$result < $EXP_PERF" | bc -l) )); then
             die 1 -e "\t **Fail** Stream test failed on at least one function less than expeted value: $EXP_PERF. Stream Results: $stream"
             return 1

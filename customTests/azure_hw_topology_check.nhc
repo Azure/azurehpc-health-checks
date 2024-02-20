@@ -84,6 +84,6 @@ function check_hw_topology() {
         done
 
         missing_str=$(IFS=',' ; echo "${formatted_missing[*]}")
-        die 1 "$FUNCNAME: Topology mismatch! Expected to find$missing_str" # awkward spacing to get formatting right
+        die 1 "$FUNCNAME: Topology mismatch! Expected to find $missing_str" # awkward spacing to get formatting right
     fi
 }
