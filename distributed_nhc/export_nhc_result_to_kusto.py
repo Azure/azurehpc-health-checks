@@ -163,7 +163,7 @@ def get_nhc_json_formatted_result(results_file):
 
     return result
 
-def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="None"):
+def ingest_results(results_file, creds, ingest_url, database, results_table_name, nhc_run_uuid="None"):
     ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     job_name = results_file.replace("\\", "/").split(".")[0].split("/")[-1] # account for \ or / in path
@@ -199,15 +199,24 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
             'physHostname': physhost,
             'workflowType': "main",
             'time': ts,
-            'pass': True,
+            'pass': False, # keep as default false
             'error': '',
             'logOutput': full_results, # the entire file
             'jsonResult': jsonResult,
             'uuid': full_uuid
         }
-        if 'error' in full_results or 'failure' in full_results:
+
+        if "Node Health Check completed successfully " in full_results:
+            record['pass'] = True
+        elif "ERROR" in full_results:
             record['pass'] = False
             record['error'] = full_results
+        elif "Error" in jsonResultDict.keys():
+            record['pass'] = False
+            record['error'] = jsonResult
+        else:
+            record['pass'] = False
+            record['error'] = "No Node Health Check completed successfully or ERROR"
 
         df = pd.DataFrame(record, index=[0])
 
