@@ -113,6 +113,8 @@ def get_nhc_json_formatted_result(results_file):
             elif key.startswith("stream_Triad"):
                 result["stream_Triad"]= str(value.strip())
 
+        return result
+
     elif n == "GPU":
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
         ib_write_lb_mlx5_ib_str = run_command(ib_write_lb_mlx5_ib_cmd)
@@ -152,6 +154,8 @@ def get_nhc_json_formatted_result(results_file):
                 result["NCCL_ALL_REDUCE"] = str(value.strip())
             elif key.startswith("nccl_all_red_lb"):
                 result["NCCL_ALL_REDUCE_LOOP_BACK"] = str(value.strip())
+
+        return result
     
 def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
     ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -179,8 +183,9 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
 
     with open(results_file, 'r') as f:
         full_results = f.read()
-        jsonResult = get_nhc_json_formatted_result(results_file)
-            
+        jsonResultDict = get_nhc_json_formatted_result(results_file)
+        jsonResult = json.dumps(jsonResultDict)
+
         record = {
             'vmSize': vmSize,
             'vmId': vmId,
