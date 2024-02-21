@@ -104,7 +104,7 @@ def get_nhc_json_formatted_result(results_file):
 
         # Split the string by lines and create key-value pairs
         for line in data_string.strip().split("\n"):
-            if line.isspace():
+            if not line or line.isspace():
                 continue
             key, value = line.split(":")
             if key.startswith("ib_write_lb_mlx5_ib"):
@@ -144,7 +144,7 @@ def get_nhc_json_formatted_result(results_file):
 
         # Split the string by lines and create key-value pairs
         for line in data_string.strip().split("\n"):
-            if line.isspace():
+            if not line or line.isspace():
                 continue
             key, value = line.split(":")
             if key.startswith("ib_write_lb_mlx5_ib"):
