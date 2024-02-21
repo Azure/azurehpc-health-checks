@@ -61,8 +61,7 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
         print(f"Ingesting health results from {os.path.basename(debug_file)} into {ingest_url} at {database}/{debug_table_name}")
         ingest_client.ingest_from_dataframe(df, IngestionProperties(database, debug_table_name))
 
-
-def get_nhc_json_formatted_result(results_file, parseType):
+def get_nhc_json_formatted_result(results_file):
     if "cpu" in results_file :
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
         ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
@@ -138,9 +137,7 @@ def get_nhc_json_formatted_result(results_file, parseType):
                 result["NCCL_ALL_REDUCE"] = float(value.strip())
             elif key.startswith("nccl_all_red_lb"):
                 result["NCCL_ALL_REDUCE_LOOP_BACK"] = float(value.strip())
-
     
-
 def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
     filename_parts = os.path.basename(results_file).split("-", maxsplit=2)
     ts_str = filename_parts[2].split(".")[0]
@@ -163,21 +160,11 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
     if not physhost:
         physhost = "not Mapped"
 
-
-    parseType = ""
-    if "cpu" in results_file :
-        parseType = "cpu"
-    elif "gpu" in results_file :
-        parseType = "gpu"
-    else : 
-        # TO DO : what is this third case?
-
-
     with open(results_file, 'r') as f:
         full_results = file.read(results_file)
         # TO DO : Python3 compatibility issue with "file" -> "open" instead?
 
-        jsonResult = get_nhc_json_formatted_result(results_file);
+        jsonResult = get_nhc_json_formatted_result(results_file)
             
         record = {
             'vmSize': vmSize,
@@ -189,7 +176,7 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
             'pass': True,
             'error': '',
             'logOutput': full_results, # the entire file
-            'jsonResult': jsonResult, # TO DO : parse and fill this in
+            'jsonResult': jsonResult,
             'uuid': uuid
         }
         if 'error' in full_results or 'failure' in full_results:
@@ -203,46 +190,6 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
         print(f"Ingesting results from {os.path.basename(results_file)} into {ingest_url} at {database}/{results_table_name}")
         ingest_client.ingest_from_dataframe(df, IngestionProperties(database, results_table_name))
 
-'''
-def ingest_kusto_logs(results_file, creds, ingest_url, database, results_table_name):
-    filename_parts = os.path.basename(results_file).split("-", maxsplit=2)
-    ts_str = filename_parts[2].split(".")[0]
-    ts = datetime.strptime(ts_str, "%Y-%m-%d_%H-%M-%S")
-
-    job_name = filename_parts[1]
-
-    if job_name == "pssh":
-        job_name = f"{job_name}-{ts_str}"
-
-    with open(results_file, 'r') as f:
-        lines = f.readlines()
-        reader = DictReader(lines, fieldnames = ["Hostname", "ResultsLog"], delimiter='|', restkey="extra")
-
-        df = pd.DataFrame(reader)
-
-        df['vmSize'] = ?????
-        df['vmId'] = ?????
-        df['vmHostName'] = ?????
-
-        # is this name or phy name?
-        # df['NodeName'] = df.apply(lambda x: x['Hostname'].strip(), axis=1)
-
-        df['physHostName'] = ?????
-        df['workflowType'] = "main"
-        df['eventTime'] = ts
-        df['pass'] = ????? # set Pass as True, but if there is an error, then as false 
-        df['errors'] = ?????
-        df['logOutput'] = ?????
-        df['jsonResult'] = ?????
-        df['uuid'] = job_name # does this make sense?
-
-        df = df[['vmSize', 'vmId', 'vmHostName', 'physHostName', 'workflowType', 'eventTime', 'pass', 'errors', 'logOutput', 'jsonResult', 'uuid']]
-
-        ingest_client = QueuedIngestClient(KustoConnectionStringBuilder.with_azure_token_credential(ingest_url, creds))
-        print(f"Ingesting results from {os.path.basename(results_file)} into {ingest_url} at {database}/{results_table_name}")
-        ingest_client.ingest_from_dataframe(df, IngestionProperties(database, results_table_name))
-        '''
-
 def parse_args():
     parser = ArgumentParser(description="Ingest NHC results into Kusto")
     parser.add_argument("health_files", nargs="+", help="List of .health.log or .debug.log files to ingest")
@@ -252,7 +199,6 @@ def parse_args():
     parser.add_argument("--debug_table_name", default="NodeHealthCheck_Debug", help="Kusto table name for debug results")
     parser.add_argument("--results_table_name", default="AzNhcRunEvents", help="Kusto table name for debug results")
     parser.add_argument("--identity", nargs="?", const=True, default=False, help="Managed Identity to use for authentication, if a client ID is provided it will be used, otherwise the system-assigned identity will be used. If --identity is not provided DefaultAzureCredentials will be used.")
-    # TO DO : add an option for uuid here?
     return parser.parse_args()
 
 def get_creds(identity):
