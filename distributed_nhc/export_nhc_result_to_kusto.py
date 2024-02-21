@@ -198,7 +198,7 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
             record['pass'] = False
             record['error'] = full_results
 
-        df = pd.DataFrame(record)
+        df = pd.DataFrame(record, index=[0])
 
         ingest_client = QueuedIngestClient(KustoConnectionStringBuilder.with_azure_token_credential(ingest_url, creds))
         print(f"Ingesting results from {os.path.basename(results_file)} into {ingest_url} at {database}/{results_table_name}")
