@@ -156,7 +156,7 @@ def get_nhc_json_formatted_result(results_file):
 def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
     ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-    job_name = results_file.split(".")[0]
+    job_name = results_file.replace("\\", "/").split(".")[0].split("/")[-1] # account for \ or / in path
     uuid = job_name if nhc_run_uuid == "none" else nhc_run_uuid
     if uuid == "health":
         uuid = ""
