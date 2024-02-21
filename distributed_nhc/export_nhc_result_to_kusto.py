@@ -45,7 +45,7 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
     if job_name == "pssh":
         job_name = f"{job_name}-{ts_str}"
 
-    with open(health_file, 'r') as f:
+    with open(health_file, 'r') as f: # should this be debug file?
         lines = f.readlines()
         reader = DictReader(lines, fieldnames = ["Hostname", "DebugLog"], delimiter='|', restkey="extra")
 
@@ -60,6 +60,150 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
         print(f"Ingesting health results from {os.path.basename(debug_file)} into {ingest_url} at {database}/{debug_table_name}")
         ingest_client.ingest_from_dataframe(df, IngestionProperties(database, debug_table_name))
 
+
+def get_nhc_json_formatted_result(results_file, parseType):
+    parseType = ""
+    if "cpu" in results_file :
+        parseType = "cpu"
+    elif "gpu" in results_file :
+        parseType = "gpu"
+    else : 
+        # TO DO : what is this third case?
+
+    if parseType == "cpu" :
+
+    elif parseType == "gpu" :
+        ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
+        ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
+
+        # TO DO : organize the values from 0-7, not yet done
+        temp_dict = {}
+        for line in ib_write_lb_mlx5_ib_vals.strip().split("\n"):
+            key, value = line.split(":")
+            temp_dict[key.strip()] = float(value.strip())
+
+        # print(temp_dict)
+
+        H2D_GPU_cmd = f"cat {results_file} | grep -o 'H2D_GPU_[0-7]: .*'"
+        H2D_GPU_vals = os.system(H2D_GPU_cmd)
+
+        D2H_GPU_cmd = f"cat {results_file} | grep -o 'D2H_GPU_[0-7]: .*'"
+        D2H_GPU_vals = os.system(D2H_GPU_cmd)
+
+        P2P_GPU_cmd = f"cat {results_file} | grep -o 'P2P_GPU_[0-7]_[0-7]: .*'"
+        P2P_GPU_vals = os.system(P2P_GPU_cmd)
+
+        nccl_all_red_cmd = f"cat {results_file} | grep -o 'nccl_all_red: .*'"
+        nccl_all_red_vals = os.system(nccl_all_red_cmd)
+
+        nccl_all_red_lb_cmd = f"cat {results_file} | grep -o 'nccl_all_red_lb: .*'"
+        nccl_all_red_lb_vals = os.system(nccl_all_red_lb_cmd)
+
+
+    
+
+def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
+    filename_parts = os.path.basename(results_file).split("-", maxsplit=2)
+    ts_str = filename_parts[2].split(".")[0]
+    ts = datetime.strptime(ts_str, "%Y-%m-%d_%H-%M-%S")
+
+    job_name = filename_parts[1]
+    uuid = job_name if nhc_run_uuid == "none" else nhc_run_uuid
+    uuid = f"nhc-{ts_str}-{uuid}"
+
+    vmSize_bash_cmd = "echo $( curl -H Metadata:true --max-time 10 -s \"http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text\") | tr '[:upper:]' '[:lower:]' "
+    vmSize = os.system(vmSize_bash_cmd)
+
+    vmId_bash_cmd = "curl  -H Metadata:true --max-time 10 -s \"http://169.254.169.254/metadata/instance/compute/vmId?api-version=2021-02-01&format=text\""
+    vmId = os.system(vmId_bash_cmd)
+
+    vmName_bash_cmd = "timeout 60 sudo /opt/azurehpc/tools/kvp_client | grep \" HostName; \"" # keep the spaces, else it will also output the results for 'PhysicalHostName'
+    vmName = os.system(vmName_bash_cmd)
+
+    phyhost = os.system("echo $(hostname) \"$(/opt/azurehpc/tools/kvp_client |grep Fully)\"")
+    if not physhost:
+        physhost = "not Mapped"
+
+
+    parseType = ""
+    if "cpu" in results_file :
+        parseType = "cpu"
+    elif "gpu" in results_file :
+        parseType = "gpu"
+    else : 
+        # TO DO : what is this third case?
+
+
+    with open(results_file, 'r') as f:
+        full_results = file.read(results_file)
+        # TO DO : Python3 compatibility issue with "file" -> "open" instead?
+
+        jsonResult = get_nhc_json_formatted_result(results_file);
+            
+        record = {
+            'vmSize': vmSize,
+            'vmId': vmId,
+            'vmHostname': vmName,
+            'physHostname': physhost,
+            'workflowType': "main",
+            'time': ts,
+            'pass': True,
+            'error': '',
+            'logOutput': full_results, # the entire file
+            'jsonResult': jsonResult, # TO DO : parse and fill this in
+            'uuid': uuid
+        }
+        if 'error' in full_results or 'failure' in full_results:
+            record['pass'] = False
+            record['error'] = full_results # TO DO : go line by line to find where the error came from?
+
+
+        df = pd.DataFrame(record)
+
+        ingest_client = QueuedIngestClient(KustoConnectionStringBuilder.with_azure_token_credential(ingest_url, creds))
+        print(f"Ingesting results from {os.path.basename(results_file)} into {ingest_url} at {database}/{results_table_name}")
+        ingest_client.ingest_from_dataframe(df, IngestionProperties(database, results_table_name))
+
+'''
+def ingest_kusto_logs(results_file, creds, ingest_url, database, results_table_name):
+    filename_parts = os.path.basename(results_file).split("-", maxsplit=2)
+    ts_str = filename_parts[2].split(".")[0]
+    ts = datetime.strptime(ts_str, "%Y-%m-%d_%H-%M-%S")
+
+    job_name = filename_parts[1]
+
+    if job_name == "pssh":
+        job_name = f"{job_name}-{ts_str}"
+
+    with open(results_file, 'r') as f:
+        lines = f.readlines()
+        reader = DictReader(lines, fieldnames = ["Hostname", "ResultsLog"], delimiter='|', restkey="extra")
+
+        df = pd.DataFrame(reader)
+
+        df['vmSize'] = ?????
+        df['vmId'] = ?????
+        df['vmHostName'] = ?????
+
+        # is this name or phy name?
+        # df['NodeName'] = df.apply(lambda x: x['Hostname'].strip(), axis=1)
+
+        df['physHostName'] = ?????
+        df['workflowType'] = "main"
+        df['eventTime'] = ts
+        df['pass'] = ????? # set Pass as True, but if there is an error, then as false 
+        df['errors'] = ?????
+        df['logOutput'] = ?????
+        df['jsonResult'] = ?????
+        df['uuid'] = job_name # does this make sense?
+
+        df = df[['vmSize', 'vmId', 'vmHostName', 'physHostName', 'workflowType', 'eventTime', 'pass', 'errors', 'logOutput', 'jsonResult', 'uuid']]
+
+        ingest_client = QueuedIngestClient(KustoConnectionStringBuilder.with_azure_token_credential(ingest_url, creds))
+        print(f"Ingesting results from {os.path.basename(results_file)} into {ingest_url} at {database}/{results_table_name}")
+        ingest_client.ingest_from_dataframe(df, IngestionProperties(database, results_table_name))
+        '''
+
 def parse_args():
     parser = ArgumentParser(description="Ingest NHC results into Kusto")
     parser.add_argument("health_files", nargs="+", help="List of .health.log or .debug.log files to ingest")
@@ -67,7 +211,9 @@ def parse_args():
     parser.add_argument("--database", help="Kusto database", required=True)
     parser.add_argument("--health_table_name", default="NodeHealthCheck", help="Kusto table name for health results")
     parser.add_argument("--debug_table_name", default="NodeHealthCheck_Debug", help="Kusto table name for debug results")
+    parser.add_argument("--results_table_name", default="AzNhcRunEvents", help="Kusto table name for debug results")
     parser.add_argument("--identity", nargs="?", const=True, default=False, help="Managed Identity to use for authentication, if a client ID is provided it will be used, otherwise the system-assigned identity will be used. If --identity is not provided DefaultAzureCredentials will be used.")
+    # TO DO : add an option for uuid here?
     return parser.parse_args()
 
 def get_creds(identity):
@@ -91,8 +237,11 @@ for health_file in args.health_files:
             ingest_health_log(health_file, creds, args.ingest_url, args.database, args.health_table_name)
         elif health_file.endswith(".debug.log"):
             ingest_debug_log(health_file, creds, args.ingest_url, args.database, args.debug_table_name)
+        elif health_file.endswith(".results"): # TO DO : confirm what the file should end with
+            ingest_results(health_file, creds, args.ingest_url, args.database, args.results_table_name)
         else:
-            raise Exception("Unsuported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh")
+            # TO DO : allow all files to be uploaded?
+            raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh")
 
     except FileNotFoundError:
         if len(health_files) == 1:
