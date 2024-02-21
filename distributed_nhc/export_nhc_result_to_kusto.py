@@ -147,13 +147,15 @@ def get_nhc_json_formatted_result(results_file):
                 result["NCCL_ALL_REDUCE_LOOP_BACK"] = float(value.strip())
     
 def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
-    filename_parts = os.path.basename(results_file).split("-", maxsplit=2)
-    ts_str = filename_parts[2].split(".")[0]
-    ts = datetime.strptime(ts_str, "%Y-%m-%d_%H-%M-%S")
+    ts = datetime.strptime(datetime.datetime.now(), "%Y-%m-%d_%H-%M-%S")
 
-    job_name = filename_parts[1]
+    job_name = results_file.split(".")[0]
     uuid = job_name if nhc_run_uuid == "none" else nhc_run_uuid
-    uuid = f"nhc-{ts_str}-{uuid}"
+    if uuid == "health":
+        uuid = ""
+    else :
+        uuid = "-" + uuid
+    full_uuid = f"nhc-{ts}{uuid}"
 
     vmSize_bash_cmd = "echo $( curl -H Metadata:true --max-time 10 -s \"http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text\") | tr '[:upper:]' '[:lower:]' "
     vmSize = os.system(vmSize_bash_cmd)
@@ -183,7 +185,7 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
             'error': '',
             'logOutput': full_results, # the entire file
             'jsonResult': jsonResult,
-            'uuid': uuid
+            'uuid': full_uuid
         }
         if 'error' in full_results or 'failure' in full_results:
             record['pass'] = False
