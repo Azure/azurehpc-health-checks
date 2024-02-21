@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 import sys
 import os
+import json
+import re
+import subprocess
 from datetime import datetime
 from csv import DictReader
 from argparse import ArgumentParser
@@ -60,8 +63,105 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
         print(f"Ingesting health results from {os.path.basename(debug_file)} into {ingest_url} at {database}/{debug_table_name}")
         ingest_client.ingest_from_dataframe(df, IngestionProperties(database, debug_table_name))
 
+def run_command(cmd):
+    result = subprocess.run(cmd, capture_output=True, shell=True, text=True)
+    return result.stdout.strip()
+
 def get_nhc_json_formatted_result(results_file):
-    # see next commit 
+    def natural_sort_key(s):
+        return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+
+    # check if CPU or GPU or Unknown
+    stream_Copy_cmd = f"cat {results_file} | grep -o 'stream_Copy: .*'"
+    stream_Copy_str = run_command(stream_Copy_cmd)
+
+    nccl_all_red_cmd = f"cat {results_file} | grep -o 'nccl_all_red: .*'"
+    nccl_all_red_str = run_command(nccl_all_red_cmd)
+
+    if stream_Copy_str:
+        processor = "CPU"
+    elif nccl_all_red_str:
+        processor = "GPU"
+    else:
+        processor = "Unknown"
+
+    if processor == "CPU":
+        ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
+        ib_write_lb_mlx5_ib_str = run_command(ib_write_lb_mlx5_ib_cmd)
+        ib_write_lb_mlx5_ib_str = sorted(ib_write_lb_mlx5_ib_str.strip().split("\n"), key=natural_sort_key)
+        ib_write_lb_mlx5_ib_str = '\n'.join(ib_write_lb_mlx5_ib_str) # convert to string
+
+        # stream_Copy_str gotten above
+
+        stream_Add_cmd = f"cat {results_file} | grep -o 'stream_Add: .*'"
+        stream_Add_str = run_command(stream_Add_cmd)
+
+        stream_Scale_cmd = f"cat {results_file} | grep -o 'stream_Scale: .*'"
+        stream_Scale_str = run_command(stream_Scale_cmd)
+
+        stream_Triad_cmd = f"cat {results_file} | grep -o 'stream_Triad: .*'"
+        stream_Triad_str = run_command(stream_Triad_cmd)
+
+        data_string = "\n".join([ib_write_lb_mlx5_ib_str, stream_Copy_str, stream_Add_str, stream_Scale_str, stream_Triad_str])
+        result = {"IB_WRITE_NON_GDR": {}, "stream_Copy": {}, "stream_Add": {}, "stream_Scale": {}, "stream_Triad": {}}
+
+        # Split the string by lines and create key-value pairs
+        for line in data_string.strip().split("\n"):
+            key, value = line.split(":")
+            if key.startswith("ib_write_lb_mlx5_ib"):
+                result["IB_WRITE_NON_GDR"][key] = str(value.strip())
+            elif key.startswith("stream_Copy"):
+                result["stream_Copy"]= str(value.strip())
+            elif key.startswith("stream_Add"):
+                result["stream_Add"]= str(value.strip())
+            elif key.startswith("stream_Scale"):
+                result["stream_Scale"]= str(value.strip())
+            elif key.startswith("stream_Triad"):
+                result["stream_Triad"]= str(value.strip())
+
+    elif processor == "GPU":
+        ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
+        ib_write_lb_mlx5_ib_str = run_command(ib_write_lb_mlx5_ib_cmd)
+        ib_write_lb_mlx5_ib_str = sorted(ib_write_lb_mlx5_ib_str.strip().split("\n"), key=natural_sort_key)
+        ib_write_lb_mlx5_ib_str = '\n'.join(ib_write_lb_mlx5_ib_str) # convert to string
+
+        H2D_GPU_cmd = f"cat {results_file} | grep -o 'H2D_GPU_[0-7]: .*'"
+        H2D_GPU_str = run_command(H2D_GPU_cmd)
+
+        D2H_GPU_cmd = f"cat {results_file} | grep -o 'D2H_GPU_[0-7]: .*'"
+        D2H_GPU_str = run_command(D2H_GPU_cmd)
+
+        P2P_GPU_cmd = f"cat {results_file} | grep -o 'P2P_GPU_[0-7]_[0-7]: .*'"
+        P2P_GPU_str = run_command(P2P_GPU_cmd)
+
+        # nccl_all_red gotten above
+
+        nccl_all_red_lb_cmd = f"cat {results_file} | grep -o 'nccl_all_red_lb: .*'"
+        nccl_all_red_lb_str = run_command(nccl_all_red_lb_cmd)
+
+        data_string = "\n".join([ib_write_lb_mlx5_ib_str, H2D_GPU_str, D2H_GPU_str, P2P_GPU_str, nccl_all_red_str, nccl_all_red_lb_str])
+        result = {"IB_WRITE_GDR": {}, "GPU_BW_HTD": {}, "GPU_BW_DTH": {}, "GPU_BW_P2P": {}, "NCCL_ALL_REDUCE": {}, "NCCL_ALL_REDUCE_LOOP_BACK": {}}
+
+        # Split the string by lines and create key-value pairs
+        for line in data_string.strip().split("\n"):
+            key, value = line.split(":")
+            if key.startswith("ib_write_lb_mlx5_ib"):
+                result["IB_WRITE_GDR"][key] = str(value.strip())
+            elif key.startswith("H2D"):
+                result["GPU_BW_HTD"][key] = str(value.strip())
+            elif key.startswith("D2H"):
+                result["GPU_BW_DTH"][key] = str(value.strip())
+            elif key.startswith("P2P"):
+                result["GPU_BW_P2P"][key] = str(value.strip())
+            elif key.startswith("nccl_all_red"):
+                result["NCCL_ALL_REDUCE"] = str(value.strip())
+            elif key.startswith("nccl_all_red_lb"):
+                result["NCCL_ALL_REDUCE_LOOP_BACK"] = str(value.strip())
+    
+    else : 
+        result = {"Error": "Unable to determine processor type"}
+
+    return result
 
 def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
     ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -148,6 +248,8 @@ for health_file in args.health_files:
             ingest_health_log(health_file, creds, args.ingest_url, args.database, args.health_table_name)
         elif health_file.endswith(".debug.log"):
             ingest_debug_log(health_file, creds, args.ingest_url, args.database, args.debug_table_name)
+        elif health_file.endswith(".log"):
+            ingest_results(health_file, creds, args.ingest_url, args.database, args.results_table_name)
         else:
             raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh")
 
