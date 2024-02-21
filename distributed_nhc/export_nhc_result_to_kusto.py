@@ -222,11 +222,10 @@ for health_file in args.health_files:
             ingest_health_log(health_file, creds, args.ingest_url, args.database, args.health_table_name)
         elif health_file.endswith(".debug.log"):
             ingest_debug_log(health_file, creds, args.ingest_url, args.database, args.debug_table_name)
-        elif health_file.endswith(".results"): # TO DO : confirm what the file should end with
+        elif "cpu_health.log" in health_file or "gpu_health.log" in health_file:
             ingest_results(health_file, creds, args.ingest_url, args.database, args.results_table_name)
         else:
-            # TO DO : allow all files to be uploaded?
-            raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh")
+            raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh, or cpu_health.log or gpu_health.log produced by run-health-checks.sh")
 
     except FileNotFoundError:
         if len(health_files) == 1:
