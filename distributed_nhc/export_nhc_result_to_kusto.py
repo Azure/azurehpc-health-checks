@@ -163,15 +163,15 @@ def get_nhc_json_formatted_result(results_file):
 
     return result
 
-def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
+def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="None"):
     ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     job_name = results_file.replace("\\", "/").split(".")[0].split("/")[-1] # account for \ or / in path
-    uuid = job_name if nhc_run_uuid == "none" else nhc_run_uuid
+    uuid = job_name if nhc_run_uuid == "None" else f"{nhc_run_uuid}-{job_name}"
     if uuid == "health":
         uuid = ""
     else :
-        uuid = "-" + uuid
+        uuid = "-" + uuid # add the dash here instead of below; this way if 'uuid' is empty, we don't have a trailing dash
     full_uuid = f"nhc-{ts}{uuid}"
 
     vmSize_bash_cmd = "echo $( curl -H Metadata:true --max-time 10 -s \"http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text\") | tr '[:upper:]' '[:lower:]' "
@@ -183,7 +183,7 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
     vmName_bash_cmd = "hostname"
     vmName = run_command(vmName_bash_cmd)
 
-    physhost = run_command("echo $(hostname) \"$(/opt/azurehpc/tools/kvp_client |grep Fully)\" | cut -d ':' -f 3 | cut -d ' ' -f 2 | sed 's/\"//g'")
+    physhost = run_command("echo $(hostname) \"$(/opt/azurehpc/tools/kvp_client | grep Fully)\" | cut -d ':' -f 3 | cut -d ' ' -f 2 | sed 's/\"//g'")
     if not physhost:
         physhost = "not Mapped"
 
@@ -223,7 +223,8 @@ def parse_args():
     parser.add_argument("--database", help="Kusto database", required=True)
     parser.add_argument("--health_table_name", default="NodeHealthCheck", help="Kusto table name for health results")
     parser.add_argument("--debug_table_name", default="NodeHealthCheck_Debug", help="Kusto table name for debug results")
-    parser.add_argument("--results_table_name", default="AzNhcRunEvents", help="Kusto table name for debug results")
+    parser.add_argument("--results_table_name", default="AzNhcRunEvents", help="Kusto table name for results")
+    parser.add_argument("--uuid", default="None", help="UUID to help identify results in Kusto table")
     parser.add_argument("--identity", nargs="?", const=True, default=False, help="Managed Identity to use for authentication, if a client ID is provided it will be used, otherwise the system-assigned identity will be used. If --identity is not provided DefaultAzureCredentials will be used.")
     return parser.parse_args()
 
@@ -249,9 +250,9 @@ for health_file in args.health_files:
         elif health_file.endswith(".debug.log"):
             ingest_debug_log(health_file, creds, args.ingest_url, args.database, args.debug_table_name)
         elif health_file.endswith(".log"):
-            ingest_results(health_file, creds, args.ingest_url, args.database, args.results_table_name)
+            ingest_results(health_file, creds, args.ingest_url, args.database, args.results_table_name, args.uuid)
         else:
-            raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh")
+            raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh, or .log produced by run-health-checks.sh")
 
     except FileNotFoundError:
         if len(args.health_files) == 1:
