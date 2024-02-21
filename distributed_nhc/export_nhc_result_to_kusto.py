@@ -153,10 +153,10 @@ def get_nhc_json_formatted_result(results_file):
                 result["GPU_BW_DTH"][key] = str(value.strip())
             elif key.startswith("P2P"):
                 result["GPU_BW_P2P"][key] = str(value.strip())
-            elif key.startswith("nccl_all_red"):
-                result["NCCL_ALL_REDUCE"] = str(value.strip())
             elif key.startswith("nccl_all_red_lb"):
                 result["NCCL_ALL_REDUCE_LOOP_BACK"] = str(value.strip())
+            elif key.startswith("nccl_all_red"):
+                result["NCCL_ALL_REDUCE"] = str(value.strip())
     
     else : 
         result = {"Error": "Unable to determine processor type"}
@@ -211,7 +211,7 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
             record['errors'] = full_results
         elif "Error" in jsonResultDict.keys():
             record['pass'] = False
-            record['errors'] = full_results
+            record['errors'] = jsonResult
         elif "Node Health Check completed successfully" in full_results:
             record['pass'] = True
         else:
