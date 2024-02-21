@@ -173,7 +173,7 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
     vmName_bash_cmd = "timeout 60 sudo /opt/azurehpc/tools/kvp_client | grep \" HostName; \" | grep -o 'Value: [^;]*' | cut -d ' ' -f 2" # keep the spaces, else it will also output the results for 'PhysicalHostName'
     vmName = run_command(vmName_bash_cmd)
 
-    physhost = run_command("echo $(hostname) \"$(/opt/azurehpc/tools/kvp_client |grep Fully)\"")
+    physhost = run_command("echo $(hostname) \"$(/opt/azurehpc/tools/kvp_client |grep Fully)\" | cut -d ':' -f 3 | cut -d ' ' -f 2 | sed 's/\"//g'")
     if not physhost:
         physhost = "not Mapped"
 
