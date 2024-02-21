@@ -66,24 +66,28 @@ def get_nhc_json_formatted_result(results_file):
     def natural_sort_key(s):
             return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
 
-    if "cpu" in results_file :
-        ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
-        ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
-        ib_write_lb_mlx5_ib_vals = sorted(ib_write_lb_mlx5_ib_vals.strip().split("\n"), key=natural_sort_key)
+    # check if CPU or GPU 
+    stream_Copy_cmd = f"cat {results_file} | grep -o 'stream_Copy: .*'"
+    stream_Copy_str = os.system(stream_Copy_cmd)
+    n = "CPU" if stream_Copy_str else "GPU"
 
-        stream_Copy_cmd = f"cat {results_file} | grep -o 'stream_Copy: .*'"
-        stream_Copy_vals = os.system(stream_Copy_cmd)
+    if n == "CPU":
+        ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
+        ib_write_lb_mlx5_ib_str = os.system(ib_write_lb_mlx5_ib_cmd)
+        ib_write_lb_mlx5_ib_str = sorted(ib_write_lb_mlx5_ib_str.strip().split("\n"), key=natural_sort_key)
+
+        # stream_Copy_str gotten above
 
         stream_Add_cmd = f"cat {results_file} | grep -o 'stream_Add: .*'"
-        stream_Add_vals = os.system(stream_Add_cmd)
+        stream_Add_str = os.system(stream_Add_cmd)
 
         stream_Scale_cmd = f"cat {results_file} | grep -o 'stream_Scale: .*'"
-        stream_Scale_vals = os.system(stream_Scale_cmd)
+        stream_Scale_str = os.system(stream_Scale_cmd)
 
         stream_Triad_cmd = f"cat {results_file} | grep -o 'stream_Triad: .*'"
-        stream_Triad_vals = os.system(stream_Triad_cmd)
+        stream_Triad_str = os.system(stream_Triad_cmd)
 
-        data_string = ib_write_lb_mlx5_ib_vals + H2D_GPU_vals + D2H_GPU_vals + P2P_GPU_vals + nccl_all_red_vals + nccl_all_red_lb_vals
+        data_string = ib_write_lb_mlx5_ib_str + H2D_GPU_str + D2H_GPU_str + P2P_GPU_str + nccl_all_red_str + nccl_all_red_lb_str
 
         result = {"IB_WRITE_NON_GDR": {}, "stream_Copy": {}, "stream_Add": {}, "stream_Scale": {}, "stream_Triad": {}}
 
@@ -101,28 +105,28 @@ def get_nhc_json_formatted_result(results_file):
             elif key.startswith("stream_Triad"):
                 result["stream_Triad"]= float(value.strip())
 
-    elif "gpu" in results_file :
+    elif n == "GPU":
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
-        ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
-        ib_write_lb_mlx5_ib_vals = sorted(ib_write_lb_mlx5_ib_vals.strip().split("\n"), key=natural_sort_key)
+        ib_write_lb_mlx5_ib_str = os.system(ib_write_lb_mlx5_ib_cmd)
+        ib_write_lb_mlx5_ib_str = sorted(ib_write_lb_mlx5_ib_str.strip().split("\n"), key=natural_sort_key)
 
         H2D_GPU_cmd = f"cat {results_file} | grep -o 'H2D_GPU_[0-7]: .*'"
-        H2D_GPU_vals = os.system(H2D_GPU_cmd)
+        H2D_GPU_str = os.system(H2D_GPU_cmd)
 
         D2H_GPU_cmd = f"cat {results_file} | grep -o 'D2H_GPU_[0-7]: .*'"
-        D2H_GPU_vals = os.system(D2H_GPU_cmd)
+        D2H_GPU_str = os.system(D2H_GPU_cmd)
 
         P2P_GPU_cmd = f"cat {results_file} | grep -o 'P2P_GPU_[0-7]_[0-7]: .*'"
-        P2P_GPU_vals = os.system(P2P_GPU_cmd)
+        P2P_GPU_str = os.system(P2P_GPU_cmd)
 
         nccl_all_red_cmd = f"cat {results_file} | grep -o 'nccl_all_red: .*'"
-        nccl_all_red_vals = os.system(nccl_all_red_cmd)
+        nccl_all_red_str = os.system(nccl_all_red_cmd)
 
         nccl_all_red_lb_cmd = f"cat {results_file} | grep -o 'nccl_all_red_lb: .*'"
-        nccl_all_red_lb_vals = os.system(nccl_all_red_lb_cmd)
+        nccl_all_red_lb_str = os.system(nccl_all_red_lb_cmd)
 
 
-        data_string = ib_write_lb_mlx5_ib_vals + H2D_GPU_vals + D2H_GPU_vals + P2P_GPU_vals + nccl_all_red_vals + nccl_all_red_lb_vals
+        data_string = ib_write_lb_mlx5_ib_str + H2D_GPU_str + D2H_GPU_str + P2P_GPU_str + nccl_all_red_str + nccl_all_red_lb_str
 
         result = {"IB_WRITE_GDR": {}, "GPU_BW_HTD": {}, "GPU_BW_DTH": {}, "GPU_BW_P2P": {}, "NCCL_ALL_REDUCE": {}, "NCCL_ALL_REDUCE_LOOP_BACK": {}}
 
@@ -224,10 +228,10 @@ for health_file in args.health_files:
             ingest_health_log(health_file, creds, args.ingest_url, args.database, args.health_table_name)
         elif health_file.endswith(".debug.log"):
             ingest_debug_log(health_file, creds, args.ingest_url, args.database, args.debug_table_name)
-        elif "cpu_health.log" in health_file or "gpu_health.log" in health_file:
+        elif health_file.endswith(".log"):
             ingest_results(health_file, creds, args.ingest_url, args.database, args.results_table_name)
         else:
-            raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh, or cpu_health.log or gpu_health.log produced by run-health-checks.sh")
+            raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh, or .log produced by run-health-checks.sh")
 
     except FileNotFoundError:
         if len(health_files) == 1:
