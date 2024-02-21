@@ -103,10 +103,13 @@ def get_nhc_json_formatted_result(results_file):
         stream_Triad_str = run_command(stream_Triad_cmd)
 
         data_string = "\n".join([ib_write_lb_mlx5_ib_str, stream_Copy_str, stream_Add_str, stream_Scale_str, stream_Triad_str])
+        data_string = os.linesep.join([s for s in data_string.splitlines() if s]) # remove empty lines
         result = {"IB_WRITE_NON_GDR": {}, "stream_Copy": {}, "stream_Add": {}, "stream_Scale": {}, "stream_Triad": {}}
 
         # Split the string by lines and create key-value pairs
         for line in data_string.strip().split("\n"):
+            if line.isspace():
+                continue
             key, value = line.split(":")
             if key.startswith("ib_write_lb_mlx5_ib"):
                 result["IB_WRITE_NON_GDR"][key] = str(value.strip())
@@ -140,10 +143,13 @@ def get_nhc_json_formatted_result(results_file):
         nccl_all_red_lb_str = run_command(nccl_all_red_lb_cmd)
 
         data_string = "\n".join([ib_write_lb_mlx5_ib_str, H2D_GPU_str, D2H_GPU_str, P2P_GPU_str, nccl_all_red_str, nccl_all_red_lb_str])
+        data_string = os.linesep.join([s for s in data_string.splitlines() if s]) # remove empty lines
         result = {"IB_WRITE_GDR": {}, "GPU_BW_HTD": {}, "GPU_BW_DTH": {}, "GPU_BW_P2P": {}, "NCCL_ALL_REDUCE": {}, "NCCL_ALL_REDUCE_LOOP_BACK": {}}
 
         # Split the string by lines and create key-value pairs
         for line in data_string.strip().split("\n"):
+            if line.isspace():
+                continue
             key, value = line.split(":")
             if key.startswith("ib_write_lb_mlx5_ib"):
                 result["IB_WRITE_GDR"][key] = str(value.strip())
