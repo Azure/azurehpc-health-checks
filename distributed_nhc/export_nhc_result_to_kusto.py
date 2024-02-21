@@ -71,27 +71,63 @@ def get_nhc_json_formatted_result(results_file):
     def natural_sort_key(s):
         return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
 
-    # check if CPU or GPU or Unknown
-    stream_Copy_cmd = f"cat {results_file} | grep -o 'stream_Copy: .*'"
-    stream_Copy_str = run_command(stream_Copy_cmd)
+    # check if GPU or CPU
+    processor_cmd = f"lspci | grep -iq NVIDIA" # if not empty, then GPU
+    processor_str = run_command(processor_cmd)
 
-    nccl_all_red_cmd = f"cat {results_file} | grep -o 'nccl_all_red: .*'"
-    nccl_all_red_str = run_command(nccl_all_red_cmd)
+    processor = "GPU" if processor_str else "CPU"
 
-    if stream_Copy_str:
-        processor = "CPU"
-    elif nccl_all_red_str:
-        processor = "GPU"
-    else:
-        processor = "Unknown"
-
-    if processor == "CPU":
+    if processor == "GPU":
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
         ib_write_lb_mlx5_ib_str = run_command(ib_write_lb_mlx5_ib_cmd)
         ib_write_lb_mlx5_ib_str = sorted(ib_write_lb_mlx5_ib_str.strip().split("\n"), key=natural_sort_key)
         ib_write_lb_mlx5_ib_str = '\n'.join(ib_write_lb_mlx5_ib_str) # convert to string
 
-        # stream_Copy_str gotten above
+        H2D_GPU_cmd = f"cat {results_file} | grep -o 'H2D_GPU_[0-7]: .*'"
+        H2D_GPU_str = run_command(H2D_GPU_cmd)
+
+        D2H_GPU_cmd = f"cat {results_file} | grep -o 'D2H_GPU_[0-7]: .*'"
+        D2H_GPU_str = run_command(D2H_GPU_cmd)
+
+        P2P_GPU_cmd = f"cat {results_file} | grep -o 'P2P_GPU_[0-7]_[0-7]: .*'"
+        P2P_GPU_str = run_command(P2P_GPU_cmd)
+
+        nccl_all_red_cmd = f"cat {results_file} | grep -o 'nccl_all_red: .*'"
+        nccl_all_red_str = run_command(nccl_all_red_cmd)
+
+        nccl_all_red_lb_cmd = f"cat {results_file} | grep -o 'nccl_all_red_lb: .*'"
+        nccl_all_red_lb_str = run_command(nccl_all_red_lb_cmd)
+
+        data_string = "\n".join([ib_write_lb_mlx5_ib_str, H2D_GPU_str, D2H_GPU_str, P2P_GPU_str, nccl_all_red_str, nccl_all_red_lb_str])
+        data_string = os.linesep.join([s for s in data_string.splitlines() if s]) # remove empty lines
+        result = {"IB_WRITE_GDR": {}, "GPU_BW_HTD": {}, "GPU_BW_DTH": {}, "GPU_BW_P2P": {}, "NCCL_ALL_REDUCE": {}, "NCCL_ALL_REDUCE_LOOP_BACK": {}}
+
+        # Split the string by lines and create key-value pairs
+        for line in data_string.strip().split("\n"):
+            if line.isspace():
+                continue
+            key, value = line.split(":")
+            if key.startswith("ib_write_lb_mlx5_ib"):
+                result["IB_WRITE_GDR"][key] = str(value.strip())
+            elif key.startswith("H2D"):
+                result["GPU_BW_HTD"][key] = str(value.strip())
+            elif key.startswith("D2H"):
+                result["GPU_BW_DTH"][key] = str(value.strip())
+            elif key.startswith("P2P"):
+                result["GPU_BW_P2P"][key] = str(value.strip())
+            elif key.startswith("nccl_all_red_lb"):
+                result["NCCL_ALL_REDUCE_LOOP_BACK"] = str(value.strip())
+            elif key.startswith("nccl_all_red"):
+                result["NCCL_ALL_REDUCE"] = str(value.strip())
+
+    else: # processor == "CPU"
+        ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
+        ib_write_lb_mlx5_ib_str = run_command(ib_write_lb_mlx5_ib_cmd)
+        ib_write_lb_mlx5_ib_str = sorted(ib_write_lb_mlx5_ib_str.strip().split("\n"), key=natural_sort_key)
+        ib_write_lb_mlx5_ib_str = '\n'.join(ib_write_lb_mlx5_ib_str) # convert to string
+
+        stream_Copy_cmd = f"cat {results_file} | grep -o 'stream_Copy: .*'"
+        stream_Copy_str = run_command(stream_Copy_cmd)
 
         stream_Add_cmd = f"cat {results_file} | grep -o 'stream_Add: .*'"
         stream_Add_str = run_command(stream_Add_cmd)
@@ -121,52 +157,7 @@ def get_nhc_json_formatted_result(results_file):
                 result["stream_Scale"]= str(value.strip())
             elif key.startswith("stream_Triad"):
                 result["stream_Triad"]= str(value.strip())
-
-    elif processor == "GPU":
-        ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
-        ib_write_lb_mlx5_ib_str = run_command(ib_write_lb_mlx5_ib_cmd)
-        ib_write_lb_mlx5_ib_str = sorted(ib_write_lb_mlx5_ib_str.strip().split("\n"), key=natural_sort_key)
-        ib_write_lb_mlx5_ib_str = '\n'.join(ib_write_lb_mlx5_ib_str) # convert to string
-
-        H2D_GPU_cmd = f"cat {results_file} | grep -o 'H2D_GPU_[0-7]: .*'"
-        H2D_GPU_str = run_command(H2D_GPU_cmd)
-
-        D2H_GPU_cmd = f"cat {results_file} | grep -o 'D2H_GPU_[0-7]: .*'"
-        D2H_GPU_str = run_command(D2H_GPU_cmd)
-
-        P2P_GPU_cmd = f"cat {results_file} | grep -o 'P2P_GPU_[0-7]_[0-7]: .*'"
-        P2P_GPU_str = run_command(P2P_GPU_cmd)
-
-        # nccl_all_red gotten above
-
-        nccl_all_red_lb_cmd = f"cat {results_file} | grep -o 'nccl_all_red_lb: .*'"
-        nccl_all_red_lb_str = run_command(nccl_all_red_lb_cmd)
-
-        data_string = "\n".join([ib_write_lb_mlx5_ib_str, H2D_GPU_str, D2H_GPU_str, P2P_GPU_str, nccl_all_red_str, nccl_all_red_lb_str])
-        data_string = os.linesep.join([s for s in data_string.splitlines() if s]) # remove empty lines
-        result = {"IB_WRITE_GDR": {}, "GPU_BW_HTD": {}, "GPU_BW_DTH": {}, "GPU_BW_P2P": {}, "NCCL_ALL_REDUCE": {}, "NCCL_ALL_REDUCE_LOOP_BACK": {}}
-
-        # Split the string by lines and create key-value pairs
-        for line in data_string.strip().split("\n"):
-            if line.isspace():
-                continue
-            key, value = line.split(":")
-            if key.startswith("ib_write_lb_mlx5_ib"):
-                result["IB_WRITE_GDR"][key] = str(value.strip())
-            elif key.startswith("H2D"):
-                result["GPU_BW_HTD"][key] = str(value.strip())
-            elif key.startswith("D2H"):
-                result["GPU_BW_DTH"][key] = str(value.strip())
-            elif key.startswith("P2P"):
-                result["GPU_BW_P2P"][key] = str(value.strip())
-            elif key.startswith("nccl_all_red_lb"):
-                result["NCCL_ALL_REDUCE_LOOP_BACK"] = str(value.strip())
-            elif key.startswith("nccl_all_red"):
-                result["NCCL_ALL_REDUCE"] = str(value.strip())
     
-    else : 
-        result = {"Error": "Unable to determine processor type"}
-
     return result
 
 def ingest_results(results_file, creds, ingest_url, database, results_table_name, nhc_run_uuid="None"):
