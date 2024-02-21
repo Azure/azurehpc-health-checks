@@ -2,6 +2,7 @@
 import sys
 import os
 import json
+import re
 from datetime import datetime
 from csv import DictReader
 from argparse import ArgumentParser
@@ -62,10 +63,13 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
         ingest_client.ingest_from_dataframe(df, IngestionProperties(database, debug_table_name))
 
 def get_nhc_json_formatted_result(results_file):
+    def natural_sort_key(s):
+            return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
+
     if "cpu" in results_file :
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
         ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
-        # TO DO : organize the values from 0-7, not yet done
+        ib_write_lb_mlx5_ib_vals = sorted(ib_write_lb_mlx5_ib_vals.strip().split("\n"), key=natural_sort_key)
 
         stream_Copy_cmd = f"cat {results_file} | grep -o 'stream_Copy: .*'"
         stream_Copy_vals = os.system(stream_Copy_cmd)
@@ -100,7 +104,7 @@ def get_nhc_json_formatted_result(results_file):
     elif "gpu" in results_file :
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
         ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
-        # TO DO : organize the values from 0-7, not yet done
+        ib_write_lb_mlx5_ib_vals = sorted(ib_write_lb_mlx5_ib_vals.strip().split("\n"), key=natural_sort_key)
 
         H2D_GPU_cmd = f"cat {results_file} | grep -o 'H2D_GPU_[0-7]: .*'"
         H2D_GPU_vals = os.system(H2D_GPU_cmd)
@@ -162,8 +166,6 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
 
     with open(results_file, 'r') as f:
         full_results = file.read(results_file)
-        # TO DO : Python3 compatibility issue with "file" -> "open" instead?
-
         jsonResult = get_nhc_json_formatted_result(results_file)
             
         record = {
@@ -181,7 +183,7 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
         }
         if 'error' in full_results or 'failure' in full_results:
             record['pass'] = False
-            record['error'] = full_results # TO DO : go line by line to find where the error came from?
+            record['error'] = full_results
 
 
         df = pd.DataFrame(record)
