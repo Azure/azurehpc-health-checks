@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import sys
 import os
+import json
 from datetime import datetime
 from csv import DictReader
 from argparse import ArgumentParser
@@ -65,9 +66,7 @@ def get_nhc_json_formatted_result(results_file, parseType):
     if "cpu" in results_file :
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
         ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
-        for line in ib_write_lb_mlx5_ib_vals.strip().split("\n"):
-            key, value = line.split(":")
-            temp_dict[key.strip()] = float(value.strip())
+        # TO DO : organize the values from 0-7, not yet done
 
         stream_Copy_cmd = f"cat {results_file} | grep -o 'stream_Copy: .*'"
         stream_Copy_vals = os.system(stream_Copy_cmd)
@@ -81,14 +80,28 @@ def get_nhc_json_formatted_result(results_file, parseType):
         stream_Triad_cmd = f"cat {results_file} | grep -o 'stream_Triad: .*'"
         stream_Triad_vals = os.system(stream_Triad_cmd)
 
+        data_string = ib_write_lb_mlx5_ib_vals + H2D_GPU_vals + D2H_GPU_vals + P2P_GPU_vals + nccl_all_red_vals + nccl_all_red_lb_vals
+
+        result = {"IB_WRITE_NON_GDR": {}, "stream_Copy": {}, "stream_Add": {}, "stream_Scale": {}, "stream_Triad": {}}
+
+        # Split the string by lines and create key-value pairs
+        for line in data_string.strip().split("\n"):
+            key, value = line.split(":")
+            if key.startswith("ib_write_lb_mlx5_ib"):
+                result["IB_WRITE_NON_GDR"][key] = float(value.strip())
+            elif key.startswith("stream_Copy"):
+                result["stream_Copy"]= float(value.strip())
+            elif key.startswith("stream_Add"):
+                result["stream_Add"]= float(value.strip())
+            elif key.startswith("stream_Scale"):
+                result["stream_Scale"]= float(value.strip())
+            elif key.startswith("stream_Triad"):
+                result["stream_Triad"]= float(value.strip())
+
     elif "gpu" in results_file :
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
         ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
         # TO DO : organize the values from 0-7, not yet done
-        temp_dict = {}
-        for line in ib_write_lb_mlx5_ib_vals.strip().split("\n"):
-            key, value = line.split(":")
-            temp_dict[key.strip()] = float(value.strip())
 
         H2D_GPU_cmd = f"cat {results_file} | grep -o 'H2D_GPU_[0-7]: .*'"
         H2D_GPU_vals = os.system(H2D_GPU_cmd)
@@ -104,10 +117,27 @@ def get_nhc_json_formatted_result(results_file, parseType):
 
         nccl_all_red_lb_cmd = f"cat {results_file} | grep -o 'nccl_all_red_lb: .*'"
         nccl_all_red_lb_vals = os.system(nccl_all_red_lb_cmd)
-    
-    else : 
-        # TO DO : what is this third case?
 
+
+        data_string = ib_write_lb_mlx5_ib_vals + H2D_GPU_vals + D2H_GPU_vals + P2P_GPU_vals + nccl_all_red_vals + nccl_all_red_lb_vals
+
+        result = {"IB_WRITE_GDR": {}, "GPU_BW_HTD": {}, "GPU_BW_DTH": {}, "GPU_BW_P2P": {}, "NCCL_ALL_REDUCE": {}, "NCCL_ALL_REDUCE_LOOP_BACK": {}}
+
+        # Split the string by lines and create key-value pairs
+        for line in data_string.strip().split("\n"):
+            key, value = line.split(":")
+            if key.startswith("ib_write_lb_mlx5_ib"):
+                result["IB_WRITE_GDR"][key] = float(value.strip())
+            elif key.startswith("H2D"):
+                result["GPU_BW_HTD"][key] = float(value.strip())
+            elif key.startswith("D2H"):
+                result["GPU_BW_DTH"][key] = float(value.strip())
+            elif key.startswith("P2P"):
+                result["GPU_BW_P2P"][key] = float(value.strip())
+            elif key.startswith("nccl_all_red"):
+                result["NCCL_ALL_REDUCE"] = float(value.strip())
+            elif key.startswith("nccl_all_red_lb"):
+                result["NCCL_ALL_REDUCE_LOOP_BACK"] = float(value.strip())
 
     
 
