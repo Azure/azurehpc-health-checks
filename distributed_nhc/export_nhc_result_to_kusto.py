@@ -3,7 +3,7 @@ import sys
 import os
 import json
 import re
-import subprocess # TO DO : do i need this?
+import subprocess
 from datetime import datetime
 from csv import DictReader
 from argparse import ArgumentParser
@@ -171,7 +171,7 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
     vmId_bash_cmd = "curl  -H Metadata:true --max-time 10 -s \"http://169.254.169.254/metadata/instance/compute/vmId?api-version=2021-02-01&format=text\""
     vmId = run_command(vmId_bash_cmd)
 
-    vmName_bash_cmd = "timeout 60 sudo /opt/azurehpc/tools/kvp_client | grep \" HostName; \"" # keep the spaces, else it will also output the results for 'PhysicalHostName'
+    vmName_bash_cmd = "timeout 60 sudo /opt/azurehpc/tools/kvp_client | grep \" HostName; \" | grep -o 'Value: [^;]*' | cut -d ' ' -f 2" # keep the spaces, else it will also output the results for 'PhysicalHostName'
     vmName = run_command(vmName_bash_cmd)
 
     phyhost = run_command("echo $(hostname) \"$(/opt/azurehpc/tools/kvp_client |grep Fully)\"")
