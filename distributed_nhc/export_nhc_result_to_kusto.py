@@ -60,6 +60,62 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
         print(f"Ingesting health results from {os.path.basename(debug_file)} into {ingest_url} at {database}/{debug_table_name}")
         ingest_client.ingest_from_dataframe(df, IngestionProperties(database, debug_table_name))
 
+def get_nhc_json_formatted_result(results_file):
+    # see next commit 
+
+def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
+    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
+    job_name = results_file.replace("\\", "/").split(".")[0].split("/")[-1] # account for \ or / in path
+    uuid = job_name if nhc_run_uuid == "none" else nhc_run_uuid
+    if uuid == "health":
+        uuid = ""
+    else :
+        uuid = "-" + uuid
+    full_uuid = f"nhc-{ts}{uuid}"
+
+    vmSize_bash_cmd = "echo $( curl -H Metadata:true --max-time 10 -s \"http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text\") | tr '[:upper:]' '[:lower:]' "
+    vmSize = run_command(vmSize_bash_cmd)
+
+    vmId_bash_cmd = "curl  -H Metadata:true --max-time 10 -s \"http://169.254.169.254/metadata/instance/compute/vmId?api-version=2021-02-01&format=text\""
+    vmId = run_command(vmId_bash_cmd)
+
+    vmName_bash_cmd = "hostname"
+    vmName = run_command(vmName_bash_cmd)
+
+    physhost = run_command("echo $(hostname) \"$(/opt/azurehpc/tools/kvp_client |grep Fully)\" | cut -d ':' -f 3 | cut -d ' ' -f 2 | sed 's/\"//g'")
+    if not physhost:
+        physhost = "not Mapped"
+
+    with open(results_file, 'r') as f:
+        full_results = f.read()
+        jsonResultDict = get_nhc_json_formatted_result(results_file)
+        jsonResult = json.dumps(jsonResultDict)
+
+        record = {
+            'vmSize': vmSize,
+            'vmId': vmId,
+            'vmHostname': vmName,
+            'physHostname': physhost,
+            'workflowType': "main",
+            'time': ts,
+            'pass': True,
+            'error': '',
+            'logOutput': full_results, # the entire file
+            'jsonResult': jsonResult,
+            'uuid': full_uuid
+        }
+        if 'error' in full_results or 'failure' in full_results:
+            record['pass'] = False
+            record['error'] = full_results
+
+        df = pd.DataFrame(record, index=[0])
+
+        ingest_client = QueuedIngestClient(KustoConnectionStringBuilder.with_azure_token_credential(ingest_url, creds))
+        print(f"Ingesting results from {os.path.basename(results_file)} into {ingest_url} at {database}/{results_table_name}")
+        ingest_client.ingest_from_dataframe(df, IngestionProperties(database, results_table_name))
+
+
 def parse_args():
     parser = ArgumentParser(description="Ingest NHC results into Kusto")
     parser.add_argument("health_files", nargs="+", help="List of .health.log or .debug.log files to ingest")
@@ -67,6 +123,7 @@ def parse_args():
     parser.add_argument("--database", help="Kusto database", required=True)
     parser.add_argument("--health_table_name", default="NodeHealthCheck", help="Kusto table name for health results")
     parser.add_argument("--debug_table_name", default="NodeHealthCheck_Debug", help="Kusto table name for debug results")
+    parser.add_argument("--results_table_name", default="AzNhcRunEvents", help="Kusto table name for debug results")
     parser.add_argument("--identity", nargs="?", const=True, default=False, help="Managed Identity to use for authentication, if a client ID is provided it will be used, otherwise the system-assigned identity will be used. If --identity is not provided DefaultAzureCredentials will be used.")
     return parser.parse_args()
 
