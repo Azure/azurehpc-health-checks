@@ -63,18 +63,32 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
 
 def get_nhc_json_formatted_result(results_file, parseType):
     if "cpu" in results_file :
+        ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
+        ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
+        for line in ib_write_lb_mlx5_ib_vals.strip().split("\n"):
+            key, value = line.split(":")
+            temp_dict[key.strip()] = float(value.strip())
+
+        stream_Copy_cmd = f"cat {results_file} | grep -o 'stream_Copy: .*'"
+        stream_Copy_vals = os.system(stream_Copy_cmd)
+
+        stream_Add_cmd = f"cat {results_file} | grep -o 'stream_Add: .*'"
+        stream_Add_vals = os.system(stream_Add_cmd)
+
+        stream_Scale_cmd = f"cat {results_file} | grep -o 'stream_Scale: .*'"
+        stream_Scale_vals = os.system(stream_Scale_cmd)
+
+        stream_Triad_cmd = f"cat {results_file} | grep -o 'stream_Triad: .*'"
+        stream_Triad_vals = os.system(stream_Triad_cmd)
 
     elif "gpu" in results_file :
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
         ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
-
         # TO DO : organize the values from 0-7, not yet done
         temp_dict = {}
         for line in ib_write_lb_mlx5_ib_vals.strip().split("\n"):
             key, value = line.split(":")
             temp_dict[key.strip()] = float(value.strip())
-
-        # print(temp_dict)
 
         H2D_GPU_cmd = f"cat {results_file} | grep -o 'H2D_GPU_[0-7]: .*'"
         H2D_GPU_vals = os.system(H2D_GPU_cmd)
