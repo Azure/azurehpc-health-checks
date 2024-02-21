@@ -62,17 +62,9 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
 
 
 def get_nhc_json_formatted_result(results_file, parseType):
-    parseType = ""
     if "cpu" in results_file :
-        parseType = "cpu"
+
     elif "gpu" in results_file :
-        parseType = "gpu"
-    else : 
-        # TO DO : what is this third case?
-
-    if parseType == "cpu" :
-
-    elif parseType == "gpu" :
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
         ib_write_lb_mlx5_ib_vals = os.system(ib_write_lb_mlx5_ib_cmd)
 
@@ -98,6 +90,9 @@ def get_nhc_json_formatted_result(results_file, parseType):
 
         nccl_all_red_lb_cmd = f"cat {results_file} | grep -o 'nccl_all_red_lb: .*'"
         nccl_all_red_lb_vals = os.system(nccl_all_red_lb_cmd)
+    
+    else : 
+        # TO DO : what is this third case?
 
 
     
