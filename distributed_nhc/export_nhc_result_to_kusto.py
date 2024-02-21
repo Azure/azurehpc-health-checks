@@ -206,9 +206,6 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
         if "ERROR" in full_results:
             record['pass'] = False
             record['errors'] = full_results
-        elif "Error" in jsonResultDict.keys():
-            record['pass'] = False
-            record['errors'] = jsonResult
         elif "Node Health Check completed successfully" in full_results:
             record['pass'] = True
         else:
