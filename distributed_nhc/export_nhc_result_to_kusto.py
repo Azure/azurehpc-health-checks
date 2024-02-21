@@ -45,7 +45,7 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
     if job_name == "pssh":
         job_name = f"{job_name}-{ts_str}"
 
-    with open(health_file, 'r') as f:
+    with open(debug_file, 'r') as f:
         lines = f.readlines()
         reader = DictReader(lines, fieldnames = ["Hostname", "DebugLog"], delimiter='|', restkey="extra")
 
@@ -92,10 +92,10 @@ for health_file in args.health_files:
         elif health_file.endswith(".debug.log"):
             ingest_debug_log(health_file, creds, args.ingest_url, args.database, args.debug_table_name)
         else:
-            raise Exception("Unsuported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh")
+            raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh")
 
     except FileNotFoundError:
-        if len(health_files) == 1:
+        if len(args.health_files) == 1:
             print(f"Cannot find file '{health_file}'")
             raise
         print(f"Cannot find file '{health_file}', skipping...")
