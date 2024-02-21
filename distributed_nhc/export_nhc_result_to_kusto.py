@@ -3,6 +3,7 @@ import sys
 import os
 import json
 import re
+import subprocess # TO DO : do i need this?
 from datetime import datetime
 from csv import DictReader
 from argparse import ArgumentParser
@@ -62,32 +63,39 @@ def ingest_debug_log(debug_file, creds, ingest_url, database, debug_table_name):
         print(f"Ingesting health results from {os.path.basename(debug_file)} into {ingest_url} at {database}/{debug_table_name}")
         ingest_client.ingest_from_dataframe(df, IngestionProperties(database, debug_table_name))
 
+
+def run_command(cmd):
+    result = subprocess.run(cmd, capture_output=True, shell=True, text=True)
+    return result.stdout.strip()
+
+
 def get_nhc_json_formatted_result(results_file):
     def natural_sort_key(s):
             return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', s)]
 
     # check if CPU or GPU 
     stream_Copy_cmd = f"cat {results_file} | grep -o 'stream_Copy: .*'"
-    stream_Copy_str = os.system(stream_Copy_cmd)
+    stream_Copy_str = run_command(stream_Copy_cmd)
     n = "CPU" if stream_Copy_str else "GPU"
 
     if n == "CPU":
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
-        ib_write_lb_mlx5_ib_str = os.system(ib_write_lb_mlx5_ib_cmd)
+        ib_write_lb_mlx5_ib_str = run_command(ib_write_lb_mlx5_ib_cmd)
         ib_write_lb_mlx5_ib_str = sorted(ib_write_lb_mlx5_ib_str.strip().split("\n"), key=natural_sort_key)
+        ib_write_lb_mlx5_ib_str = '\n'.join(ib_write_lb_mlx5_ib_str) # convert to string
 
         # stream_Copy_str gotten above
 
         stream_Add_cmd = f"cat {results_file} | grep -o 'stream_Add: .*'"
-        stream_Add_str = os.system(stream_Add_cmd)
+        stream_Add_str = run_command(stream_Add_cmd)
 
         stream_Scale_cmd = f"cat {results_file} | grep -o 'stream_Scale: .*'"
-        stream_Scale_str = os.system(stream_Scale_cmd)
+        stream_Scale_str = run_command(stream_Scale_cmd)
 
         stream_Triad_cmd = f"cat {results_file} | grep -o 'stream_Triad: .*'"
-        stream_Triad_str = os.system(stream_Triad_cmd)
+        stream_Triad_str = run_command(stream_Triad_cmd)
 
-        data_string = ib_write_lb_mlx5_ib_str + H2D_GPU_str + D2H_GPU_str + P2P_GPU_str + nccl_all_red_str + nccl_all_red_lb_str
+        data_string = ib_write_lb_mlx5_ib_str + str(stream_Copy_str) + str(stream_Add_str) + str(stream_Scale_str) + str(stream_Triad_str)
 
         result = {"IB_WRITE_NON_GDR": {}, "stream_Copy": {}, "stream_Add": {}, "stream_Scale": {}, "stream_Triad": {}}
 
@@ -107,26 +115,26 @@ def get_nhc_json_formatted_result(results_file):
 
     elif n == "GPU":
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
-        ib_write_lb_mlx5_ib_str = os.system(ib_write_lb_mlx5_ib_cmd)
-        ib_write_lb_mlx5_ib_str = sorted(ib_write_lb_mlx5_ib_str.strip().split("\n"), key=natural_sort_key)
+        ib_write_lb_mlx5_ib_str = run_command(ib_write_lb_mlx5_ib_cmd)
+        ib_write_lb_mlx5_ib_str = sorted(str(ib_write_lb_mlx5_ib_str).strip().split("\n"), key=natural_sort_key)
 
         H2D_GPU_cmd = f"cat {results_file} | grep -o 'H2D_GPU_[0-7]: .*'"
-        H2D_GPU_str = os.system(H2D_GPU_cmd)
+        H2D_GPU_str = run_command(H2D_GPU_cmd)
 
         D2H_GPU_cmd = f"cat {results_file} | grep -o 'D2H_GPU_[0-7]: .*'"
-        D2H_GPU_str = os.system(D2H_GPU_cmd)
+        D2H_GPU_str = run_command(D2H_GPU_cmd)
 
         P2P_GPU_cmd = f"cat {results_file} | grep -o 'P2P_GPU_[0-7]_[0-7]: .*'"
-        P2P_GPU_str = os.system(P2P_GPU_cmd)
+        P2P_GPU_str = run_command(P2P_GPU_cmd)
 
         nccl_all_red_cmd = f"cat {results_file} | grep -o 'nccl_all_red: .*'"
-        nccl_all_red_str = os.system(nccl_all_red_cmd)
+        nccl_all_red_str = run_command(nccl_all_red_cmd)
 
         nccl_all_red_lb_cmd = f"cat {results_file} | grep -o 'nccl_all_red_lb: .*'"
-        nccl_all_red_lb_str = os.system(nccl_all_red_lb_cmd)
+        nccl_all_red_lb_str = run_command(nccl_all_red_lb_cmd)
 
 
-        data_string = ib_write_lb_mlx5_ib_str + H2D_GPU_str + D2H_GPU_str + P2P_GPU_str + nccl_all_red_str + nccl_all_red_lb_str
+        data_string = ib_write_lb_mlx5_ib_str + str(H2D_GPU_str) + str(D2H_GPU_str) + str(P2P_GPU_str) + str(nccl_all_red_str) + str(nccl_all_red_lb_str)
 
         result = {"IB_WRITE_GDR": {}, "GPU_BW_HTD": {}, "GPU_BW_DTH": {}, "GPU_BW_P2P": {}, "NCCL_ALL_REDUCE": {}, "NCCL_ALL_REDUCE_LOOP_BACK": {}}
 
@@ -158,15 +166,15 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
     full_uuid = f"nhc-{ts}{uuid}"
 
     vmSize_bash_cmd = "echo $( curl -H Metadata:true --max-time 10 -s \"http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text\") | tr '[:upper:]' '[:lower:]' "
-    vmSize = os.system(vmSize_bash_cmd)
+    vmSize = run_command(vmSize_bash_cmd)
 
     vmId_bash_cmd = "curl  -H Metadata:true --max-time 10 -s \"http://169.254.169.254/metadata/instance/compute/vmId?api-version=2021-02-01&format=text\""
-    vmId = os.system(vmId_bash_cmd)
+    vmId = run_command(vmId_bash_cmd)
 
     vmName_bash_cmd = "timeout 60 sudo /opt/azurehpc/tools/kvp_client | grep \" HostName; \"" # keep the spaces, else it will also output the results for 'PhysicalHostName'
-    vmName = os.system(vmName_bash_cmd)
+    vmName = run_command(vmName_bash_cmd)
 
-    phyhost = os.system("echo $(hostname) \"$(/opt/azurehpc/tools/kvp_client |grep Fully)\"")
+    phyhost = run_command("echo $(hostname) \"$(/opt/azurehpc/tools/kvp_client |grep Fully)\"")
     if not phyhost:
         phyhost = "not Mapped"
 
@@ -236,7 +244,7 @@ for health_file in args.health_files:
             raise Exception("Unsupported file, must be .health.log or .debug.log produced by ./distributed_nhc.sb.sh, or .log produced by run-health-checks.sh")
 
     except FileNotFoundError:
-        if len(health_files) == 1:
+        if len(args.health_files) == 1:
             print(f"Cannot find file '{health_file}'")
             raise
         print(f"Cannot find file '{health_file}', skipping...")
