@@ -95,7 +95,7 @@ def get_nhc_json_formatted_result(results_file):
         stream_Triad_cmd = f"cat {results_file} | grep -o 'stream_Triad: .*'"
         stream_Triad_str = run_command(stream_Triad_cmd)
 
-        data_string = ib_write_lb_mlx5_ib_str + str(stream_Copy_str) + str(stream_Add_str) + str(stream_Scale_str) + str(stream_Triad_str)
+        data_string = "\n".join([ib_write_lb_mlx5_ib_str, stream_Copy_str, stream_Add_str, stream_Scale_str, stream_Triad_str])
 
         result = {"IB_WRITE_NON_GDR": {}, "stream_Copy": {}, "stream_Add": {}, "stream_Scale": {}, "stream_Triad": {}}
 
@@ -103,15 +103,15 @@ def get_nhc_json_formatted_result(results_file):
         for line in data_string.strip().split("\n"):
             key, value = line.split(":")
             if key.startswith("ib_write_lb_mlx5_ib"):
-                result["IB_WRITE_NON_GDR"][key] = float(value.strip())
+                result["IB_WRITE_NON_GDR"][key] = str(value.strip())
             elif key.startswith("stream_Copy"):
-                result["stream_Copy"]= float(value.strip())
+                result["stream_Copy"]= str(value.strip())
             elif key.startswith("stream_Add"):
-                result["stream_Add"]= float(value.strip())
+                result["stream_Add"]= str(value.strip())
             elif key.startswith("stream_Scale"):
-                result["stream_Scale"]= float(value.strip())
+                result["stream_Scale"]= str(value.strip())
             elif key.startswith("stream_Triad"):
-                result["stream_Triad"]= float(value.strip())
+                result["stream_Triad"]= str(value.strip())
 
     elif n == "GPU":
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} | grep -o 'ib_write_lb_mlx5_ib[0-7]: .*'"
@@ -133,8 +133,7 @@ def get_nhc_json_formatted_result(results_file):
         nccl_all_red_lb_cmd = f"cat {results_file} | grep -o 'nccl_all_red_lb: .*'"
         nccl_all_red_lb_str = run_command(nccl_all_red_lb_cmd)
 
-
-        data_string = ib_write_lb_mlx5_ib_str + str(H2D_GPU_str) + str(D2H_GPU_str) + str(P2P_GPU_str) + str(nccl_all_red_str) + str(nccl_all_red_lb_str)
+        data_string = "\n".join([ib_write_lb_mlx5_ib_str, H2D_GPU_str, D2H_GPU_str, P2P_GPU_str, nccl_all_red_str, nccl_all_red_lb_str])
 
         result = {"IB_WRITE_GDR": {}, "GPU_BW_HTD": {}, "GPU_BW_DTH": {}, "GPU_BW_P2P": {}, "NCCL_ALL_REDUCE": {}, "NCCL_ALL_REDUCE_LOOP_BACK": {}}
 
@@ -142,17 +141,17 @@ def get_nhc_json_formatted_result(results_file):
         for line in data_string.strip().split("\n"):
             key, value = line.split(":")
             if key.startswith("ib_write_lb_mlx5_ib"):
-                result["IB_WRITE_GDR"][key] = float(value.strip())
+                result["IB_WRITE_GDR"][key] = str(value.strip())
             elif key.startswith("H2D"):
-                result["GPU_BW_HTD"][key] = float(value.strip())
+                result["GPU_BW_HTD"][key] = str(value.strip())
             elif key.startswith("D2H"):
-                result["GPU_BW_DTH"][key] = float(value.strip())
+                result["GPU_BW_DTH"][key] = str(value.strip())
             elif key.startswith("P2P"):
-                result["GPU_BW_P2P"][key] = float(value.strip())
+                result["GPU_BW_P2P"][key] = str(value.strip())
             elif key.startswith("nccl_all_red"):
-                result["NCCL_ALL_REDUCE"] = float(value.strip())
+                result["NCCL_ALL_REDUCE"] = str(value.strip())
             elif key.startswith("nccl_all_red_lb"):
-                result["NCCL_ALL_REDUCE_LOOP_BACK"] = float(value.strip())
+                result["NCCL_ALL_REDUCE_LOOP_BACK"] = str(value.strip())
     
 def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
     ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -186,7 +185,7 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
             'vmSize': vmSize,
             'vmId': vmId,
             'vmHostname': vmName,
-            'physHostname': physhost,
+            'physHostname': phyhost,
             'workflowType': "main",
             'time': ts,
             'pass': True,
@@ -198,7 +197,6 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
         if 'error' in full_results or 'failure' in full_results:
             record['pass'] = False
             record['error'] = full_results
-
 
         df = pd.DataFrame(record)
 
