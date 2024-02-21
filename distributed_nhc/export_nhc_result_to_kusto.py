@@ -200,23 +200,23 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
             'workflowType': "main",
             'time': ts,
             'pass': False, # keep as default false
-            'error': '',
+            'errors': '',
             'logOutput': full_results, # the entire file
             'jsonResult': jsonResult,
             'uuid': full_uuid
         }
 
-        if "Node Health Check completed successfully " in full_results:
-            record['pass'] = True
-        elif "ERROR" in full_results:
+        if "ERROR" in full_results:
             record['pass'] = False
-            record['error'] = full_results
+            record['errors'] = full_results
         elif "Error" in jsonResultDict.keys():
             record['pass'] = False
-            record['error'] = jsonResult
+            record['errors'] = full_results
+        elif "Node Health Check completed successfully" in full_results:
+            record['pass'] = True
         else:
             record['pass'] = False
-            record['error'] = "No Node Health Check completed successfully or ERROR"
+            record['errors'] = "No Node Health Check completed successfully or ERROR"
 
         df = pd.DataFrame(record, index=[0])
 
