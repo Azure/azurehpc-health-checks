@@ -147,7 +147,7 @@ def get_nhc_json_formatted_result(results_file):
                 result["NCCL_ALL_REDUCE_LOOP_BACK"] = float(value.strip())
     
 def ingest_results(results_file, creds, ingest_url, database, results_table_name, hostfile=None, nhc_run_uuid="none"):
-    ts = datetime.strptime(datetime.datetime.now(), "%Y-%m-%d_%H-%M-%S")
+    ts = datetime.strptime(datetime.now(), "%Y-%m-%d_%H-%M-%S")
 
     job_name = results_file.split(".")[0]
     uuid = job_name if nhc_run_uuid == "none" else nhc_run_uuid
