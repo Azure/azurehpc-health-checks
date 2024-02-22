@@ -57,7 +57,7 @@ function run_ib_bw_gdr(){
 	 fi
   done
   dbg "ib_write_lb_${device}: $ib_bandwidth Gbps"
-  if [[ $ib_bandwidth < $EXP_IB_BW ]]; then
+  if (( $(echo "$ib_bandwidth < $EXP_IB_BW" | bc -l) )); then
 	 log "$IB_WRITE_BW_OUT2"
     die 1 "$FUNCNAME: $IB_WRITE_BW, IB=$device, $device_peer, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
 	 return 1

@@ -56,8 +56,7 @@ function check_nccl_allreduce() {
          fi
       done
       dbg "nccl_all_red: $avg_bus_bw  GB/s"
-      if [[ $avg_bus_bw < $EXP_NCCL_ALLREDUCE_BW ]]
-      then
+      if (( $(echo "$avg_bus_bw < $EXP_NCCL_ALLREDUCE_BW" | bc -l) )); then
          dbg "$nccl_allreduce_out"
          dbg "Iteration ${iter} of ${REPEATS} failed: NCCL allreduce bandwidth $avg_bus_bw GB/s < $EXP_NCCL_ALLREDUCE_BW GB/s"
       else
