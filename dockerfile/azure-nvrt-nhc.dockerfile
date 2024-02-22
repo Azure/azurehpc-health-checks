@@ -51,12 +51,6 @@ RUN cd /tmp && \
     MLNX_OFED_LINUX-${OFED_VERSION}-ubuntu22.04-x86_64/mlnxofedinstall --user-space-only --without-fw-update --without-ucx-cuda --force --all && \
     rm -rf /tmp/MLNX_OFED_LINUX*
 
-# install clang dependency
-RUN cd /tmp && \
-    wget https://download.amd.com/developer/eula/aocc-compiler/aocc-compiler-${AOCC_VERSION}_amd64.deb && \
-    apt install -y ./aocc-compiler-${AOCC_VERSION}_amd64.deb && \
-    rm aocc-compiler-${AOCC_VERSION}_amd64.deb
-
 # Install HPCx
 RUN cd /tmp && \
     TARBALL="hpcx-${HPCX_VERSION}-gcc-mlnx_ofed-ubuntu22.04-cuda12-gdrcopy2-nccl2.18-x86_64.tbz" && \
@@ -104,6 +98,12 @@ COPY customTests/*.nhc /etc/nhc/scripts/
 COPY customTests/topofiles ${AZ_NHC_ROOT}/topofiles
 COPY conf ${AZ_NHC_ROOT}/default/conf
 
+# install clang dependency needed for stream
+RUN cd /tmp && \
+    wget https://download.amd.com/developer/eula/aocc-compiler/aocc-compiler-${AOCC_VERSION}_amd64.deb && \
+    apt install -y ./aocc-compiler-${AOCC_VERSION}_amd64.deb && \
+    rm aocc-compiler-${AOCC_VERSION}_amd64.deb
+
 # Install stream 
 RUN mkdir -p /tmp/stream
 COPY customTests/stream/Makefile /tmp/stream/
@@ -111,6 +111,10 @@ RUN cd /tmp/stream && \
 wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c  && \
 make all CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=${AZ_NHC_ROOT}/bin && \
 rm -rf /tmp/stream
+
+# Remove AOCC after STREAM build
+RUN version=$(echo "$AOCC_VERSION" | sed 's/_1$//') && \
+apt remove aocc-compiler-"${version}" -y
 
 # Copy necessary files
 COPY customTests/*.nhc /etc/nhc/scripts/
