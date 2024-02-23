@@ -205,7 +205,9 @@ def ingest_results(results_file, creds, ingest_url, database, results_table_name
 
         if "ERROR" in full_results:
             record['pass'] = False
-            record['errors'] = full_results
+            specific_error_cmd = f"cat {results_file} | grep -o 'ERROR.*'"
+            specific_error_str = run_command(specific_error_cmd)
+            record['errors'] = specific_error_str
         elif "Node Health Check completed successfully" in full_results:
             record['pass'] = True
         else:
