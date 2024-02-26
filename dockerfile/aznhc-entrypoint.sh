@@ -1,5 +1,9 @@
 #! /bin/bash
 
+if [ -z "$AZ_NHC_ROOT" ]; then
+    AZ_NHC_ROOT="/azure-nhc"
+fi
+
 CONF_FILE=${AZ_NHC_ROOT}/conf/aznhc.conf
 OUTPUT_PATH=${AZ_NHC_ROOT}/output/aznhc.log
 DEFAULT_NHC_FILE_PATH=${AZ_NHC_ROOT}/default
@@ -48,5 +52,7 @@ fi
 if [ "$output_mounted" = false ]; then
     cat $OUTPUT_PATH
 fi
+
+echo "Health checks completed." | tee -a $OUTPUT_PATH
 
 exit 0

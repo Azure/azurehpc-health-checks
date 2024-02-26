@@ -23,6 +23,17 @@ fi
 
 export NHC_DIR
 
-bats --pretty ${parent_dir}/bats-unit-tests.sh
+echo "Running basic tests"
+bats --pretty ${parent_dir}/basic-unit-test.sh
+
+echo "Running nhc custom checks tests"
+if lspci | grep -iq NVIDIA ; then
+    bats --pretty ${parent_dir}/nhc-gpu-test.sh
+elif lspci | grep -iq AMD ; then
+	# AMD installs
+    echo "No unit tests for AMD GPU SKUs"
+else
+    bats --pretty ${parent_dir}/nhc-cpu-test.sh
+fi
 
 exit 0
