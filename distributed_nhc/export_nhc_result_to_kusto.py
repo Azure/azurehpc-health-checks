@@ -116,7 +116,6 @@ def get_nhc_json_formatted_result(results_file):
     processor_str = run_command(processor_cmd)
 
     processor = "GPU" if processor_str else "CPU"
-    processor = "GPU"
 
     if processor == "GPU":
         ib_write_lb_mlx5_ib_cmd = f"cat {results_file} \
