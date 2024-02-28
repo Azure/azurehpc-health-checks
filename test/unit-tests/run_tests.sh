@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # Install bats if necessary
-if ! command -v bats &> /dev/null; then
+if ! command -v bats &> /dev/null ; then
     echo "Bats not found. Attempting to install..."
-    distro=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+    distro_check=$( cat /etc/os-release | grep -i ID_LIKE=)
+    echo $distro_check
     if [[ $distro_check =~ "debian" ]]; then
         sudo apt-get install -y bats
     else
-        sudo yum install epel-release
+        sudo yum install -y epel-release
         sudo yum install -y bats
     fi
 fi
@@ -22,18 +23,35 @@ if [ -z "$NHC_DIR" ]; then
 fi
 
 export NHC_DIR
+source $NHC_DIR/test/unit-tests/nhc-test-common.sh
 
-echo "Running basic tests"
+# echo "Running integration tests"
 bats --pretty ${parent_dir}/basic-unit-test.sh
+integration_test_status=$?
 
 echo "Running nhc custom checks tests"
+
+sudo docker run -itd --name=aznhc --net=host -e TIMEOUT=500 --rm \
+--runtime=nvidia --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE \
+--privileged -v /sys:/hostsys/ \
+-v $NHC_DIR/customTests:/azure-nhc/customTests \
+-v $NHC_DIR/test:/azure-nhc/test \
+aznhc.azurecr.io/nvrt bash
+
+sudo docker exec -it aznhc bash -c "cp /azure-nhc/customTests/azure_common.nhc /etc/nhc/scripts/"
+
 if lspci | grep -iq NVIDIA ; then
-    bats --pretty ${parent_dir}/nhc-gpu-test.sh
+    echo "Running GPU Unit tests"
+    sudo docker exec -it aznhc bash -c "bats --pretty /azure-nhc/test/unit-tests/nhc-gpu-test.sh"
+    unit_test_status=$?
 elif lspci | grep -iq AMD ; then
 	# AMD installs
     echo "No unit tests for AMD GPU SKUs"
 else
-    bats --pretty ${parent_dir}/nhc-cpu-test.sh
+    sudo docker exec -it aznhc bash -c "bats --pretty /azure-nhc/test/unit-tests/nhc-cpu-test.sh"
+    unit_test_status=$?
 fi
 
-exit 0
+sudo docker container stop aznhc
+
+exit $((unit_test_status || integration_test_status))
