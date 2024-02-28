@@ -82,12 +82,16 @@ else
 fi
 
 # Install build tools
+# Install locate
+sudo apt-get install mlocate
 # Check cmake version + install if necessary
 output=$(cmake --version | sed -n 1p | sed 's/[^0-9]*//g')
 export NHC_CMAKE=cmake
 if [ $output -lt 3200 ]; then
     echo "Upgrade cmake version to 3.20 or above to build nvbandwidth"
     pushd $SRC_DIR/build
+      # Install Boost for CMake
+      sudo apt install build-essential libboost-system-dev libboost-thread-dev libboost-program-options-dev libboost-test-dev
       wget -q -O cmake.sh https://github.com/Kitware/CMake/releases/download/v3.28.0/cmake-3.28.0-linux-x86_64.sh
       chmod +x cmake.sh
       mkdir -p cmake
