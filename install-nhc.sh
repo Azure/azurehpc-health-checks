@@ -83,6 +83,8 @@ fi
 
 # Install build tools
 # Check cmake version + install if necessary
+# Install boost for CMake
+sudo apt install build-essential libboost-system-dev libboost-thread-dev libboost-program-options-dev libboost-test-dev
 output=$(cmake --version | sed -n 1p | sed 's/[^0-9]*//g')
 export NHC_CMAKE=cmake
 if [ $output -lt 3200 ]; then
