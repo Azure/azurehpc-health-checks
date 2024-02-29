@@ -41,6 +41,7 @@ RUN apt-get update -y                           \
     devscripts                                  \
     openssh-client                              \
     net-tools                                   \
+    bats                                        \   
     bc
 
 
