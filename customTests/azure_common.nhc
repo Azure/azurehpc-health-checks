@@ -9,7 +9,7 @@ function check_all_reduce_dependencies() {
    fi
    # attempt to source HPCX modules
    if [ -z $HPCX_DIR ]; then
-      hpcx=$(locate hpcx-init.sh)
+      hpcx=$(find / -name 'hpcx-init.sh' 2>/dev/null | head -n 1)
       IFS=' ' read -ra hpcx <<< "$hpcx"
       if [ ! -f $hpcx ]; then
          die 1 "$FUNCNAME: HPCX module not found. Ensure HPCX is installed and HPCX_DIR env variable is set."
