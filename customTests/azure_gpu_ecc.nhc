@@ -9,8 +9,18 @@ GPU_QUERY="ecc.errors.uncorrected.volatile.sram,ecc.errors.uncorrected.aggregate
 function collect_ecc_data() {
    ECC_TYPE=$1
 
+   # conditional statement; "just ot see if the code passes theunit tests or not rather than hardcoding the values"
+   # test with curr vm and ncv4
    if [[ $ECC_TYPE == "SDBE" ]]; then
       # implement collect data
+      page_retirement_query_out=$(nvidia-smi - -d PAGE_RETIREMENT)
+      page_retirement_query_out_rc=$?
+      if [[ $page_retirement_query_out_rc != 0 ]]
+      then
+      log "$page_retirement_query_out"
+      die 1 "$FUNCNAME: nvidia-smi (get page retirement table) returned error code $page_retirement_query_out_rc"
+      fi
+      IFS=$'\n'
       echo ""
    else
       gpu_query_out=$(nvidia-smi --query-gpu=$GPU_QUERY --format=csv,noheader)
@@ -88,8 +98,32 @@ function check_ecc() {
 function check_SDBE_ecc(){
    collect_ecc_data "SDBE"
    # Implement check of collected value against limits
+   gpu_sections=($(echo "$page_retirement_query_out" | awk '/GPU / {print $0}'))
+   sbe_sections=($(echo "$page_retirement_query_out" | awk '/Single Bit ECC / {print $NF}'))
+   dbe_sections=($(echo "$page_retirement_query_out" | awk '/Double Bit ECC / {print $NF}'))
+   ppending_blacklist_sections=($(echo "$page_retirement_query_out" | awk '/Pending Page Blacklist / {print $NF}'))
+
    #implement SBE DBE total check
-   #implement page retirement check
+   # Process each GPU section
+   for index in "${!gpu_sections[@]}"; do
+      # Extract SBE and DBE values
+      gpu=${gpu_sections[index]}
+      sbe=${sbe_sections[index]}
+
+      dbe=${dbe_sections[index]}
+
+      # Calculate the sum of SBE and DBE pages
+      total=$((sbe + dbe))
+
+      #implement page retirement check
+      # Check if page blacklist is pending
+      pending=${ppending_blacklist_sections}
+
+      if total >= 62 && [ "$pending" == "Yes" ]; then
+         die 1 "$FUNCNAME: Retirement Table Full for, GPU section: GPU=$gpu Total Pages=$total, Pending Blacklist=$pending"
+      fi
+   done
+
    return 0
 }
 
