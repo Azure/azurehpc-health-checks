@@ -44,6 +44,10 @@ RUN apt-get update -y                           \
     bats                                        \   
     bc
 
+RUN mkdir -p ${AZ_NHC_ROOT}/LICENSES
+COPY LICENSE ${AZ_NHC_ROOT}/LICENSES/azure-nhc_LICENSE.txt
+COPY README.md ${AZ_NHC_ROOT}/README.md
+
 
 # Install OFED
 RUN cd /tmp && \
@@ -70,6 +74,7 @@ COPY ${host_nccl_dir} /opt/nccl
 RUN cd /opt/nccl/build/pkg/deb/ && \
     dpkg -i libnccl2_${NCCL_VERSION}+cuda12.2_amd64.deb && \
     dpkg -i libnccl-dev_${NCCL_VERSION}+cuda12.2_amd64.deb && \
+    cp /opt/nccl/LICENSE.txt ${AZ_NHC_ROOT}/LICENSES/nccl_LICENSE.txt && \
     rm -rf /opt/nccl
 
 
@@ -86,7 +91,7 @@ RUN cd /tmp && \
     ./configure --prefix=/usr --sysconfdir=/etc --libexecdir=/usr/libexec  && \
     make test  && \
     make install && \
-    rm -rf /tmp/lbnl-nhc-${NHC_VERSION}*
+    mv /tmp/lbnl-nhc-${NHC_VERSION}* ${AZ_NHC_ROOT}
 
 # Create workspace directories 
 RUN mkdir -p ${AZ_NHC_ROOT}/bin
@@ -111,7 +116,9 @@ COPY customTests/stream/Makefile /tmp/stream/
 RUN cd /tmp/stream && \
 wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c  && \
 make all CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=${AZ_NHC_ROOT}/bin && \
-rm -rf /tmp/stream
+rm -rf /tmp/stream && \
+cd ${AZ_NHC_ROOT}/LICENSES && \
+wget https://www.cs.virginia.edu/stream/FTP/Code/LICENSE.txt -O stream_LICENSE.txt
 
 # Remove AOCC after STREAM build
 RUN version=$(echo "$AOCC_VERSION" | sed 's/_1$//') && \
@@ -125,10 +132,12 @@ COPY customTests/topofiles ${AZ_NHC_ROOT}/topofiles
 ARG host_perftest_dir=dockerfile/build_exe/perftest-${PERF_TEST_VERSION}
 COPY ${host_perftest_dir}/ib_write_bw ${AZ_NHC_ROOT}/bin
 COPY ${host_perftest_dir}_nongdr/ib_write_bw ${AZ_NHC_ROOT}/bin/ib_write_bw_nongdr
+COPY ${host_perftest_dir}/COPYING ${AZ_NHC_ROOT}/LICENSES/perftest_LICENSE
 
 # Install NV Bandwidth tool
 ARG host_nvbandwidth_dir=dockerfile/build_exe/nvbandwidth-${NV_BANDWIDTH_VERSION}
 COPY ${host_nvbandwidth_dir}/nvbandwidth ${AZ_NHC_ROOT}/bin
+COPY ${host_nvbandwidth_dir}/LICENSE ${AZ_NHC_ROOT}/LICENSES/nvbandwidth_LICENSE
 
 # Copy entrypoint script
 COPY dockerfile/aznhc-entrypoint.sh ${AZ_NHC_ROOT}
