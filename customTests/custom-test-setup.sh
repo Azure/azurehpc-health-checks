@@ -67,25 +67,37 @@ function install_nvbandwidth(){
 	popd
 }
 
+function check_if_command() {
+    if command -v $1 &> /dev/null; then
+        echo "$1"
+    fi
+}
+
+# Function to find clang in specified path
+function find_clang_in_path() {
+    local path="$1"
+	if [ ! -d "$path" ]; then
+		return
+	fi
+    local clang_path=$(find "$path" -name "clang" | grep '/bin/')
+    check_if_command "$clang_path"
+}
+
 function install_stream(){
 	STREAM_DIR=${SRC_DIR}/build/stream
 	mkdir -p $STREAM_DIR/
 	cp ${SRC_DIR}/customTests/stream/*  $STREAM_DIR
 	pushd $STREAM_DIR
 
-	# default path
-	CLANG=$( find /opt/azurehpc/spack/ -name "clang" | grep 'bin' )
-
-	if ! command -v "$CLANG" &> /dev/null; then
-		# for older images
-		CLANG=$( find /opt/AMD -name "clang" | grep 'bin' )
+	CLANG=$(find_clang_in_path "/opt/azurehpc/spack/")
+	if [ -z "$CLANG" ]; then
+		CLANG=$(find_clang_in_path "/opt/AMD/")
+	fi
+	if [ -z "$CLANG" ]; then
+		CLANG=$(command -v clang)
 	fi
 
-	if command -v clang &> /dev/null &&  ! command -v "$CLANG" &> /dev/null ; then
-		CLANG=$( which clang )
-	fi
-
-	if command -v "$CLANG" &> /dev/null ;  then
+	if [ ! -z $CLANG ] ;  then
 		echo -e "clang compiler found Building Stream"
 		if ! [[ -f "stream.c" ]]; then 
 			wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
