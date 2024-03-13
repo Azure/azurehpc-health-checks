@@ -29,8 +29,6 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - sudo access
 - Supported SKU
 
-Note: Other distributions may work but are not supported.
-
 ## Setup ##
 
 Az NHC (Azure Health Checks) uses a docker container to run the health checks. This makes setup rather easy:
@@ -104,8 +102,6 @@ Azure NHC has recently changed to using docker containerization to allow for bro
 
 Releases tagged less than v0.3.0 are considered legacy.
 
-
-
 ## _References_ ##
 
 - [LBNL Node Health Checks](https://github.com/mej/nhc)
@@ -128,6 +124,11 @@ contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additio
 ### Developer Guide ###
 
 See the [Dev guide](./developer_guide.md) if you're planning on contributing to this project.
+
+## Copyright and Licensing ##
+
+This project has several dependencies. Usage and distribution of this software must adhere to the [AZ NHC License](./LICENSE) as well as the dependency licenses.
+Copyright/licenses for the software package dependencies can be found in directory ```/azure-nhc/LICENSE``` and software installation directories on the docker image.
 
 ## Trademarks ##
 
