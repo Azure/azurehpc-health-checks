@@ -6,16 +6,22 @@ source /etc/nhc/scripts/azure_common.nhc
 function collect_nccl_allreduce_data() {
    TOPOFILE=$1
    MESSAGE_SIZE=$2
+   gpu_count=$(nvidia-smi --list-gpus | wc -l)
+
+   if [ -z "$gpu_count" ]; then
+      die 1 "$check_nccl_allreduce: No GPUs found"
+      return 1
+   fi
 
    ENVIRON_VARS="-x LD_LIBRARY_PATH=$LD_LIBRARY_PATH -x NCCL_IB_PCI_RELAXED_ORDERING=1 -x UCX_IB_PCI_RELAXED_ORDERING=on -x UCX_TLS=tcp -x UCX_NET_DEVICES=eth0 -x CUDA_DEVICE_ORDER=PCI_BUS_ID -x NCCL_SOCKET_IFNAME=eth0 -x NCCL_TOPO_FILE=$TOPOFILE"
    NCCL_ARGS="-b $MESSAGE_SIZE -f 2 -g 1 -e $MESSAGE_SIZE -c 1"
 
    # ensure unloaded before use
-   MPI_ARGS="-np 8 --map-by ppr:8:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
+   MPI_ARGS="-np $gpu_count --map-by ppr:$gpu_count:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
    nccl_allreduce_out=$(mpirun $MPI_ARGS $ENVIRON_VARS $ALL_REDUCE_PATH $NCCL_ARGS)
    nccl_allreduce_out_rc=$?
    if [[ $nccl_allreduce_out_rc != 0 ]]; then
-      die 1 "$FUNCNAME: nccl_allreduce returned error code $nccl_allreduce_out_rc"
+      die 1 "$check_nccl_allreduce: nccl_allreduce returned error code $nccl_allreduce_out_rc"
    fi
    IFS=$'\n'
    nccl_allreduce_out_lines=( $nccl_allreduce_out )
