@@ -108,3 +108,59 @@ done
     set -e
     [[ "$result" == *"ERROR"* ]]
 }
+
+@test "Check Collect_ecc_data function" {
+    set +e
+    result=$(collect_ecc_data "SDBE")
+    status=$?
+    set -e
+    [[ "$result" != *"ERROR"* ]] && [ "$status" -eq 0 ]
+}
+
+@test "Check SDBE_ecc function" {
+    set +e
+    result=$(check_SDBE_ecc)
+    status=$?
+    set -e
+    [[ "$result" != *"ERROR"* ]] && [ "$status" -eq 0 ]
+}
+
+IFS=$'\n'
+TAB=$'\t'
+gpu_sections=($(awk '/GPU / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
+sbe_sections=($(awk '/Single Bit ECC / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
+dbe_sections=($(awk '/Double Bit ECC / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
+ppending_blacklist_sections=($(awk '/Pending Page Blacklist / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
+
+@test "Check Page Retirement Table Full error" {
+    set +e
+    flag="false"
+    error_msg=''
+    for i in "${!gpu_sections[@]}"; do
+        # Extract SBE and DBE values
+        gpu=${gpu_sections[i]}
+        sbe=${sbe_sections[i]}
+        dbe=${dbe_sections[i]}
+
+        # Calculate the sum of SBE and DBE pages
+        total=$((sbe + dbe))
+
+        #implement page retirement check
+        # Check if page blacklist is pending
+        pending=${ppending_blacklist_sections[i]}
+        
+        if [ "$total" -ge 62 ] && [ "$pending" == "Yes" ]; then
+            echo "error: Retirement Table Full for, GPU: $gpu, Total Pages: $total, Pending Blacklist: $pending"
+            flag="true"
+            error_msg+="$TAB error: Retirement Table Full for, GPU: $gpu, Total Pages: $total, Pending Blacklist: $pending$IFS"
+        fi
+    done
+
+    if [ "$flag" == "true" ]; then
+        echo "ERROR: $IFS$error_msg"
+    fi
+
+    status=$?
+    set -e
+    [ "$status" -eq 0 ]
+}

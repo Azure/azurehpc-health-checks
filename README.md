@@ -29,8 +29,6 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - sudo access
 - Supported SKU
 
-Note: Other distributions may work but are not supported.
-
 ## Setup ##
 
 Az NHC (Azure Health Checks) uses a docker container to run the health checks. This makes setup rather easy:

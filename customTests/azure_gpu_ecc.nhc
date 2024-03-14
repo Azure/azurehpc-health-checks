@@ -8,19 +8,18 @@ GPU_QUERY="ecc.errors.uncorrected.volatile.sram,ecc.errors.uncorrected.aggregate
 
 function collect_ecc_data() {
    ECC_TYPE=$1
-
-   # conditional statement; "just ot see if the code passes theunit tests or not rather than hardcoding the values"
-   # test with curr vm and ncv4
+   
    if [[ $ECC_TYPE == "SDBE" ]]; then
       # implement collect data
-      page_retirement_query_out=$(nvidia-smi - -d PAGE_RETIREMENT)
+      page_retirement_query_out=$(nvidia-smi -q -d PAGE_RETIREMENT)
       page_retirement_query_out_rc=$?
-      if [[ $page_retirement_query_out_rc != 0 ]]
-      then
-      log "$page_retirement_query_out"
-      die 1 "$FUNCNAME: nvidia-smi (get page retirement table) returned error code $page_retirement_query_out_rc"
+      
+      if [[ $page_retirement_query_out_rc != 0 ]]; then
+         log "$page_retirement_query_out"
+         die 1 "$FUNCNAME: nvidia-smi (get page retirement table) returned error code $page_retirement_query_out_rc"
       fi
       IFS=$'\n'
+      TAB=$'\t'
       echo ""
    else
       gpu_query_out=$(nvidia-smi --query-gpu=$GPU_QUERY --format=csv,noheader)
@@ -34,7 +33,7 @@ function collect_ecc_data() {
       gpu_remapped_rows_out_rc=$?
       if [[ $gpu_remapped_rows_out_rc != 0 ]]
       then
-      log "$gpu_remaped_rows_out"
+      log "$gpu_remapped_rows_out"
       die 1 "$FUNCNAME: nvidia-smi (get gpu remapped rows) returned error code $gpu_freq_out_rc"
       fi
       IFS=$'\n'
@@ -62,17 +61,17 @@ function check_ecc() {
       gpu_query_out_line=( ${gpu_query_out_lines[$i]} ) 
       IFS=$' \t\n'
       dbg "GPU id $i: row remap pending, (${gpu_remapped_rows_query_out_line[0]})"
-      if [[ ${gpu_remapped_rows_query_out_line[0]} > 0 ]]
+      if [[ ${gpu_remapped_rows_query_out_line[0]} -gt 0 ]]
       then
          die 1 "$FUNCNAME: GPU id $i: Row remap pending"
       fi
       dbg "GPU id $i: row remap error, (${gpu_remapped_rows_query_out_line[1]})"
-      if [[ ${gpu_remapped_rows_query_out_line[1]} > 0 ]]
+      if [[ ${gpu_remapped_rows_query_out_line[1]} -gt 0 ]]
       then
          die 1 "$FUNCNAME: GPU id $i: Row remap error"
       fi
       dbg "GPU id $i: row remap uncorrectable error count, (${gpu_remapped_rows_query_out_line[3]})"
-      if [[ ${gpu_remapped_rows_query_out_line[3]} > 512 ]]
+      if [[ ${gpu_remapped_rows_query_out_line[3]} -gt 512 ]]
       then
          die 1 "$FUNCNAME: GPU id $i: Row remap uncorrectable error count is too high"
       fi
@@ -97,6 +96,9 @@ function check_ecc() {
 
 function check_SDBE_ecc(){
    collect_ecc_data "SDBE"
+   flag="false"
+   error_msg=''
+
    # Implement check of collected value against limits
    gpu_sections=($(echo "$page_retirement_query_out" | awk '/GPU / {print $0}'))
    sbe_sections=($(echo "$page_retirement_query_out" | awk '/Single Bit ECC / {print $NF}'))
@@ -109,7 +111,6 @@ function check_SDBE_ecc(){
       # Extract SBE and DBE values
       gpu=${gpu_sections[index]}
       sbe=${sbe_sections[index]}
-
       dbe=${dbe_sections[index]}
 
       # Calculate the sum of SBE and DBE pages
@@ -117,12 +118,18 @@ function check_SDBE_ecc(){
 
       #implement page retirement check
       # Check if page blacklist is pending
-      pending=${ppending_blacklist_sections}
-
-      if total >= 62 && [ "$pending" == "Yes" ]; then
-         die 1 "$FUNCNAME: Retirement Table Full for, GPU section: GPU=$gpu Total Pages=$total, Pending Blacklist=$pending"
+      pending=${ppending_blacklist_sections[index]}
+      
+      if [ "$total" -ge 62 ] && [ "$pending" == "Yes" ]; then
+         log "$FUNCNAME: Retirement Table Full for, GPU section: GPU=$gpu Total Pages=$total, Pending Blacklist=$pending"
+         flag="true"
+         error_msg+="$TAB $FUNCNAME: Retirement Table Full for, GPU: $gpu, Total Pages: $total, Pending Blacklist: $pending$IFS"
       fi
    done
+
+   if [ "$flag" == "true" ]; then
+      die 1 "ERROR: $IFS$error_msg"
+   fi
 
    return 0
 }
