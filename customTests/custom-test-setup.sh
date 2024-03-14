@@ -67,34 +67,52 @@ function install_nvbandwidth(){
 	popd
 }
 
+function check_if_command() {
+    if command -v $1 &> /dev/null; then
+        echo "$1"
+    fi
+}
+
+# Function to find clang in specified path
+function find_clang_in_path() {
+    local path="$1"
+	if [ ! -d "$path" ]; then
+		return
+	fi
+    local clang_path=$(find "$path" -name "clang" | grep '/bin/')
+    check_if_command "$clang_path"
+}
+
 function install_stream(){
 	STREAM_DIR=${SRC_DIR}/build/stream
 	mkdir -p $STREAM_DIR/
 	cp ${SRC_DIR}/customTests/stream/*  $STREAM_DIR
 	pushd $STREAM_DIR
 
-	# Stream
-	if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null || command -v clang &> /dev/null; then
-		echo -e "clang compiler found Building Stream"
+	CLANG=$(find_clang_in_path "/opt/azurehpc/spack/")
+	if [ -z "$CLANG" ]; then
+		CLANG=$(find_clang_in_path "/opt/AMD/")
+	fi
+	if [ -z "$CLANG" ]; then
+		CLANG=$(command -v clang)
+	fi
 
+	if [ ! -z $CLANG ] ;  then
+		echo -e "clang compiler found Building Stream"
 		if ! [[ -f "stream.c" ]]; then 
 			wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c
 		fi
-		if command -v /opt/AMD/aocc-compiler-4.0.0/bin/clang &> /dev/null; then
-			make all CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=$EXE_DIR
-		else
-			make all CC=clang EXEC_DIR=$EXE_DIR
-		fi
+		make all CC=$CLANG EXEC_DIR=$EXE_DIR
 		popd
 	else
-		echo "clang command not found. Skipping Stream build. Add clang to PATH ENV variable and rerun script to build Stream"
+		echo "clang command not found. Add clang to PATH ENV variable and rerun install script to build Stream"
+		popd
+		exit 1
 	fi
+
 }
 
-#Nvidia installs
-if lspci | grep -iq NVIDIA ; then
-	install_nvbandwidth
-elif lspci | grep -iq AMD ; then
+if lspci | grep -iq AMD ; then
 	# AMD installs
 	distro=$(awk -F= '/^NAME/{print $2}' /etc/os-release)
 	if [[ $distro =~ "Ubuntu" ]]; then
@@ -102,6 +120,8 @@ elif lspci | grep -iq AMD ; then
 	else
 		sudo yum install -y rocm-bandwidth-test
 	fi
+else
+	install_nvbandwidth
 fi
 
 install_stream
