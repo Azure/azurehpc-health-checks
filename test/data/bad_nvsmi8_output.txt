@@ -1,0 +1,56 @@
+
+==============NVSMI LOG==============
+
+Timestamp                                 : Thu Mar 14 20:46:07 2024
+Driver Version                            : 535.86.10
+CUDA Version                              : 12.2
+
+Attached GPUs                             : 8
+GPU 00000001:00:00.0
+    Retired Pages
+        Single Bit ECC                    : 60
+        Double Bit ECC                    : 5
+        Pending Page Blacklist            : No
+
+GPU 00000002:00:00.0
+    Retired Pages
+        Single Bit ECC                    : 2
+        Double Bit ECC                    : 61
+        Pending Page Blacklist            : Yes
+
+GPU 00000003:00:00.0
+    Retired Pages
+        Single Bit ECC                    : 0
+        Double Bit ECC                    : 0
+        Pending Page Blacklist            : No
+
+GPU 00000004:00:00.0
+    Retired Pages
+        Single Bit ECC                    : 6
+        Double Bit ECC                    : 0
+        Pending Page Blacklist            : Yes
+
+GPU 00000005:00:00.0
+    Retired Pages
+        Single Bit ECC                    : 0
+        Double Bit ECC                    : 0
+        Pending Page Blacklist            : No
+
+GPU 00000006:00:00.0
+    Retired Pages
+        Single Bit ECC                    : 20
+        Double Bit ECC                    : 45
+        Pending Page Blacklist            : Yes
+
+GPU 00000007:00:00.0
+    Retired Pages
+        Single Bit ECC                    : 0
+        Double Bit ECC                    : 0
+        Pending Page Blacklist            : No
+
+GPU 00000008:00:00.0
+    Retired Pages
+        Single Bit ECC                    : 8
+        Double Bit ECC                    : 56
+        Pending Page Blacklist            : Yes
+
