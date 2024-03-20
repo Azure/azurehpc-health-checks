@@ -165,7 +165,7 @@ fi
 WORKING_DIR="/azure-nhc"
 DOCK_CONF_PATH="$WORKING_DIR/conf"
 DOCKER_RUN_ARGS="--name=$DOCK_CONT_NAME --net=host  -e TIMEOUT=$TIMEOUT \
-    --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged \
+    --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g \
     -v /sys:/hostsys/ \
     -v $CONF_FILE:"$DOCK_CONF_PATH/aznhc.conf" \
     -v $OUTPUT_PATH:$WORKING_DIR/output/aznhc.log \
