@@ -25,7 +25,7 @@ fi
 export NHC_DIR
 source $NHC_DIR/test/unit-tests/nhc-test-common.sh
 
-# echo "Running integration tests"
+echo "Running integration tests"
 bats --pretty ${parent_dir}/basic-unit-test.sh
 integration_test_status=$?
 
@@ -33,6 +33,7 @@ echo "Running nhc custom checks tests"
 
 sudo docker run -itd --name=aznhc --net=host -e TIMEOUT=500 --rm \
 --runtime=nvidia --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE \
+--shm-size=8g \
 --privileged -v /sys:/hostsys/ \
 -v $NHC_DIR/customTests:/azure-nhc/customTests \
 -v $NHC_DIR/test:/azure-nhc/test \

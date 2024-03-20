@@ -94,15 +94,21 @@ RUN cd /tmp && \
     mv /tmp/lbnl-nhc-${NHC_VERSION}* ${AZ_NHC_ROOT}
 
 # Create workspace directories 
-RUN mkdir -p ${AZ_NHC_ROOT}/bin
-RUN mkdir -p ${AZ_NHC_ROOT}/conf
-RUN mkdir -p ${AZ_NHC_ROOT}/output
-RUN mkdir -p ${AZ_NHC_ROOT}/default
+RUN mkdir -p ${AZ_NHC_ROOT}/bin && \
+    mkdir -p ${AZ_NHC_ROOT}/conf && \
+    mkdir -p ${AZ_NHC_ROOT}/output && \
+    mkdir -p ${AZ_NHC_ROOT}/default && \
+    mkdir -p ${AZ_NHC_ROOT}/default/conf && \
+    mkdir -p ${AZ_NHC_ROOT}/topofiles
 
 # Copy necessary files
 COPY customTests/*.nhc /etc/nhc/scripts/
-COPY customTests/topofiles ${AZ_NHC_ROOT}/topofiles
 COPY conf ${AZ_NHC_ROOT}/default/conf
+
+# Get Topofiles from AI/HPC images
+RUN git clone https://github.com/Azure/azhpc-images.git /tmp/azhpc-images && \
+    cp /tmp/azhpc-images/topology/* ${AZ_NHC_ROOT}/topofiles && \
+    rm -rf /tmp/azhpc-images
 
 # install clang dependency needed for stream
 RUN cd /tmp && \
@@ -123,10 +129,6 @@ wget https://www.cs.virginia.edu/stream/FTP/Code/LICENSE.txt -O stream_LICENSE.t
 # Remove AOCC after STREAM build
 RUN version=$(echo "$AOCC_VERSION" | sed 's/_1$//') && \
 apt remove aocc-compiler-"${version}" -y
-
-# Copy necessary files
-COPY customTests/*.nhc /etc/nhc/scripts/
-COPY customTests/topofiles ${AZ_NHC_ROOT}/topofiles
 
 # Install Perf-Test
 ARG host_perftest_dir=dockerfile/build_exe/perftest-${PERF_TEST_VERSION}
