@@ -118,21 +118,25 @@ done
 }
 
 @test "Check SDBE_ecc function" {
-    set +e
-    result=$(check_SDBE_ecc)
-    status=$?
-    set -e
-    [[ "$result" != *"ERROR"* ]] && [ "$status" -eq 0 ]
+    # only v100 SKU
+    if lspci | grep -i 'VGA\|3D controller'| grep -qi 'V100'; then
+        set +e
+        result=$(check_SDBE_ecc)
+        status=$?
+        set -e
+        [[ "$result" != *"ERROR"* ]] && [ "$status" -eq 0 ]
+    else
+        echo "No V100 GPU found, skipping test"
+    fi
 }
 
-IFS=$'\n'
-TAB=$'\t'
-gpu_sections=($(awk '/GPU / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
-sbe_sections=($(awk '/Single Bit ECC / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
-dbe_sections=($(awk '/Double Bit ECC / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
-ppending_blacklist_sections=($(awk '/Pending Page Blacklist / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
-
 @test "Check Page Retirement Table Full error" {
+    IFS=$'\n'
+    TAB=$'\t'
+    gpu_sections=($(awk '/GPU / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
+    sbe_sections=($(awk '/Single Bit ECC / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
+    dbe_sections=($(awk '/Double Bit ECC / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
+    ppending_blacklist_sections=($(awk '/Pending Page Blacklist / {print $NF}' $AZ_NHC_ROOT/test/data/bad_nvsmi8_output.txt))
     set +e
     flag="false"
     error_msg=''
