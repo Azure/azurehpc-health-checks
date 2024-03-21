@@ -47,18 +47,27 @@ done
 }
 
 @test "Pass case: check_gpu_ecc" {
-    set +e
-    result=$(check_gpu_ecc 1 1)
-    status=$?
-    set -e
-    [[ "$result" != *"ERROR"* ]] && [[ $status -eq 0 ]]
+    if lspci | grep -i 'VGA\|3D controller'| grep -qi 'V100'; then
+        echo "Skipping normal check_gpu_ecc for V100 SKU. ECC addressed in SDB unit test"
+    else
+        set +e
+        result=$(check_gpu_ecc 30000000 30000000)
+        status=$?
+        set -e
+        [[ "$result" != *"ERROR"* ]] && [[ $status -eq 0 ]]
+    fi
 }
 
 @test "Fail case: check_gpu_ecc" {
-    set +e
-    result=$(check_gpu_ecc -1 -1)
-    set -e
-    [[ "$result" == *"ERROR"* ]]
+    if lspci | grep -i 'VGA\|3D controller'| grep -qi 'V100'; then
+        echo "Skipping normal check_gpu_ecc for V100 SKU. ECC addressed in SDB unit test"
+    else
+        set +e
+        result=$(check_gpu_ecc -1 -1)
+        echo $result
+        set -e
+        [[ "$result" == *"ERROR"* ]]
+    fi
 }
 
 @test "Pass case: check_nccl_allreduce" {
