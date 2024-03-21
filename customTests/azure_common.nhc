@@ -5,18 +5,18 @@ export HPCX_DIR=/opt/hpcx
 
 function check_all_reduce_dependencies() {
    if [[ ! -f $ALL_REDUCE_PATH ]]; then
-      die 1 "$FUNCNAME: all reduce executable path: $ALL_REDUCE_PATH not found. Ensure nccl-tests is installed and built in."
+      die 1 "$FUNCNAME: all reduce executable path: $ALL_REDUCE_PATH not found. Ensure nccl-tests is installed and built in. FaultCode: NHCNA"
       return 1
    fi
 
    if [[ ! -z $HPCX_DIR ]]; then
       if [[ ! -f $HPCX_DIR/hpcx-init.sh ]]; then
-         die 1 "$FUNCNAME: hpcx-init.sh not found in HPCX_DIR: $HPCX_DIR. Set/export the HPCX_DIR ENV variable to the HPCX directory."
+         die 1 "$FUNCNAME: hpcx-init.sh not found in HPCX_DIR: $HPCX_DIR. Set/export the HPCX_DIR ENV variable to the HPCX directory. FaultCode: NHCNA"
          return 1
       fi
       source $HPCX_DIR/hpcx-init.sh && hpcx_load
    else
-      die 1 "$FUNCNAME: HPCX_DIR not set. Set/export the HPCX_DIR ENV variable to the HPCX directory."
+      die 1 "$FUNCNAME: HPCX_DIR not set. Set/export the HPCX_DIR ENV variable to the HPCX directory. FaultCode: NHCNA"
       return 1
    fi
 
@@ -56,7 +56,7 @@ function determine_IB_devices(){
       ib_dir="/sys/class/infiniband"
    fi
    if [ ! -d "$ib_dir" ]; then
-      die 1 "$FUNCNAME: IB system directory $ib_dir not found."
+      die 1 "$FUNCNAME: IB system directory $ib_dir not found. FaultCode: NHCNA"
       return 1
    fi
    mapfile -t devices < <(ibstat -l)
@@ -72,7 +72,7 @@ function determine_IB_devices(){
          fi
       fi
    done
-   echo ${ib_devices[@]}
+   echo "${ib_devices[@]}"
    return 0
 }
 
@@ -82,7 +82,7 @@ function map_IB_to_numa(){
       ib_dir="/sys/class/infiniband"
    fi
    if [ ! -d "$ib_dir" ]; then
-      die 1 "$FUNCNAME: IB system directory $ib_dir not found."
+      die 1 "$FUNCNAME: IB system directory $ib_dir not found. FaultCode: NHCNA"
       return 1
    fi
 
@@ -93,7 +93,7 @@ function map_IB_to_numa(){
    for device in "${ib_dev[@]}"; do
       ib_numa+=($(cat ${ib_dir}/${device}/device/numa_node))
    done
-   echo ${ib_numa[@]}
+   echo "${ib_numa[@]}"
    return 0
 }
 
@@ -104,7 +104,7 @@ function get_ib_numa_node(){
       ib_dir="/sys/class/infiniband"
    fi
    if [ ! -f "$ib_dir/$ib_dev/device/numa_node" ]; then
-      die 1 "$FUNCNAME: IB system directory $ib_dir not found."
+      die 1 "$FUNCNAME: IB system directory $ib_dir not found. FaultCode: NHCNA"
       return 1
    fi
 

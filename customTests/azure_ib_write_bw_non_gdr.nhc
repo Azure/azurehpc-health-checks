@@ -16,11 +16,11 @@ function ib_write(){
    EXP_IB_BW=$3
 
    if ! numa_node=$(get_ib_numa_node "$device"); then
-      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA node"
+      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA node. FaultCode: NHCNA"
       return 1
    fi
    if ! numa_core=$(get_numa_cpu "$numa_node"); then
-      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA core"
+      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA core. faultCode: NHCNA"
       return 1
    fi
 
@@ -32,13 +32,13 @@ function ib_write(){
       log "$IB_WRITE_BW_OUT1"
       PORT=$(echo $IB_WRITE_BW_OUT1 | grep -oP '(?<=port\s)\w+')
       if [ -z "$PORT" ]; then
-         die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC, Port argument was not specified."
+         die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC, Port argument was not specified. FaultCode: NHCNA"
          return 1
       fi
       NETSTAT_OUT=$(netstat -lnp | grep $PORT)
       log "Running: netstat -lnp | grep $PORT:"
       log "$NETSTAT_OUT"
-      die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
+      die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC. FaultCode: NHCNA"
       return 1
    fi
    sleep $SLEEP_TIME
@@ -49,13 +49,13 @@ function ib_write(){
       log "$IB_WRITE_BW_OUT2"
       PORT=$(echo $IB_WRITE_BW_OUT2 | grep -oP '(?<=port\s)\w+')
       if [ -z "$PORT" ]; then
-         die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC, Port argument was not specified"
+         die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC, Port argument was not specified. faultCode: NHCNA"
          return 1
       fi
       NETSTAT_OUT=$(netstat -lnp | grep $PORT)
       log "Running: netstat -lnp | grep $PORT:"
       log "$NETSTAT_OUT"
-      die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC"
+      die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC. FaultCode: NHCNA"
       return 1
    fi
    IFS=$'\n'
@@ -73,7 +73,7 @@ function ib_write(){
    done
 
    if (( $(echo "$ib_bandwidth < $EXP_IB_BW" | bc -l) )); then
-         die 1 "check_ib_bw_non_gdr:  IB=$device, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps)"
+         die 1 "check_ib_bw_non_gdr:  IB=$device, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps). FaultCode: NHC2003"
          return 1
    fi
    dbg "ib_write_lb_${device}: $ib_bandwidth Gbps"
