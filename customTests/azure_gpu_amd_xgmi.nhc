@@ -16,7 +16,7 @@ check_gpu_xgmi(){
         error=${xgmi_errors[$i]}
         log "GPU $i has $error xgmi error(s)" 
         if [ $error -gt 0 ]; then
-            die 1 "check_gpu_xgmi: XGMI error count: $error on GPU $i. FaultCode: NHCNA"
+            die 1 "check_gpu_xgmi: XGMI error count: $error on GPU $i"
             return 1
         fi
     done

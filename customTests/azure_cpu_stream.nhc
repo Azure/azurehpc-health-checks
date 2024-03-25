@@ -119,7 +119,7 @@ function check_cpu_stream(){
         result=${values[$i]}
         dbg stream_${result_labels[$i]}: $result
         if (( $(echo "$result < $EXP_PERF" | bc -l) )); then
-            die 1 -e "\t **Fail** Stream test failed on at least one function less than expeted value: $EXP_PERF. Stream Results: $stream. FaultCode: NHCNA"
+            die 1 -e "\t **Fail** Stream test failed on at least one function less than expeted value: $EXP_PERF. Stream Results: $stream. FaultCode: NHC2001"
             return 1
         fi
     done

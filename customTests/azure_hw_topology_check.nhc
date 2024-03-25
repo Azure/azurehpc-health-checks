@@ -56,7 +56,7 @@ function check_hw_topology() {
     fi
 
     if [ ! -f "$TOPO_FILE" ]; then
-        die 1 "$FUNCNAME: Specified topology file "$TOPO_FILE" does not exist! FaultCode:NHCNA"
+        die 1 "$FUNCNAME: Specified topology file "$TOPO_FILE" does not exist! FaultCode: NHCNA"
     fi
     dbg "Checking topology against $TOPO_FILE"
     expected_topo=$(load_expected_topology "$TOPO_FILE")

@@ -94,10 +94,10 @@ function evaluate_nvBW_result(){
                     else
                         if [ "$test" = "$P2P" ]; then
                             dbg "${tests_map[$test]}_GPU_${gpu_device}_${peer_device}: $gpubw GB/s"
-                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW"
+                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW. FaultCode: NHC2020"
                         else
                             dbg "${tests_map[$test]}_GPU_${gpu_device}: $gpubw GB/s"
-                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device failed. Bandwidth $gpubw is less than $EXP_BW"
+                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device failed. Bandwidth $gpubw is less than $EXP_BW. FaultCode: NHC2020"
                         fi
                     fi
                     ((gpu_device++)) 
@@ -316,7 +316,7 @@ function check_rocm_gpu_bw(){
     done    
 
     for bad_result in "${bad_results[@]}"; do
-        die 1 "check_gpu_bw: $bad_result. FaultCode: NHCNA"
+        die 1 "check_gpu_bw: $bad_result. FaultCode: NHC2020"
     done
 
     if [ ${#bad_results[@]} -gt 0 ]; then
