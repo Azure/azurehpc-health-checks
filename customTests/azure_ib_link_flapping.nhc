@@ -46,7 +46,7 @@ if [ "$lost_carrier_line" != "" ]; then
 
          if [ $diff_hours -lt $TIME_INTERVAL_HOURS ]; then
             log "$IB_FLAPPING_LINK_TEST, multiple IB link flapping events within $TIME_INTERVAL_HOURS hours($previous_stored_date, $last_date_str)"
-            die 1 "$FUNCNAME: $IB_FLAPPING_LINK_TEST, multiple IB link flapping events within $TIME_INTERVAL_HOURS hours"
+            die 1 "$FUNCNAME: $IB_FLAPPING_LINK_TEST, multiple IB link flapping events within $TIME_INTERVAL_HOURS hours. FaultCode: NHC2005"
          else
             rm $lost_carrier_file
             log "Time interval > $TIME_INTERVAL_HOURS, Remove $lost_carrier_file"

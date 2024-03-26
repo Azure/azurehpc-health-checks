@@ -136,11 +136,17 @@ ppending_blacklist_sections=($(awk '/Pending Page Blacklist / {print $NF}' $AZ_N
     set +e
     flag="false"
     error_msg=''
+    re='^[0-9]+$'
+
     for i in "${!gpu_sections[@]}"; do
         # Extract SBE and DBE values
         gpu=${gpu_sections[i]}
         sbe=${sbe_sections[i]}
         dbe=${dbe_sections[i]}
+
+        if ! [[ $sbe =~ $re ]] || ! [[ $dbe =~ $re ]]; then
+            continue
+        fi
 
         # Calculate the sum of SBE and DBE pages
         total=$((sbe + dbe))

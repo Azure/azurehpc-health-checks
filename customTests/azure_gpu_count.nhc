@@ -10,12 +10,12 @@ function check_gpu_count() {
    fi  
 
    if [ -z $EXPECTED_NUM_GPU ]; then
-      die 1 -e "$FUNCNAME: No expected value provided for the number of GPUs. GPU count found: $gpu_count"
+      die 1 -e "$FUNCNAME: No expected value provided for the number of GPUs. GPU count found: $gpu_count. FaultCode: NHCNA"
       return 1
    fi
 
    if [ "$gpu_count" -ne "$EXPECTED_NUM_GPU" ]; then
-     die 1 -e "$FUNCNAME: Expected to see $EXPECTED_NUM_GPU but found $gpu_count"
+     die 1 -e "$FUNCNAME: Expected to see $EXPECTED_NUM_GPU but found $gpu_count. FaultCode: NHC2009"
      return 1
    fi
    return 0

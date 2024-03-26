@@ -16,7 +16,7 @@ function run_ib_bw_gdr(){
  
    #NUMA mapping
    if ! numa_node=$(get_ib_numa_node "$device"); then
-      die 1 "check_ib_bw_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA node"
+      die 1 "check_ib_bw_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA node. FaultCode: NHC2005"
       return 1
    fi
 
@@ -30,7 +30,7 @@ function run_ib_bw_gdr(){
 	 NETSTAT_OUT=$(netstat -lnp | grep $PORTARG)
 	 log "Running: netstat -lnp | grep $PORTARG:"
 	 log "$NETSTAT_OUT"
-	 die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC"
+	 die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC. FaultCode: NHCNA"
 	 return 1
   fi
   
@@ -42,7 +42,7 @@ function run_ib_bw_gdr(){
 	 NETSTAT_OUT=$(netstat -lnp | grep $PORTARG)
 	 log "Running: netstat -lnp | grep $PORTARG:"
 	 log "$NETSTAT_OUT"
-	 die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC"
+	 die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC. FaultCode: NHCNA"
 	 return 1
   fi
   IFS=$'\n'
@@ -60,7 +60,7 @@ function run_ib_bw_gdr(){
   dbg "ib_write_lb_${device}: $ib_bandwidth Gbps"
   if (( $(echo "$ib_bandwidth < $EXP_IB_BW" | bc -l) )); then
 	 log "$IB_WRITE_BW_OUT2"
-    die 1 "$FUNCNAME: $IB_WRITE_BW, IB=$device, $device_peer, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps"
+    die 1 "$FUNCNAME: $IB_WRITE_BW, IB=$device, $device_peer, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps. FaultCode: NHC2003"
 	 return 1
   fi
  
@@ -70,7 +70,7 @@ function run_ib_bw_gdr(){
 function check_ib_bw_gdr(){
    GPU_FREQ=$(boost_gpu_clock)
    if [[ $? != 0 ]]; then
-      die 1 -e "$FUNCNAME: Failed to boost GPU clocks"
+      die 1 -e "$FUNCNAME: Failed to boost GPU clocks. FaultCode: NHCNA"
       return 0
    fi
    EXP_IB_BW=$1
@@ -86,7 +86,7 @@ function check_ib_bw_gdr(){
       pid_array+=($!)
       (( dev_idx++ ))
    done
-   wait  ${pid_array[@]}
+   wait  "${pid_array[@]}"
 
    remove_clock_boost
 

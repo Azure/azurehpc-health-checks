@@ -31,35 +31,35 @@ function check_nvsmi_healthmon() {
         dbg "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON completed successfully"
         return 0
     elif [[ $NVSMI_HEALTHMON_RC -eq 4 ]]; then
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Permission denied"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Permission denied. FaultCode: NHCNA"
         return 1
     elif [[ $NVSMI_HEALTHMON_RC -eq 8 ]]; then
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Power cables not attached"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Power cables not attached. FaultCode: NHC2001"
         return 1
     elif [[ $NVSMI_HEALTHMON_RC -eq 2 ]]; then
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Invalid argument or flag"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Invalid argument or flag. FaultCode: NHCNA"
         return 1
     elif [[ $NVSMI_HEALTHMON_RC -eq 9 ]]; then
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  NVIDIA driver not loaded"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  NVIDIA driver not loaded. FaultCode: NHCNA"
         return 1
     elif [[ $NVSMI_HEALTHMON_RC -eq 10 ]]; then
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Interrupt issue with a GPU"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Interrupt issue with a GPU. FaultCode: NHC2001"
         return 1
     elif [[ $NVSMI_HEALTHMON_RC -eq 12 ]]; then
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  NVML shared library could not be found"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  NVML shared library could not be found. faultCode: NHCNA"
         return 1
     elif [[ $NVSMI_HEALTHMON_RC -eq 14 ]]; then
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  InfoROM is corrupted"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  InfoROM is corrupted. FaultCode: NHC2008"
         return 1
     elif [[ $NVSMI_HEALTHMON_RC -eq 15 ]]; then
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  The GPU has fallen off the bus or has otherwise become inaccessible"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  The GPU has fallen off the bus or has otherwise become inaccessible. FaultCode: NHC2010"
         return 1
     elif [[ $NVSMI_HEALTHMON_RC -gt 127 ]]; then
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Caught fatal signal $((NVSMI_HEALTHMON_RC&0x7f))"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Caught fatal signal $((NVSMI_HEALTHMON_RC&0x7f)). FaultCode: NHC2015"
         return 1
     else
         log "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  \"$NVSMI_HEALTHMON_OUTPUT\""
-        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Returned failure code $NVSMI_HEALTHMON_RC"
+        die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Returned failure code $NVSMI_HEALTHMON_RC. FaultCode: NHC2001"
         return 1
     fi
 }
