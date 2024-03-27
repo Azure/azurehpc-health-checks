@@ -3,7 +3,7 @@
 # Check GPU persistence mode, if not enabled, attempt to enable.
 
 PERSISTENCE_GPU_QUERY="persistence_mode"
-
+source customTests/azure_common.nhc
 
 function collect_persistence_data() {
 
@@ -39,5 +39,7 @@ function check_gpu_persistence() {
          dbg "$FUNCNAME: GPU id $i: Persistence mode is already enabled"
       fi
 done
+
+pass 0 "$FUNCNAME: GPU Persistence mode is enabled"
 return 0
 }

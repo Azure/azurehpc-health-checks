@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source /etc/nhc/scripts/azure_common.nhc
+source customTests/azure_common.nhc
 
 check_gpu_xgmi(){
     # Check AMD GPU XGMI link errors
@@ -20,4 +21,7 @@ check_gpu_xgmi(){
             return 1
         fi
     done
+
+    pass 0 "$FUNCNAME: No xgmi errors found on any GPU"
+    return 0
 }

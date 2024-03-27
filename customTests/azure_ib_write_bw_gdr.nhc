@@ -1,6 +1,7 @@
 #!/bin/bash
 
 source /etc/nhc/scripts/azure_common.nhc
+source customTests/azure_common.nhc
 
 IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw
 SLEEP_TIME=5
@@ -64,6 +65,7 @@ function run_ib_bw_gdr(){
 	 return 1
   fi
  
+  pass 0 "$FUNCNAME: IB write bandwidth test IB_WRITE_BW passed"
   return 0
 }
 
@@ -90,5 +92,6 @@ function check_ib_bw_gdr(){
 
    remove_clock_boost
 
+   pass 0 "$FUNCNAME: check passed"
    return 0
 }

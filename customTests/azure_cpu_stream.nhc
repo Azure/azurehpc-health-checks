@@ -3,6 +3,8 @@
 # Run Stream
 
 EXE_DIR=$AZ_NHC_ROOT/bin
+source customTests/azure_common.nhc
+
 
 function get_core_conf(){
     # only supports HBv4/HX
@@ -123,6 +125,8 @@ function check_cpu_stream(){
             return 1
         fi
     done
+
+    pass 0 "$FUNCNAME: Stream tests passed"
     return 0
 
 }
