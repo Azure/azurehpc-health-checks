@@ -7,7 +7,7 @@ source $AZ_NHC_ROOT/test/unit-tests/nhc-test-common.sh
 cpu_test=( "azure_cpu_stream.nhc" "azure_ib_write_bw_non_gdr.nhc")
          
 for check in "${cpu_test[@]}" ; do
-    source $NHC_DIR/customTests/$check
+    source $AZ_NHC_ROOT/customTests/$check
 done
 
 @test "Pass case: check_cpu_stream" {

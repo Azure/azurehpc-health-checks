@@ -104,7 +104,8 @@ RUN mkdir -p ${AZ_NHC_ROOT}/bin && \
     mkdir -p ${AZ_NHC_ROOT}/output && \
     mkdir -p ${AZ_NHC_ROOT}/default && \
     mkdir -p ${AZ_NHC_ROOT}/default/conf && \
-    mkdir -p ${AZ_NHC_ROOT}/topofiles
+    mkdir -p ${AZ_NHC_ROOT}/topofiles && \
+    mkdir -p ${AZ_NHC_ROOT}/lib
 
 # Copy necessary files
 COPY customTests/*.nhc /etc/nhc/scripts/
@@ -130,6 +131,8 @@ make all CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=${AZ_NHC_ROOT}/bin &
 rm -rf /tmp/stream && \
 cd ${AZ_NHC_ROOT}/LICENSES && \
 wget https://www.cs.virginia.edu/stream/FTP/Code/LICENSE.txt -O stream_LICENSE.txt
+
+RUN cp /opt/AMD/aocc-compiler-4.0.0/lib/libomp.so ${AZ_NHC_ROOT}/lib
 
 # Remove AOCC after STREAM build
 RUN version=$(echo "$AOCC_VERSION" | sed 's/_1$//') && \

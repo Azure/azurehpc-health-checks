@@ -3,6 +3,7 @@
 # Run Stream
 
 EXE_DIR=$AZ_NHC_ROOT/bin
+LD_LIBRARY_PATH=$AZ_NHC_ROOT/lib:$LD_LIBRARY_PATH
 
 function get_core_conf(){
     # only supports HBv4/HX
