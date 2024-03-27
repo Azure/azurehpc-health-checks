@@ -67,6 +67,7 @@ function check_nccl_allreduce() {
          dbg "$nccl_allreduce_out"
          dbg "Iteration ${iter} of ${REPEATS} failed: NCCL allreduce bandwidth $avg_bus_bw GB/s < $EXP_NCCL_ALLREDUCE_BW GB/s"
       else
+         pass 0 "$FUNCNAME: NCCL all reduce bandwidth test passed, $avg_bus_bw GB/s"
          return 0
       fi
    done

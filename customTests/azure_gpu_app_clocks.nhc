@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/nhc/scripts/azure_common.nhc
+
 # Check if application GPU clock frequencies are set to their maximum values, if not will attempt to set them.
 
 GPU_QUERY_CLOCKS="clocks.max.memory,clocks.applications.memory,clocks.max.graphics,clocks.applications.graphics"
@@ -42,5 +44,7 @@ function check_app_gpu_clocks() {
          dbg "GPU Id $i: max application GPU clocks are already set, GPU memory is  ${gpu_freq_out_line[0]} MHz and GPU graphics is ${gpu_freq_out_line[2]} MHz"
       fi
 done
+
+pass 0 "$FUNCNAME: Application GPU clock frequencies set to max"
 return 0
 }

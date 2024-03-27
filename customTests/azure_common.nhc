@@ -9,6 +9,36 @@ function get_sku(){
    return 0
 }
 
+function pass(){
+   IFS=$' \t\n'
+   local RET="$1"
+   shift
+
+   CHECK_SUCCESS=0
+
+   if [[ -z "$CHECK" ]] && CHECK="$FUNCNAME $*"; then
+      if [[ -n "$NHC_RM" && "$MARK_OFFLINE" -eq 1 && "$PASS_CNT" -eq 0 ]]; then
+        if [[ "${CHECK:0:5}" == "pass " ]]; then
+            CHECK="$OFFLINE_NODE '$HOSTNAME' '$*'"
+            eval $OFFLINE_NODE "'$HOSTNAME'" "'$*'"
+            CHECK="$FUNCNAME $*"
+        else
+            eval $OFFLINE_NODE "'$HOSTNAME'" "'$*'"
+        fi
+      fi
+   fi
+
+   if [[ -n "$LOGFILE" ]]; then
+      echo "SUCCESS:  $NAME:  Health check passed:  $*"
+      oecho "SUCCESS:  $NAME:  Health check passed:  $*"
+   fi
+
+   if [[ "$NHC_CHECK_ALL" == "0" ]]; then
+      ((PASS_CNT++))
+      return 0
+   fi
+}
+
 function check_all_reduce_dependencies() {
    if [[ ! -f $ALL_REDUCE_PATH ]]; then
       die 1 "$FUNCNAME: all reduce executable path: $ALL_REDUCE_PATH not found. Ensure nccl-tests is installed and built in."

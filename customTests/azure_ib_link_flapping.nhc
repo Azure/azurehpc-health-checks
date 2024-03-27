@@ -1,4 +1,6 @@
 #!/bin/bash
+
+source /etc/nhc/scripts/azure_common.nhc
   
 #expect to not have any IB link flaps within a given time interval (in hours)
 IB_FLAPPING_LINK_TEST="IB link flapping detected"
@@ -58,6 +60,7 @@ if [ "$lost_carrier_line" != "" ]; then
    fi
 else
    log "No IB link flapping entry in syslog"
+   pass 0 "$FUNCNAME: No IB link flapping found"
    return 0
 fi
 }

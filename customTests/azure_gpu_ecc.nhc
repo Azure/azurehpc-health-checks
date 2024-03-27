@@ -1,10 +1,11 @@
 #!/bin/bash
 
+source /etc/nhc/scripts/azure_common.nhc
+
 # Check for GPU ECC errors
 
 GPU_REMAPPED_ROWS_QUERY="remapped_rows.pending,remapped_rows.failure,remapped_rows.uncorrectable"
 GPU_QUERY="ecc.errors.uncorrected.volatile.sram,ecc.errors.uncorrected.aggregate.sram,ecc.errors.uncorrected.volatile.dram,ecc.errors.uncorrected.aggregate.dram,ecc.errors.corrected.volatile.sram,ecc.errors.corrected.aggregate.sram,ecc.errors.corrected.volatile.dram,ecc.errors.corrected.aggregate.dram"
-
 
 function collect_ecc_data() {
    ECC_TYPE=$1
@@ -144,6 +145,7 @@ function check_gpu_ecc() {
       check_ecc $ecc_error_threshold $ecc_sram_threshold
    fi
 
+   pass 0 "$FUNCNAME: ECC checks passed"
    return 0
 }
 

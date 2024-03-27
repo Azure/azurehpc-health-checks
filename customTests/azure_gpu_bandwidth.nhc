@@ -106,6 +106,8 @@ function evaluate_nvBW_result(){
             done
         done
     done
+
+    pass 0 "$FUNCNAME: NVBandwidth Tests Successful"
     return 0
 }
 
@@ -175,7 +177,8 @@ function check_nvBW_gpu_bw()
     fi
 
     evaluate_nvBW_result $EXP_CUDA_BW $EXP_P2P_BW
- 
+    
+    pass 0 "$FUNCNAME: GPU bandwidth Tests with NVBandwidth passed"
     return 0
 }
 
@@ -323,6 +326,7 @@ function check_rocm_gpu_bw(){
         return 1
     fi
 
+    pass 0 "$FUNCNAME: ROCm GPU bandwidth test passed"
     return 0
 }
 
@@ -357,5 +361,6 @@ function check_gpu_bw(){
         die 1 -e "$FUNCNAME: No GPUs found!"
 	fi
 
+    pass 0 "$FUNCNAME: GPU Bandiwdth Tests Passed"
     return 0
 }

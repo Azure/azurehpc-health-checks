@@ -2,6 +2,8 @@
 
 # reference this link for info on XID error codes: https://docs.nvidia.com/deploy/xid-errors/index.html
 
+source /etc/nhc/scripts/azure_common.nhc
+
 # Check for the following GPU Xid errors in dmesg
 XID_EC="48 56 57 58 62 63 64 65 68 69 73 74 79 80 81 92 119 120"
 GPU_XID_TEST="GPU Xid errors detected"
@@ -32,6 +34,7 @@ function check_gpu_xid()
       done
    else
       dbg "No GPU Xid error found in dmesg"
+      pass 0 "$FUNCNAME: No GPU XID error found"
       return 0
    fi
 }
