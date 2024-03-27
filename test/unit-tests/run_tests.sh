@@ -31,8 +31,12 @@ integration_test_status=$?
 
 echo "Running nhc custom checks tests"
 
+if lspci | grep -iq NVIDIA ; then
+    NVIDIA_RT="--runtime=nvidia"
+fi
+
 sudo docker run -itd --name=aznhc --net=host -e TIMEOUT=500 --rm \
---runtime=nvidia --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE \
+${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE \
 --shm-size=8g \
 --privileged -v /sys:/hostsys/ \
 -v $NHC_DIR/customTests:/azure-nhc/customTests \
