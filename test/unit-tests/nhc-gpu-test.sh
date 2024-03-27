@@ -3,10 +3,7 @@
 source $AZ_NHC_ROOT/customTests/azure_common.nhc
 source $AZ_NHC_ROOT/test/unit-tests/nhc-test-common.sh
 
-# Load HPC-X
-hpcx_init_file=$(find /opt/hpcx* -maxdepth 1 -name "hpcx-init.sh")
-source $hpcx_init_file
-hpcx_load
+
 
 gpu_test=( "azure_gpu_count.nhc" "azure_gpu_bandwidth.nhc" "azure_gpu_ecc.nhc" "azure_nccl_allreduce.nhc" "azure_ib_write_bw_gdr.nhc" "azure_ib_write_bw_non_gdr.nhc")
 
