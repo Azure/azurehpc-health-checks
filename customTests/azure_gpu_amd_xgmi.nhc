@@ -20,4 +20,7 @@ check_gpu_xgmi(){
             return 1
         fi
     done
+
+    pass 0 "$FUNCNAME: No xgmi errors found on any GPU"
+    return 0
 }

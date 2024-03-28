@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/nhc/scripts/azure_common.nhc
+
 function check_nvlink_status(){
     # Check if nvlink is enabled
     num_gpus=$(nvidia-smi --list-gpus | wc -l)
@@ -31,5 +33,7 @@ function check_nvlink_status(){
             dbg "$FUNCNAME: GPU $gpu_id has all nvlinks active."
         fi
     done
+
+    pass 0 "$FUNCNAME: NVLink is enabled and GPU $gpu_id has all nvlinks active"
     return 0
 }

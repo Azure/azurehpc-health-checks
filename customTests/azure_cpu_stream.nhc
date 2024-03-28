@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source /etc/nhc/scripts/azure_common.nhc
+
 # Run Stream
 
 EXE_DIR=$AZ_NHC_ROOT/bin
@@ -124,6 +126,8 @@ function check_cpu_stream(){
             return 1
         fi
     done
+
+    pass 0 "$FUNCNAME: Stream tests passed"
     return 0
 
 }

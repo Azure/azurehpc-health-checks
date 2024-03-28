@@ -2,14 +2,18 @@
 
 # Check for GPU ECC errors
 
+source /etc/nhc/scripts/azure_common.nhc
+
 NVIDIA_SMI_HEALTHMON="${NVIDIA_SMI_HEALTHMON:-nvidia-smi}"
 NVIDIA_SMI_HEALTHMON_ARGS="${NVIDIA_SMI_HEALTHMON_ARGS}"
+NVSMI_OUTPUT_VAR="$(nvidia-smi)"
+
 
 NVSMI_HEALTHMON_LINES=( )
 NVSMI_HEALTHMON_OUTPUT=""
 NVSMI_HEALTHMON_RC=""
 
-export NVSMI_HEALTHMON_LINES NVSMI_HEALTHMON_OUTPUT NVSMI_HEALTHMON_RC
+export NVSMI_HEALTHMON_LINES NVSMI_HEALTHMON_OUTPUT NVSMI_HEALTHMON_RC NVSMI_OUTPUT_VAR
 
 function nhc_nvsmi_gather_data() {
     local IFS
@@ -23,12 +27,15 @@ function nhc_nvsmi_gather_data() {
 # Run the nvidia-smi utility and verify that all GPUs
 # are functioning properly.
 function check_nvsmi_healthmon() {
+    dbg "$NVSMI_OUTPUT_VAR"
+
     if [[ -z "$NVSMI_HEALTHMON_RC" ]]; then
         nhc_nvsmi_gather_data
     fi
 
     if [[ $NVSMI_HEALTHMON_RC -eq 0 ]]; then
         dbg "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON completed successfully"
+        pass 0 "$FUNCNAME: $NVIDIA_SMI_HEALTHMON completed successfully"
         return 0
     elif [[ $NVSMI_HEALTHMON_RC -eq 4 ]]; then
         die 1 "$FUNCNAME:  $NVIDIA_SMI_HEALTHMON:  Permission denied"
