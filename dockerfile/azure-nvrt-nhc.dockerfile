@@ -10,12 +10,15 @@ ENV AOCC_VERSION=4.0.0_1
 ENV PERF_TEST_VERSION=23.10.0
 ENV NV_BANDWIDTH_VERSION=0.4
 ENV NCCL_VERSION=2.19.3-1
-ENV HPCX_VERSION=v2.16
+ENV OPEN_MPI_VERSION=4.1.5
 ENV NCCL_TEST_VERSION=2.13.8
 
 ENV AZ_NHC_ROOT="/azure-nhc"
-ENV HPCX_DIR="/opt/hpcx"
-
+ENV MPI_BIN=/opt/openmpi/bin
+ENV MPI_INCLUDE=/opt/openmpi/include
+ENV MPI_LIB=/opt/openmpi/lib
+ENV MPI_MAN=/opt/openmpi/share/man
+ENV MPI_HOME=/opt/openmpi
 
 WORKDIR ${AZ_NHC_ROOT}
 
@@ -56,16 +59,18 @@ RUN cd /tmp && \
     MLNX_OFED_LINUX-${OFED_VERSION}-ubuntu22.04-x86_64/mlnxofedinstall --user-space-only --without-fw-update --without-ucx-cuda --force --all && \
     rm -rf /tmp/MLNX_OFED_LINUX*
 
-# Install HPCx
-RUN cd /tmp && \
-    TARBALL="hpcx-${HPCX_VERSION}-gcc-mlnx_ofed-ubuntu22.04-cuda12-gdrcopy2-nccl2.18-x86_64.tbz" && \
-    HPCX_DOWNLOAD_URL=https://content.mellanox.com/hpc/hpc-x/${HPCX_VERSION}/${TARBALL} && \
-    HPCX_FOLDER=$(basename ${HPCX_DOWNLOAD_URL} .tbz) && \
-    mkdir -p $HPCX_FOLDER && \
-    wget -q ${HPCX_DOWNLOAD_URL} && \
-    tar -xvf ${TARBALL} && \
-    mv ${HPCX_FOLDER} ${HPCX_DIR} && \
-    rm -rf /tmp/${TARBALL}
+
+# Install OpenMPI
+RUN cd /tmp && \ 
+    wget -q "https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-${OPEN_MPI_VERSION}.tar.gz" && \
+    tar -xvf openmpi-${OPEN_MPI_VERSION}.tar.gz && \
+    cd openmpi-${OPEN_MPI_VERSION} && \
+    cp LICENSE ${AZ_NHC_ROOT}/LICENSES/OpenMPI_LICENSE.txt && \
+    ./configure --prefix=/opt/openmpi --enable-mpirun-prefix-by-default --with-platform=contrib/platform/mellanox/optimized && \
+    make -j$(nproc) && \
+    make install && \
+    rm -rf /tmp/openmpi-${OPEN_MPI_VERSION} openmpi-${OPEN_MPI_VERSION}.tar.gz
+
 
 # Install NCCL
 ARG host_nccl_dir=dockerfile/build_exe/nccl-${NCCL_VERSION}

@@ -1,7 +1,6 @@
 #!/bin/bash
 
 export ALL_REDUCE_PATH=/opt/nccl-tests/build/all_reduce_perf
-export HPCX_DIR=/opt/hpcx
 
 function get_sku(){
    SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text" | tr '[:upper:]' '[:lower:]' | sed 's/standard_//')
@@ -45,18 +44,16 @@ function check_all_reduce_dependencies() {
       return 1
    fi
 
-   if [[ ! -z $HPCX_DIR ]]; then
-      if [[ ! -f $HPCX_DIR/hpcx-init.sh ]]; then
-         die 1 "$FUNCNAME: hpcx-init.sh not found in HPCX_DIR: $HPCX_DIR. Set/export the HPCX_DIR ENV variable to the HPCX directory."
-         return 1
-      fi
-      source $HPCX_DIR/hpcx-init.sh && hpcx_load
-   else
-      die 1 "$FUNCNAME: HPCX_DIR not set. Set/export the HPCX_DIR ENV variable to the HPCX directory."
-      return 1
-   fi
+   export PATH="$PATH:/opt/openmpi/bin"
+   export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/opt/openmpi/lib"
+   export MANPATH="$MANPATH:/opt/openmpi/share/man"
 
    # CHeck if NCv4 and set graph env variable
+   if [[ $(get_sku) == "nc96ads_a100_v4" ]]; then
+      export NCCL_GRAPH_FILE=${AZ_NHC_ROOT}/topofiles/ncv4-graph.xml
+   fi
+
+   # Check if NCv4 and set graph env variable
    if [[ $(get_sku) == "nc96ads_a100_v4" ]]; then
       export NCCL_GRAPH_FILE=${AZ_NHC_ROOT}/topofiles/ncv4-graph.xml
    fi
