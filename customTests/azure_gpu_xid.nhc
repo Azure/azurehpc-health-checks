@@ -27,7 +27,7 @@ function check_gpu_xid()
          xid_found_line=$(grep "Xid.*: $XID," $kernel_log  | head -n 1)
          if [ "$xid_found_line" != "" ]; then
             log "$GPU_XID_TEST: $xid_found_line"
-            die 1 "$FUNCNAME: $GPU_XID_TEST: $xid_found_line"
+            die 1 "$FUNCNAME: $GPU_XID_TEST: $xid_found_line. FaultCode: NHC2001"
          else
             dbg "No GPU Xid $XID error found in dmesg"
          fi

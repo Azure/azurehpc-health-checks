@@ -8,7 +8,7 @@ function check_nvlink_status(){
 
     nvlink_status=$(nvidia-smi nvlink --status)
     if [ $? -ne 0 ]; then
-        die 1 "$FUNCNAME: Failed to get NVLINK status with error code $?"
+        die 1 "$FUNCNAME: Failed to get NVLINK status with error code $?. FaultCode: NHC2016"
     fi
     if [ -z "$nvlink_status" ]; then
         log "$FUNCNAME: NVLINK is not enabled"
@@ -19,13 +19,13 @@ function check_nvlink_status(){
         # Run nvlink command
         nvlink_output=$(nvidia-smi nvlink -s -i $gpu_id)
         if [ $? -ne 0 ]; then
-            die 1 "$FUNCNAME: Failed to get NVLINK status with error code $?"
+            die 1 "$FUNCNAME: Failed to get NVLINK status with error code $?. FaultCode: NHC2016"
         fi
         # Check for inactive links
         if [[ $nvlink_output == *"inactive"* ]]; then
             # Extract and display the information about inactive links
             inactive_links=$(echo "$nvlink_output" | grep "Link" | grep "<inactive>" | sed 's/Link \([0-9]*\): <inactive>/Link \1: Inactive/')
-            die 1 "$FUNCNAME: GPU $gpu_id has nvlinks inactive: $inactive_links"
+            die 1 "$FUNCNAME: GPU $gpu_id has nvlinks inactive: $inactive_links. FaultCode: NHC2016"
             return 1
         elif [[ $nvlink_output == *"all links are inActive"* ]]; then 
             die 1 "$FUNCNAME: GPU $gpu_id has all nvlinks inactive"

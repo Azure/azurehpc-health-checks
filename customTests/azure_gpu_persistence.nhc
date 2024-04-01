@@ -12,7 +12,7 @@ function collect_persistence_data() {
    gpu_query_out_rc=$?
    if [[ $gpu_query_out_rc != 0 ]]; then
      log "$gpu_query_out"
-     die 1 "$FUNCNAME: nvidia-smi (persistence mode) returned error code $gpu_query_out_rc"
+     die 1 "$FUNCNAME: nvidia-smi (persistence mode) returned error code $gpu_query_out_rc. FaultCode: NHC2015"
    fi
    IFS=$'\n'
    gpu_query_out_lines=( $gpu_query_out ) 
@@ -32,7 +32,7 @@ function check_gpu_persistence() {
          gpu_persistence_out_rc=$?
          if [[ $gpu_query_out_rc != 0 ]]; then
             log "$gpu_persistence_out"
-            die 1 "$FUNCNAME: nvidia-smi (enable persistence mode) returned error code $gpu_persistence_out_rc"
+            die 1 "$FUNCNAME: nvidia-smi (enable persistence mode) returned error code $gpu_persistence_out_rc. FaultCode: NHC2015"
          else
             dbg "$gpu_persistence_out"
          fi

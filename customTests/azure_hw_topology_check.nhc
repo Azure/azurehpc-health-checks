@@ -54,11 +54,11 @@ function check_hw_topology() {
     elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
         TOPO_FILE=$AZ_NHC_ROOT/topofiles/ndv5-topo.xml
     else
-        die 1 "$FUNCNAME: SKU $SKU is not supported for this test."
+        die 1 "$FUNCNAME: SKU $SKU is not supported for this test. FauleCode: NHCNA"
     fi
 
     if [ ! -f "$TOPO_FILE" ]; then
-        die 1 "$FUNCNAME: Specified topology file "$TOPO_FILE" does not exist!"
+        die 1 "$FUNCNAME: Specified topology file "$TOPO_FILE" does not exist! FaultCode: NHCNA"
     fi
     dbg "Checking topology against $TOPO_FILE"
     expected_topo=$(load_expected_topology "$TOPO_FILE")
@@ -86,7 +86,7 @@ function check_hw_topology() {
         done
 
         missing_str=$(IFS=',' ; echo "${formatted_missing[*]}")
-        die 1 "$FUNCNAME: Topology mismatch! Expected to find $missing_str" # awkward spacing to get formatting right
+        die 1 "$FUNCNAME: Topology mismatch! Expected to find $missing_str. FaultCode: NHC2010" # awkward spacing to get formatting right
     fi
 
     pass 0 "$FUNCNAME: Topology passed check against $TOPO_FILE"

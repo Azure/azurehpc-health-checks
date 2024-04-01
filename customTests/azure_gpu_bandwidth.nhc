@@ -65,7 +65,7 @@ function evaluate_nvBW_result(){
                 EXP_BW=$EXP_P2P_BW
                 ;;
             *)
-                die 1 "check_gpu_bw: failed to parse results"
+                die 1 "check_gpu_bw: failed to parse results. FaultCode: NHCNA"
                 return 1
                 ;;
         esac
@@ -94,10 +94,10 @@ function evaluate_nvBW_result(){
                     else
                         if [ "$test" = "$P2P" ]; then
                             dbg "${tests_map[$test]}_GPU_${gpu_device}_${peer_device}: $gpubw GB/s"
-                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW"
+                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device failed. Bandwidth $gpubw is less than $EXP_BW. FaultCode: NHC2020"
                         else
                             dbg "${tests_map[$test]}_GPU_${gpu_device}: $gpubw GB/s"
-                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device failed. Bandwidth $gpubw is less than $EXP_BW"
+                            die 1 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device failed. Bandwidth $gpubw is less than $EXP_BW. FaultCode: NHC2020"
                         fi
                     fi
                     ((gpu_device++)) 
@@ -120,7 +120,7 @@ function check_nvBW_gpu_bw()
     # Lock graphics clocks to max freq to eliminate any time for the GPUs to boost.
     error_smi="check_gpu_bw: Failed raise GPU clocks with error code"
     if ! boost_gpu_clock > /dev/null 2>&1 ; then
-        die 1 -e "check_gpu_bw: $error_smi"
+        die 1 -e "check_gpu_bw: $error_smi. FaultCode: NHCNA"
         return 0
     fi
 
@@ -224,7 +224,7 @@ function check_rocm_gpu_bw(){
     exp_oam_bw=$3
 
     if [ ! -f /opt/rocm/bin/rocm-bandwidth-test ]; then
-        die 1 "check_gpu_bw: rocm_bandwidth_test not found. Ensure ROCm is installed and sourced correctly. Check/rerun azurehpc-health-checks installation."
+        die 1 "check_gpu_bw: rocm_bandwidth_test not found. Ensure ROCm is installed and sourced correctly. Check/rerun azurehpc-health-checks installation. FaultCode: NHCNA"
         return 1
     fi
 
@@ -319,7 +319,7 @@ function check_rocm_gpu_bw(){
     done    
 
     for bad_result in "${bad_results[@]}"; do
-        die 1 "check_gpu_bw: $bad_result"
+        die 1 "check_gpu_bw: $bad_result. FaultCode: NHC2020"
     done
 
     if [ ${#bad_results[@]} -gt 0 ]; then
@@ -337,7 +337,7 @@ function check_gpu_bw(){
         EXP_CUDA_BW=$1
         EXP_P2P_BW=$2
         if [[ -z "$EXP_CUDA_BW"  ]]; then
-            die 1 -e "$FUNCNAME: Expected H2D/D2H bandwidth not set!"
+            die 1 -e "$FUNCNAME: Expected H2D/D2H bandwidth not set! FaultCode: NHCNA"
             return 0
         fi
         check_nvBW_gpu_bw $EXP_CUDA_BW $EXP_P2P_BW
@@ -348,7 +348,7 @@ function check_gpu_bw(){
         EXP_AMD_OAM=$3
 
         if [[ -z "$EXP_AMD_HD"  ]] || [[ -z "$EXP_AMD_DD"  ]]; then
-            die 1 -e "$FUNCNAME: Expected HTD/P2P/OAM P2P bandwidth not set!"
+            die 1 -e "$FUNCNAME: Expected HTD/P2P/OAM P2P bandwidth not set! NHCNA"
             return 0
         fi
         if [[ -z "$EXP_AMD_OAM"  ]]; then
@@ -358,7 +358,7 @@ function check_gpu_bw(){
 
         check_rocm_gpu_bw $EXP_AMD_HD $EXP_AMD_DD $EXP_AMD_OAM
     else
-        die 1 -e "$FUNCNAME: No GPUs found!"
+        die 1 -e "$FUNCNAME: No GPUs found! FaultCode: NHC2009"
 	fi
 
     pass 0 "$FUNCNAME: GPU Bandiwdth Tests Passed"

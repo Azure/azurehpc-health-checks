@@ -17,7 +17,7 @@ function collect_ecc_data() {
       
       if [[ $page_retirement_query_out_rc != 0 ]]; then
          log "$page_retirement_query_out"
-         die 1 "$FUNCNAME: nvidia-smi (get page retirement table) returned error code $page_retirement_query_out_rc"
+         die 1 "$FUNCNAME: nvidia-smi (get page retirement table) returned error code $page_retirement_query_out_rc. FaultCode: NHCNA"
       fi
       IFS=$'\n'
       TAB=$'\t'
@@ -28,14 +28,14 @@ function collect_ecc_data() {
       if [[ $gpu_query_out_rc != 0 ]]
       then
       log "$gpu_query_out"
-      die 1 "$FUNCNAME: nvidia-smi (get gpu uncorrected counts) returned error code $gpu_query_out_rc"
+      die 1 "$FUNCNAME: nvidia-smi (get gpu uncorrected counts) returned error code $gpu_query_out_rc. FaultCode: NHCNA"
       fi
       gpu_remapped_rows_out=$(nvidia-smi --query-remapped-rows=$GPU_REMAPPED_ROWS_QUERY --format=csv,noheader)
       gpu_remapped_rows_out_rc=$?
       if [[ $gpu_remapped_rows_out_rc != 0 ]]
       then
       log "$gpu_remapped_rows_out"
-      die 1 "$FUNCNAME: nvidia-smi (get gpu remapped rows) returned error code $gpu_freq_out_rc"
+      die 1 "$FUNCNAME: nvidia-smi (get gpu remapped rows) returned error code $gpu_freq_out_rc. FaultCode: NHCNA"
       fi
       IFS=$'\n'
       gpu_query_out_lines=( $gpu_query_out )
@@ -53,7 +53,7 @@ function check_ecc() {
    ecc_sram_threshold=$2
 
    if [[ ${#gpu_query_out_lines[*]} != ${#gpu_remapped_rows_query_out_lines[*]} ]]; then
-      die 1 "$FUNCNAME: nvidia-smi (Number GPU's not correct), (${#gpu_query_out_lines[*]},${#gpu_remapped_rows_query_out_lines[*]})"
+      die 1 "$FUNCNAME: nvidia-smi (Number GPU's not correct), (${#gpu_query_out_lines[*]},${#gpu_remapped_rows_query_out_lines[*]}). FaultCode: NHC2007"
    fi
    for ((i=0; i<${#gpu_remapped_rows_query_out_lines[*]}; i++))
    do
@@ -64,29 +64,29 @@ function check_ecc() {
       dbg "GPU id $i: row remap pending, (${gpu_remapped_rows_query_out_line[0]})"
       if [[ ${gpu_remapped_rows_query_out_line[0]} -gt 0 ]]
       then
-         die 1 "$FUNCNAME: GPU id $i: Row remap pending"
+         die 1 "$FUNCNAME: GPU id $i: Row remap pending. FaultCode: NHC2007"
       fi
       dbg "GPU id $i: row remap error, (${gpu_remapped_rows_query_out_line[1]})"
       if [[ ${gpu_remapped_rows_query_out_line[1]} -gt 0 ]]
       then
-         die 1 "$FUNCNAME: GPU id $i: Row remap error"
+         die 1 "$FUNCNAME: GPU id $i: Row remap error. FaultCode: NHC2007"
       fi
       dbg "GPU id $i: row remap uncorrectable error count, (${gpu_remapped_rows_query_out_line[3]})"
       if [[ ${gpu_remapped_rows_query_out_line[3]} -gt 512 ]]
       then
-         die 1 "$FUNCNAME: GPU id $i: Row remap uncorrectable error count is too high"
+         die 1 "$FUNCNAME: GPU id $i: Row remap uncorrectable error count is too high. FaultCode: NHC2007"
       fi
       dbg "GPU id $i: No GPU row remap pending, row remap errors or row remap high count errors"
       if [[ ${gpu_query_out_line[4]} -gt $ecc_sram_threshold || ${gpu_query_out_line[5]} -gt $ecc_sram_threshold ]]; then
-         die 1 "$FUNCNAME: GPU id $i: High SRAM correctable ECC error count detected, (${gpu_query_out_line[4]},${gpu_query_out_line[5]})"
+         die 1 "$FUNCNAME: GPU id $i: High SRAM correctable ECC error count detected, (${gpu_query_out_line[4]},${gpu_query_out_line[5]}). FaultCode: NHC2019"
       elif [[ ${gpu_query_out_line[0]} -gt 0 || ${gpu_query_out_line[1]} -gt 0 ]]; then
-         die 1 "$FUNCNAME: GPU id $i: SRAM Uncorrectable ECC error count detected, (${gpu_query_out_line[0]},${gpu_query_out_line[1]})"
+         die 1 "$FUNCNAME: GPU id $i: SRAM Uncorrectable ECC error count detected, (${gpu_query_out_line[0]},${gpu_query_out_line[1]}). FaultCode: NHC2019"
       else
          dbg "GPU id $i: Normal SRAM Uncorrectable/correctable ECC error count, (${gpu_query_out_line[0]},${gpu_query_out_line[1]},${gpu_query_out_line[4]},${gpu_query_out_line[5]})"
       fi
       if [[ -n $ecc_error_threshold ]]; then
          if [[ ${gpu_query_out_line[2]} -gt $ecc_error_threshold || ${gpu_query_out_line[3]} -gt $ecc_error_threshold || ${gpu_query_out_line[6]} -gt $ecc_error_threshold || ${gpu_query_out_line[7]} -gt $ecc_error_threshold ]]; then
-	    die 1 "$FUNCNAME: GPU id $i: High DRAM Uncorrectable/correctable ECC error count detected, (${gpu_query_out_line[2]},${gpu_query_out_line[3]},${gpu_query_out_line[6]},${gpu_query_out_line[7]})"
+	    die 1 "$FUNCNAME: GPU id $i: High DRAM Uncorrectable/correctable ECC error count detected, (${gpu_query_out_line[2]},${gpu_query_out_line[3]},${gpu_query_out_line[6]},${gpu_query_out_line[7]}). FaultCode: NHC2019"
          else
             dbg "GPU id $i: Normal DRAM Uncorrectable/correctable ECC error count, (${gpu_query_out_line[2]},${gpu_query_out_line[3]},${gpu_query_out_line[6]},${gpu_query_out_line[7]})"
          fi
@@ -99,6 +99,7 @@ function check_SDBE_ecc(){
    collect_ecc_data "SDBE"
    flag="false"
    error_msg=''
+   re='^[0-9]+$'
 
    # Implement check of collected value against limits
    gpu_sections=($(echo "$page_retirement_query_out" | awk '/GPU / {print $0}'))
@@ -113,6 +114,10 @@ function check_SDBE_ecc(){
       gpu=${gpu_sections[index]}
       sbe=${sbe_sections[index]}
       dbe=${dbe_sections[index]}
+
+      if ! [[ $sbe =~ $re ]] || ! [[ $dbe =~ $re ]]; then
+         continue
+      fi
 
       # Calculate the sum of SBE and DBE pages
       total=$((sbe + dbe))
@@ -129,7 +134,7 @@ function check_SDBE_ecc(){
    done
 
    if [ "$flag" == "true" ]; then
-      die 1 "ERROR: $IFS$error_msg"
+      die 1 "ERROR: $IFS$error_msg. FaultCode: NHC2018"
    fi
 
    return 0
