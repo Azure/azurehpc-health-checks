@@ -331,7 +331,7 @@ function check_rocm_gpu_bw(){
 }
 
 function check_gpu_bw(){
-
+    trap "background_cleanup" RETURN
     if lspci | grep -iq NVIDIA ; then
 	    # Check GPU BW using NVBandwidth
         EXP_CUDA_BW=$1

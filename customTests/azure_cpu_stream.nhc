@@ -51,6 +51,7 @@ function install_check(){
 }
 
 function check_cpu_stream(){
+    trap "background_cleanup" RETURN
 
     EXP_PERF=$1
 	#set expected BW set to default value if argument empty

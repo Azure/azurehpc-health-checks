@@ -5,7 +5,9 @@ source /etc/nhc/scripts/azure_common.nhc
 IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw
 SLEEP_TIME=5
 
-HOSTNAME=`hostname`
+HOSTNAME=$(hostname)
+
+
 
 function run_ib_bw_gdr(){
 
@@ -21,7 +23,7 @@ function run_ib_bw_gdr(){
    fi
 
    MESSAGE_SIZE=8388608
-   IB_WRITE_BW=`basename $IB_WRITE_BW_EXE_PATH`
+   IB_WRITE_BW=$( basename $IB_WRITE_BW_EXE_PATH )
    IB_WRITE_BW_ARGS="-p $PORTARG -s $MESSAGE_SIZE -x 0 -F --report_gbits  --perform_warm_up"
    IB_WRITE_BW_OUT1=$(numactl -N $numa_node -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=$dev_idx -d $device > /dev/null &)
    IB_WRITE_BW_OUT1_RC=$?
@@ -69,6 +71,8 @@ function run_ib_bw_gdr(){
 }
 
 function check_ib_bw_gdr(){
+   trap "background_cleanup" RETURN
+   
    GPU_FREQ=$(boost_gpu_clock)
    if [[ $? != 0 ]]; then
       die 1 -e "$FUNCNAME: Failed to boost GPU clocks. FaultCode: NHCNA"
@@ -81,6 +85,7 @@ function check_ib_bw_gdr(){
    #get devices
    devices=($(determine_IB_devices))
    dev_idx=0
+
    for device in "${devices[@]}";
    do
       run_ib_bw_gdr $EXP_IB_BW ${port_numbers[$dev_idx]} $device $dev_idx &
@@ -92,5 +97,6 @@ function check_ib_bw_gdr(){
    remove_clock_boost
 
    pass 0 "$FUNCNAME: check passed"
+
    return 0
 }

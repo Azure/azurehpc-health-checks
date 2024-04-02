@@ -82,6 +82,8 @@ function ib_write(){
 }
 
 function check_ib_bw_non_gdr(){
+   trap "background_cleanup" RETURN
+
    DEFAULT_MSG_SIZE=1048576
 
    EXP_IB_BW=$1

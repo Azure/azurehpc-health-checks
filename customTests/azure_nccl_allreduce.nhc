@@ -29,6 +29,7 @@ function collect_nccl_allreduce_data() {
 }
 
 function check_nccl_allreduce() {
+   trap "background_cleanup" RETURN
 
    EXP_NCCL_ALLREDUCE_BW=$1
    REPEATS="${2:-1}"

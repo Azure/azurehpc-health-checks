@@ -25,7 +25,8 @@ function collect_nccl_allreduce_ib_loopback_data() {
 }
 
 function check_nccl_allreduce_ib_loopback() {
-
+   trap "background_cleanup" RETURN
+   
    EXP_NCCL_ALLREDUCE_IB_LOOPBACK_BW=$1
    REPEATS="${2:-1}"
    TOPOFILE=$3
