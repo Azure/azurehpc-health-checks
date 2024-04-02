@@ -13,7 +13,7 @@ fi
 
 SRC_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
-# not using src directory as insatll location
+# not using src directory as install location
 if [ $SRC_DIR != $INSTALL_DIR ]; then
   INSTALL_DIR=$INSTALL_DIR/azurehpc-health-checks
 fi
