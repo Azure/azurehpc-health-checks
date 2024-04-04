@@ -40,7 +40,6 @@ function get_sku(){
 
 function background_cleanup() {
    # cleans up background processes that might be left over
-   dbg Cleanup of background processes
    kill $(jobs -p) 2>/dev/null
 }
 

@@ -70,6 +70,7 @@ function evaluate_nvBW_result(){
                 ;;
         esac
         
+        # shellcheck disable=SC2066
         for lines in "${result_lines_array[$test]}"; do
             IFS=$'\n'
             result_lines=( $lines )
@@ -107,7 +108,6 @@ function evaluate_nvBW_result(){
         done
     done
 
-    pass 0 "$FUNCNAME: NVBandwidth Tests Successful"
     return 0
 }
 
@@ -140,7 +140,7 @@ function check_nvBW_gpu_bw()
     if [[ "$(check_nvlink_enabled)" == true && -n "$EXP_P2P_BW" ]]; then
         cmd_args="$cmd_args $P2P"
     fi  
-    cmd="$NVBW -t $cmd_args"
+    cmd="$NVBW -t $cmd_args -i 10"
 
     error_nbw="check_gpu_bw: Failed to run NVBandwidth with error code"
     if ! catch_error "$cmd" "$error_nbw"; then
