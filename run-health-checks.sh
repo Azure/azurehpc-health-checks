@@ -144,6 +144,17 @@ if [ ! -f $OUTPUT_PATH ]; then
     echo "Azure Healthcheck log" > $OUTPUT_PATH
 fi
 
+# get physical host name
+pHostName=$(python3 ${AZ_NHC_ROOT}/getPhysHostName.py)
+hostName=$(echo $pHostName| awk '{print $1}')
+physHostName=$(echo $pHostName| awk '{print $4}')
+
+# Add meta Data to log output file
+cat <<EOF >> $OUTPUT_PATH
+PHYSICAL HOST NAME: $physHostName
+HOST NAME: $hostName
+EOF
+
 # mount additional directories
 ADDITIONAL_MNTS=""
 if [ -n "$USER_DIRS" ]; then

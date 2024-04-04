@@ -35,6 +35,15 @@ if [ ! -f $CONF_FILE ]; then
     fi
 fi
 
+# Obtain Node Name MetaData
+# Make the first API call
+vm_name=$(curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-11-15&format=text")
+
+# Add meta Data to log output file
+cat <<EOF >> $OUTPUT_PATH
+VM NAME: $vm_name
+EOF
+
 #---------------------------------------------
 
 # Check if we mounted Custom test directory. If so update the custom tests.

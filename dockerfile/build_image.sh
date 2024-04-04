@@ -36,6 +36,7 @@ nbw_dir=$build_exe"/nvbandwidth-"${NV_BANDWIDTH_VERSION}""
 
 function build_cuda_exes(){
     # Install NV Bandwidth tool
+    sudo apt install -y libboost-program-options-dev
     mkdir -p ${nbw_dir} 
     archive_url=https://github.com/NVIDIA/nvbandwidth/archive/refs/tags/v${NV_BANDWIDTH_VERSION}.tar.gz
     wget -q -O - $archive_url | tar -xz --strip=1 -C  ${nbw_dir}
