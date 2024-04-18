@@ -10,6 +10,7 @@ GPU_XID_TEST="GPU Xid errors detected"
 
 function check_gpu_xid()
 {
+   logfile=${AZ_NHC_ROOT}/output/aznhc.log
    kernel_log=$1
    if [[ -z $kernel_log ]]; then
       kernel_log="$AZ_NHC_ROOT/syslog"
@@ -19,15 +20,24 @@ function check_gpu_xid()
       log "$FUNCNAME: $kernel_log not found. Skipping GPU Xid error test."
       return 0
    fi
+
    # check for any xid errors
    grep -q "Xid" $kernel_log
    RC=$?
    if [ $RC == 0 ]; then
       for XID in $XID_EC; do
-         xid_found_line=$(grep "Xid.*: $XID," $kernel_log  | head -n 1)
+         xid_found_line=$(grep "Xid.*: $XID," $kernel_log  | tail -n 1)
          if [ "$xid_found_line" != "" ]; then
-            log "$GPU_XID_TEST: $xid_found_line"
-            die 1 "$FUNCNAME: $GPU_XID_TEST: $xid_found_line"
+            logXid=$(echo "$xid_found_line" | awk -F ',' '{print $1}' )
+            logMsg="Found XID: $logXid"
+            
+            # check if the XID has been reported in the log before
+            if grep -qF "$logMsg" "$logfile"; then
+               log "This XID has been reported before: $logXid."
+            else
+               log "$logMsg"
+               die 1 "$FUNCNAME: $GPU_XID_TEST: $xid_found_line. FaultCode: NHC2001"
+            fi
          else
             dbg "No GPU Xid $XID error found in dmesg"
          fi
