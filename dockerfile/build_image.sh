@@ -87,7 +87,8 @@ pushd $parent_dir/../
 
 if [[ "$build_type" == "cuda" ]]; then
     echo "Nvidia runtime selected"
-    IMAGE=aznhc.azurecr.io/nvrt
+    # ACR registry
+    IMAGE="azurenodehealthchecks.azurecr.io/public/aznhc/aznhc-nv"
     DOCK_FILE=dockerfile/azure-nvrt-nhc.dockerfile
     mkdir -p $build_exe
     pushd $build_exe

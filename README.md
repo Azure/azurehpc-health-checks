@@ -10,7 +10,7 @@
 
 AzureHPC Node Health Checks provides an automated suite of test that targets specific Azure HPC offerings. This is an extension of [LBNL Node Health Checks](https://github.com/mej/nhc). 
 
-## Supported Offerings ##
+## Supported SKU Offerings ##
 
 - [NDm H100 v5-series](https://learn.microsoft.com/en-us/azure/virtual-machines/nd-h100-v5-series)
 - [NCads H100 v5-series](https://learn.microsoft.com/en-us/azure/virtual-machines/ncads-h100-v5)
@@ -22,12 +22,6 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - [HBv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv3-series)
 - [HBv2-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv2-series)
 - [NDv2-serries](https://learn.microsoft.com/en-us/azure/virtual-machines/ndv2-series)
-
-## Minimum Requirements ##
-
-- Docker 24.0.7
-- sudo access
-- Supported SKU
 
 ## Setup ##
 
@@ -46,7 +40,7 @@ This project comes with default VM SKU test configuration files that list the te
 ## Usage ##
 
 - Invoke health checks using a script that determines SKU and runs the configuration file according to SKU for you:
-```sudo ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-v|--verbose]```
+```sudo ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-e|--append_conf < path to conf file to be appended >] [-a|--all_tests] [-v|--verbose]```
 
   - See help menu for more options:
 
@@ -56,11 +50,20 @@ This project comes with default VM SKU test configuration files that list the te
     | -c, --config  | conf file   | Optional path to a custom NHC config file. If not specified the current VM SKU will be detected and the appropriate conf file will be used.   |
     | -o, --output  | log file    | Optional path to output the health check logs to. All directories in the path must exist. If not specified it will use output to ./health.log |
     | -t, --timeout | n seconds   | Optional timeout in seconds for each health check. If not specified it will default to 500 seconds.                                           |
+    | -e, --append_conf | conf file   | Append a custom conf file to the conf file being used for the test. Useful if you have a set of common tests you want to add to the default conf files provided. |
     | -a, --all     |             | Run ALL checks; don't exit on first failure.                                                                                                  |
     | -v, --verbose |             | If set, enables verbose and debug outputs.                                                                                                    |
 
   - Adding more tests to the configuration files may require modifying the time flag (-t) to avoid timeout. For the default tests provided we recommend setting the time out to 500 seconds but this may vary from machine to machine.
   - For other methods on launching Az NHC see [Az NHC docker documentation](./dockerfile/README.MD)
+
+### Example usage ###
+  
+  1. Default configuration: ```sudo ./run-health-checks.sh```
+  1. Verbose output with timeout of 600 seconds: ```sudo ./run-health-checks.sh -v -t 600```
+  1. Custom conf and log file: ```sudo ./run-health-checks.sh -c /path/to/myconf.cong -o /path/to/mylog.log```
+  1. Append a conf file to default conf:  ```sudo ./run-health-checks.sh -e /path/to/confToAdd.conf```
+  1. Append a conf file to custom conf:  ```sudo ./run-health-checks.sh -c /path/to/custom.conf -e /path/to/confToAdd.conf```
 
 ## Distributed NHC ##
 
