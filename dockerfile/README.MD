@@ -18,7 +18,7 @@ The container can be used on Nvidia GPU as well as CPU based SKUs. The [run scri
 The docker image is available publicly and can be pulled down the following ways:
 
 - Using the [pull script](./pull-image-acr.sh). ```sudo ./pull-image-acr.sh cuda```
-- Directly calling the the docker pull command: ```sudo docker pull aznhc.azurecr.io/nvrt:latest```
+- Directly calling the the docker pull command: ```sudo docker pull mcr.microsoft.com/aznhc/aznhc-nv:latest```
 
 Notes:
 
@@ -56,11 +56,11 @@ This method should be used when no customizations are needed. Care must be used 
 
    ```bash
     NVIDIA_RT="--runtime=nvidia" # only for GPU SKUs, Omit for non-gpu
-    DOCK_IMG_NAME="aznhc.azurecr.io/nvrt"
+    DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv"
     OUTPUT_PATH=${AZ_NHC_ROOT}/output/aznhc.log
     kernel_log=/var/log/syslog
 
-    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged \
+    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g\
         -v /sys:/hostsys/ \
         -v $OUTPUT_PATH:$WORKING_DIR/output/aznhc.log \
         -v ${kernel_log}:$WORKING_DIR/syslog
@@ -74,7 +74,7 @@ This method should be used when no customizations are needed. Care must be used 
     # This example would skip XID and IB link flap tests as the syslog is not mounted
     # This example also does not mount an output file. This means results will be printed to STDOUT.
     NVIDIA_RT="--runtime=nvidia" # only for GPU SKUs, omit for non-gpu
-    DOCK_IMG_NAME="aznhc.azurecr.io/nvrt"
-    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged -v /sys:/hostsys/
+    DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv"
+    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g -v /sys:/hostsys/
     sudo docker run ${DOCKER_RUN_ARGS}  "${DOCK_IMG_NAME}" bash -c "/azure-nhc/aznhc-entrypoint.sh"
    ```

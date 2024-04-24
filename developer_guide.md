@@ -22,7 +22,7 @@ Az NHC is ran inside an Ubuntu 22.04 docker container. See instructions for how 
 
   ```bash
     NVIDIA_RT="--runtime=nvidia" # only for GPU SKUs, Omit for non-gpu
-    DOCK_IMG_NAME="aznhc.azurecr.io/nvrt"
+    DOCK_IMG_NAME=mcr.microsoft.com/aznhc/aznhc-nv
     OUTPUT_PATH=${AZ_NHC_ROOT}/output/aznhc.log
     kernel_log=/var/log/syslog
 

@@ -41,7 +41,7 @@ ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE \
 --privileged -v /sys:/hostsys/ \
 -v $NHC_DIR/customTests:/azure-nhc/customTests \
 -v $NHC_DIR/test:/azure-nhc/test \
-aznhc.azurecr.io/nvrt bash
+mcr.microsoft.com/aznhc/aznhc-nv bash
 
 sudo docker exec -it aznhc bash -c "cp /azure-nhc/customTests/azure_common.nhc /etc/nhc/scripts/"
 

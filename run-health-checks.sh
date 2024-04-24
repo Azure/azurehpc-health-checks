@@ -1,7 +1,7 @@
 #!/bin/bash
 
 AZ_NHC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCK_IMG_NAME="aznhc.azurecr.io/nvrt"
+DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv"
 DOCK_CONT_NAME=aznhc
 
 
@@ -9,7 +9,7 @@ function print_help()
 {
 cat << EOF
 
-Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-a|--all_tests] [-d|--mount_dir] [-v|--verbose]
+Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf file>] [-o|--output <directory path to output all log files>] [-e|--append_conf < path to conf file to be appended >] [-a|--all_tests] [-d|--mount_dir] [-v|--verbose]
 Run health checks on the current VM.
 
 -h, -help,          --help                  Display this help
@@ -20,6 +20,9 @@ Run health checks on the current VM.
                                             If not specified it will use output to ./health.log
 
 -t, -timeout,       --timeout               Optional timeout in seconds for each health check. If not specified it will default to 500 seconds.
+
+-e, -append_conf,   --append_conf           Append a custom conf file to the conf file being used for the test. Useful if you have a set of common
+                                            tests you want to add to the default conf files provided.
 
 -a, -all,     --all                         Run ALL checks; don't exit on first failure.
 
@@ -37,7 +40,7 @@ OUTPUT_PATH="./health.log"
 TIMEOUT=500
 VERBOSE=false
 
-options=$(getopt -l "help,config:,output:,timeout:,all:,verbose" -o "hac:o:t:d:v" -a -- "$@")
+options=$(getopt -l "help,config:,output:,timeout:,all:,verbose" -o "hac:o:e:t:d:v" -a -- "$@")
 if [ $? -ne 0 ]; then
     print_help
     exit 1
@@ -58,6 +61,10 @@ case "$1" in
 -o|--output)
     shift
     OUTPUT_PATH="$(realpath -m ${1//\~/$HOME})"
+    ;;
+-e|--append_conf)
+    shift
+    APPEND_CONF_PATH="$(realpath -m ${1//\~/$HOME})"
     ;;
 -t|--timeout)
     shift
@@ -165,6 +172,23 @@ if [ -n "$USER_DIRS" ]; then
             echo "Directory $dir does not exist, skipping"
         fi
     done
+fi
+
+# Concatenate the test conf file with another conf file passed in by the append argument.
+# This will create a new config file with the postfix of appended.conf.
+# The appended file path will be printed in the new file
+if [ ! -z $APPEND_CONF_PATH  ]; then
+    if [ ! -f $APPEND_CONF_PATH ]; then
+        echo "Append conf file $APPEND_CONF_PATH does not exist"
+        exit 1
+    fi
+    conf_dir=$(dirname "$CONF_FILE")
+    default_name="$(basename "$CONF_FILE" .conf)"
+    combined_conf="$conf_dir/${default_name}_appended.conf"
+    cat $CONF_FILE > $combined_conf
+    echo -e "\n\n#######################################################################\n### APPENDED Conf File $APPEND_CONF_PATH \n" >> $combined_conf
+    cat $APPEND_CONF_PATH >> $combined_conf
+    CONF_FILE=$combined_conf
 fi
 
 echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
