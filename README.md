@@ -69,7 +69,7 @@ This project comes with default VM SKU test configuration files that list the te
 
 AzureHPC Node Health Checks also comes bundled with a distributed version of NHC, which is designed to run on a cluster of machines and report back to a central location. This is useful for running health checks on a large cluster with dozens or hundreds of nodes.
 
-See [Distributed NHC](./distributed-nhc/README.md) for more information.
+See [Distributed NHC](./distributed_nhc/README.md) for more information.
 
 ## Health Checks ##
 
