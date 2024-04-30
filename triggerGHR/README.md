@@ -4,7 +4,7 @@ The script “triggerGHR.sh” component is created to automate the process of t
 
 ## Prerequisite
 
-1) If the user wants to use NHC and report failure to GHR, they must be onboarded to both Azure health check (NHC) and Azure Impact Reporting (GHR) services. 
+1) If the user wants to use NHC and report failure to GHR, they must be onboarded to both Azure health check (NHC) and Azure Impact Reporting (GHR) services(please refer link for more information https://review.learn.microsoft.com/en-us/azure/impact-reporting/onboardtoimpactrp?branch=main&tabs=powershell%2Cconnectivity). 
 2) If the user wants to use only Azure Impact Reporting (GHR) service, they must be onboarded to GHR (please refer link for more information https://review.learn.microsoft.com/en-us/azure/impact-reporting/onboardtoimpactrp?branch=main&tabs=powershell%2Cconnectivity) and have the impact reporter role assigned to either a user-assigned identity or system-assigned identity to report the Impact to GHR.  
 3) If the resource that triggers this script has impact reporter role assigned to "user assigned identity" and not to "system assigned identity", then user must provide the "object_id" from Azure Portal that corresponds to the user assigned identity in the .env file. Otherwise, the resource will not be able to access GHR because of authentication failure. 
 4) To run the script with the -r option and report to GHR, the user needs to meet the conditions (2,3) above and provide input for the variable FAILURE_SCENARIO in .env file.
