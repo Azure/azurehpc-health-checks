@@ -165,9 +165,12 @@ EOF
 # mount additional directories
 ADDITIONAL_MNTS=""
 if [ -n "$USER_DIRS" ]; then
-    for dir in $(echo $USER_DIRS | tr "," "\n"); do
-        if [ -d "$dir" ]; then
-            ADDITIONAL_MNTS+=" -v $dir:/mnt/$dir"
+    for host_dir in $(echo $USER_DIRS | tr "," "\n"); do
+        # Strip /mnt if present to avoid mounts with /mnt/mnt/<path>
+        base_dir=${host_dir#/mnt/}
+        cont_dir="/mnt/${base_dir}"
+        if [ -d "$host_dir" ]; then
+            ADDITIONAL_MNTS+=" -v $host_dir:$cont_dir"
         else
             echo "Directory $dir does not exist, skipping"
         fi
@@ -205,6 +208,7 @@ DOCKER_RUN_ARGS="--name=$DOCK_CONT_NAME --net=host  -e TIMEOUT=$TIMEOUT \
     -v $CONF_FILE:"$DOCK_CONF_PATH/aznhc.conf" \
     -v $OUTPUT_PATH:$WORKING_DIR/output/aznhc.log \
     -v ${kernel_log}:$WORKING_DIR/syslog \
-    -v ${AZ_NHC_ROOT}/customTests:$WORKING_DIR/customTests"
+    -v ${AZ_NHC_ROOT}/customTests:$WORKING_DIR/customTests \
+    ${ADDITIONAL_MNTS}"
 
 sudo docker run ${DOCKER_RUN_ARGS} -e NHC_ARGS="${NHC_ARGS}" "${DOCK_IMG_NAME}" bash -c "$WORKING_DIR/aznhc-entrypoint.sh"
