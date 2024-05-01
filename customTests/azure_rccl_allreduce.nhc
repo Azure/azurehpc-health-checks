@@ -1,0 +1,76 @@
+#!/bin/bash
+
+source /etc/nhc/scripts/azure_common.nhc
+
+
+function collect_rccl_allreduce_data() {
+   MESSAGE_SIZE=$1
+   gpu_count=$(rocm-smi -l | grep 'GPU' | wc -l)
+
+   if [ -z "$gpu_count" ]; then
+      die 1 "$check_rccl_allreduce: No GPUs found"
+      return 1
+   fi
+
+   ENVIRON_VARS="-x LD_LIBRARY_PATH=/opt/rccl/lib:$LD_LIBRARY_PATH -x NCCL_IB_PCI_RELAXED_ORDERING=1 -x UCX_IB_PCI_RELAXED_ORDERING=on -x UCX_TLS=tcp -x UCX_NET_DEVICES=eth0 -x CUDA_DEVICE_ORDER=PCI_BUS_ID -x NCCL_SOCKET_IFNAME=eth0"
+   RCCL_ARGS="-b $MESSAGE_SIZE -f 2 -g 1 -e $MESSAGE_SIZE -c 1"
+
+   # ensure unloaded before use
+   MPI_ARGS="-np $gpu_count --map-by ppr:$gpu_count:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
+
+   rccl_allreduce_out=$(mpirun $MPI_ARGS $ENVIRON_VARS $RCCL_ALL_REDUCE_PATH $RCCL_ARGS)
+   rccl_allreduce_out_rc=$?
+   if [[ $rccl_allreduce_out_rc != 0 ]]; then
+      die 1 "$FUNCNAME: rccl_allreduce returned error code $rccl_allreduce_out_rc. FaultCode: NHCNA"
+   fi
+   IFS=$'\n'
+   rccl_allreduce_out_lines=( $rccl_allreduce_out )
+   IFS=$' \t\n'
+}
+
+function check_rccl_allreduce() {
+   trap "background_cleanup" RETURN
+
+   EXP_RCCL_ALLREDUCE_BW=$1
+   REPEATS="${2:-1}"
+
+   MESSAGE_SIZE=$3
+
+   if ! check_all_reduce_dependencies ; then
+      die 1 -e "$FUNCNAME: Missing one or more dependencies. FaultCode: NHCNA"
+      return 0
+   fi
+
+   for iter in $(seq 1 $REPEATS)
+   do
+      collect_rccl_allreduce_data $MESSAGE_SIZE
+      for ((i=0; i<${#rccl_allreduce_out_lines[*]}; i++))
+      do
+         if [[ "${rccl_allreduce_out_lines[$i]//FAILED}" != "${rccl_allreduce_out_lines[$i]}" ]]
+         then
+            dbg "$rccl_allreduce_out"
+            die 1 "$FUNCNAME: RCCL allreduce, Out of bounds values failed. FaultCode: NHC2010"
+            return 0
+         fi
+         if [[ "${rccl_allreduce_out_lines[$i]//bandwidth}" != "${rccl_allreduce_out_lines[$i]}" ]]
+         then
+            IFS=$' \t\n'
+            rccl_allreduce_out_line=( ${rccl_allreduce_out_lines[$i]} )
+            avg_bus_bw=${rccl_allreduce_out_line[5]}
+            dbg "Measured Avg RCCL allreduce bus BW $avg_bus_bw GB/s (expected >=$EXP_RCCL_ALLREDUCE_BW GB/s)"
+            break
+         fi
+      done
+      dbg "rccl_all_red: $avg_bus_bw  GB/s"
+      if (( $(echo "$avg_bus_bw < $EXP_RCCL_ALLREDUCE_BW" | bc -l) )); then
+         dbg "$rccl_allreduce_out"
+         dbg "Iteration ${iter} of ${REPEATS} failed: RCCL allreduce bandwidth $avg_bus_bw GB/s < $EXP_RCCL_ALLREDUCE_BW GB/s"
+      else
+         pass 0 "$FUNCNAME: RCCL all reduce bandwidth test passed, $avg_bus_bw GB/s"
+         return 0
+      fi
+   done
+
+   die 1 "$FUNCNAME: RCCL allreduce, BUS BW (expected >=$EXP_RCCL_ALLREDUCE_BW GB/s, but measured $avg_bus_bw GB/s). FaultCode: NHC2010"
+   return 0
+}

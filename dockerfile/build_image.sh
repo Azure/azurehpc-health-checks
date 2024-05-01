@@ -96,7 +96,7 @@ if [[ "$build_type" == "cuda" ]]; then
     popd
 elif [[ "$build_type" == "rocm" ]]; then
     echo "AMD runtime selected"
-    IMAGE="azurenodehealthchecks.azurecr.io/public/aznhc/aznhc-rocm"
+    IMAGE="azurenodehealthchecks.azurecr.io/staging/aznhc/aznhc-rocm"
     DOCK_FILE=dockerfile/azure-rocm-nhc.dockerfile
 else
     echo "Please specify a build type: cuda or rocm"

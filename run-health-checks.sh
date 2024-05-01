@@ -1,7 +1,9 @@
 #!/bin/bash
 
 AZ_NHC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv"
+DOCK_IMG_NAME_NV="mcr.microsoft.com/aznhc/aznhc-nv"
+DOCK_IMG_NAME_CPU=$DOCK_IMG_NAME_NV # Default to the NV image
+DOCK_IMG_NAME_AMD="azurenodehealthchecks.azurecr.io/staging/aznhc/aznhc-rocm"
 DOCK_CONT_NAME=aznhc
 
 
@@ -195,10 +197,16 @@ echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
 
 if lspci | grep -iq NVIDIA ; then
     NVIDIA_RT="--runtime=nvidia"
+    DOCK_IMG_NAME=$DOCK_IMG_NAME_NV
+elif lspci | grep -iq AMD ; then
+    DOCK_IMG_NAME=$DOCK_IMG_NAME_AMD
+else
+    DOCK_IMG_NAME=$DOCK_IMG_NAME_CPU
 fi
 
 WORKING_DIR="/azure-nhc"
 DOCK_CONF_PATH="$WORKING_DIR/conf"
+
 DOCKER_RUN_ARGS="--name=$DOCK_CONT_NAME --net=host  -e TIMEOUT=$TIMEOUT \
     --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g \
     -v /sys:/hostsys/ \
