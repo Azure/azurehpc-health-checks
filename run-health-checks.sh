@@ -89,12 +89,25 @@ esac
 shift
 done
 
+function collect_meta_data(){
+    # get meta data for VM and underlying host
+    pHostName=$(python3 ${AZ_NHC_ROOT}/getPhysHostName.py)
+    computerName=$(echo $pHostName| awk '{print $1}')
+    physHostName=$(echo $pHostName| awk '{print $4}')
+    vmhostname=$(hostname)
+    vmid=$( curl -H Metadata:true --max-time 10 -s  "http://169.254.169.254/metadata/instance/compute/vmId?api-version=2021-03-01&format=text")
+    vm_name=$(curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-11-15&format=text")
+}
+
+
 OUTPUT_PATH=$(realpath -m "$OUTPUT_PATH")
+
+# SKU will be used to determine support and to log as part of Meta data
+SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text" | tr '[:upper:]' '[:lower:]' | sed 's/standard_//')
 
 # If a custom configuration isn't specified, detect the VM SKU and use the appropriate conf file
 if [ -z "$CONF_FILE" ]; then
     echo "No custom conf file specified, detecting VM SKU..."
-    SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text" | tr '[:upper:]' '[:lower:]' | sed 's/standard_//')
     CONF_DIR="$AZ_NHC_ROOT/conf/"
     CONF_FILE="$CONF_DIR/$SKU.conf"
     if [ -e "$CONF_FILE" ]; then
@@ -153,15 +166,17 @@ if [ ! -f $OUTPUT_PATH ]; then
     echo "Azure Healthcheck log" > $OUTPUT_PATH
 fi
 
-# get physical host name
-pHostName=$(python3 ${AZ_NHC_ROOT}/getPhysHostName.py)
-hostName=$(echo $pHostName| awk '{print $1}')
-physHostName=$(echo $pHostName| awk '{print $4}')
+collect_meta_data
 
 # Add meta Data to log output file
 cat <<EOF >> $OUTPUT_PATH
+------ VM Meta Data ------
+VM NAME: $vm_name
+COMPUTER NAME: $computerName
+VM HOST NAME: $vmhostname
+VM ID: $vmid
+VM SKU: standard_${SKU}
 PHYSICAL HOST NAME: $physHostName
-HOST NAME: $hostName
 EOF
 
 # mount additional directories

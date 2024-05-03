@@ -6,7 +6,10 @@ source /etc/nhc/scripts/azure_common.nhc
 
 NVIDIA_SMI_HEALTHMON="${NVIDIA_SMI_HEALTHMON:-nvidia-smi}"
 NVIDIA_SMI_HEALTHMON_ARGS="${NVIDIA_SMI_HEALTHMON_ARGS}"
-NVSMI_OUTPUT_VAR="$(nvidia-smi)"
+
+if lspci | grep -iq NVIDIA ; then
+    NVSMI_OUTPUT_VAR="$(nvidia-smi)"
+fi
 
 
 NVSMI_HEALTHMON_LINES=( )

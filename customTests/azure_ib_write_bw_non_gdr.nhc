@@ -99,6 +99,5 @@ function check_ib_bw_non_gdr(){
       ib_write $device $MSG_SIZE $EXP_IB_BW
    done
 
-   pass 0 "$FUNCNAME: check passed"
    return 0
 }

@@ -22,6 +22,8 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - [HBv3-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv3-series)
 - [HBv2-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hbv2-series)
 - [NDv2-serries](https://learn.microsoft.com/en-us/azure/virtual-machines/ndv2-series)
+- [HC-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hc-series)
+- [ND mi300x v5-series](https://techcommunity.microsoft.com/t5/azure-high-performance-computing/azure-previews-nd-mi300x-v5-optimized-for-demanding-ai-and-hpc/ba-p/4002519)
 
 ## Setup ##
 

@@ -10,12 +10,14 @@ GPU_XID_TEST="GPU Xid errors detected"
 
 function check_gpu_xid()
 {
-   logfile=${AZ_NHC_ROOT}/output/aznhc.log
-   kernel_log=$1
-   if [[ -z $kernel_log ]]; then
-      kernel_log="$AZ_NHC_ROOT/syslog"
+   # time threshold in hours
+   time_threshold=$1
+   if [ -z "$time_threshold" ]; then
+      time_threshold=2
    fi
 
+   logfile=${AZ_NHC_ROOT}/output/aznhc.log
+   kernel_log="$AZ_NHC_ROOT/syslog"
    if [[ ! -f $kernel_log ]]; then
       log "$FUNCNAME: $kernel_log not found. Skipping GPU Xid error test."
       return 0
@@ -30,21 +32,29 @@ function check_gpu_xid()
          if [ "$xid_found_line" != "" ]; then
             logXid=$(echo "$xid_found_line" | awk -F ',' '{print $1}' )
             logMsg="Found XID: $logXid"
+            log_date="$(echo "$logXid" | awk '{print $1, $2, $3}') $(date +"%Y")"
+            log_date=$(date -d "$log_date" +"%s")
+            current_ts=$(date +"%s")
+            diff=$(( (current_ts - log_date) / 3600 ))
             
-            # check if the XID has been reported in the log before
-            if grep -qF "$logMsg" "$logfile"; then
-               log "This XID has been reported before: $logXid."
+            if [ "$diff" -le $time_threshold ]; then
+               # check if the XID has been reported in the log before
+               if grep -qF "$logMsg" "$logfile"; then
+                  log "This XID has been reported before: $logXid."
+               else
+                  log "$logMsg"
+                  die 1 "$FUNCNAME: $GPU_XID_TEST: $xid_found_line. FaultCode: NHC2001"
+               fi
             else
-               log "$logMsg"
-               die 1 "$FUNCNAME: $GPU_XID_TEST: $xid_found_line. FaultCode: NHC2001"
+               log "Xid older than $time_threshold hours: $diff hours. Skipping this XID error: $logXid."
             fi
+
          else
-            dbg "No GPU Xid $XID error found in dmesg"
+            dbg "No GPU Xid $XID error found in kernel log"
          fi
       done
-   else
-      dbg "No GPU Xid error found in dmesg"
-      pass 0 "$FUNCNAME: No GPU XID error found"
-      return 0
    fi
+
+   pass 0 "$FUNCNAME:  GPU XID error check passed."
+   return 0
 }
