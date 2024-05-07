@@ -55,7 +55,7 @@ function check_all_reduce_dependencies() {
    fi
 
    if [[ ! -f $REDUCE_PATH ]]; then
-      die 1 "$FUNCNAME: all reduce executable path: $ALL_REDUCE_PATH not found. Ensure nccl-tests is installed and built in. FaultCode: NHCNA"
+      die 1 "$FUNCNAME: all reduce executable path: $REDUCE_PATH not found. Ensure nccl-tests is installed and built in. FaultCode: NHCNA"
       return 1
    fi
 

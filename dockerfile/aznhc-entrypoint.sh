@@ -4,7 +4,7 @@ function collect_meta_data(){
     # get meta data for VM and underlying host
     vmhostname=$(hostname)
     vmid=$( curl -H Metadata:true --max-time 10 -s  "http://169.254.169.254/metadata/instance/compute/vmId?api-version=2021-03-01&format=text")
-    vm_name=$(curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-11-15&format=text")
+    vmname=$(curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-11-15&format=text")
 }
 
 
@@ -33,7 +33,7 @@ if ! grep -q "VM Meta Data" "$OUTPUT_PATH"; then
     cat <<EOF >> $OUTPUT_PATH
     cat <<EOF >> $OUTPUT_PATH
     ------ VM Meta Data ------
-    VM NAME: $vm_name
+    VM NAME: $vmname
     VM HOST NAME: $vmhostname
     VM ID: $vmid
 EOF
