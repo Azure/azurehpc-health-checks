@@ -72,11 +72,12 @@ if [ "${#NHC_ARGS[@]}" -eq 0 ]; then
 else
     nhc ${NHC_ARGS[@]} CONFFILE=$CONF_FILE LOGFILE=$OUTPUT_PATH TIMEOUT=$TIMEOUT
 fi
+nhc_exit_code=$?
 
 if [ "$output_mounted" = false ]; then
     cat $OUTPUT_PATH
 fi
 
-echo "Health checks completed." | tee -a $OUTPUT_PATH
+echo "Health checks completed with exit code: ${nhc_exit_code}." | tee -a $OUTPUT_PATH
 
-exit 0
+exit $nhc_exit_code
