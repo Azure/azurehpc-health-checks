@@ -1,5 +1,13 @@
 #! /bin/bash
 
+function collect_meta_data(){
+    # get meta data for VM and underlying host
+    vmhostname=$(hostname)
+    vmid=$( curl -H Metadata:true --max-time 10 -s  "http://169.254.169.254/metadata/instance/compute/vmId?api-version=2021-03-01&format=text")
+    vmname=$(curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-11-15&format=text")
+}
+
+
 if [ -z "$AZ_NHC_ROOT" ]; then
     AZ_NHC_ROOT="/azure-nhc"
 fi
@@ -8,7 +16,6 @@ CONF_FILE=${AZ_NHC_ROOT}/conf/aznhc.conf
 OUTPUT_PATH=${AZ_NHC_ROOT}/output/aznhc.log
 DEFAULT_NHC_FILE_PATH=${AZ_NHC_ROOT}/default
 
-#------------------Default conf file set up-------------------
 
 # Check if the output file exists, if not create it
 if [ ! -f $OUTPUT_PATH ]; then
@@ -16,11 +23,28 @@ if [ ! -f $OUTPUT_PATH ]; then
     output_mounted=false
 fi
 
+#------------------Collect VM Meta Data-------------------
+# This clause is only for cases where the docker image is used without the run script
+# The run script will use the string "VM Meta Data" so if it is present we skip this section
+if ! grep -q "VM Meta Data" "$OUTPUT_PATH"; then
+    # Obtain Node Name MetaData
+    collect_meta_data
+    # Add meta Data to log output file
+    cat <<EOF >> $OUTPUT_PATH
+    cat <<EOF >> $OUTPUT_PATH
+    ------ VM Meta Data ------
+    VM NAME: $vmname
+    VM HOST NAME: $vmhostname
+    VM ID: $vmid
+EOF
+fi
+
 # Set default time out if ENV variable not present
 if [ -z "$TIMEOUT" ]; then
     TIMEOUT=500
 fi
 
+#------------------Default conf file set up-------------------
 if [ ! -f $CONF_FILE ]; then
     echo "No custom conf file specified, detecting VM SKU..."
     SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text" | tr '[:upper:]' '[:lower:]' | sed 's/standard_//')
@@ -34,15 +58,6 @@ if [ ! -f $CONF_FILE ]; then
         return 1
     fi
 fi
-
-# Obtain Node Name MetaData
-# Make the first API call
-vm_name=$(curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-11-15&format=text")
-
-# Add meta Data to log output file
-cat <<EOF >> $OUTPUT_PATH
-VM NAME: $vm_name
-EOF
 
 #---------------------------------------------
 

@@ -32,13 +32,13 @@ function ib_write(){
       log "$IB_WRITE_BW_OUT1"
       PORT=$(echo $IB_WRITE_BW_OUT1 | grep -oP '(?<=port\s)\w+')
       if [ -z "$PORT" ]; then
-         die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC, Port argument was not specified. FaultCode: NHCNA"
+         die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC, Port argument was not specified. FaultCode: NHCNA"
          return 1
       fi
       NETSTAT_OUT=$(netstat -lnp | grep $PORT)
       log "Running: netstat -lnp | grep $PORT:"
       log "$NETSTAT_OUT"
-      die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC. FaultCode: NHCNA"
+      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT1_RC. FaultCode: NHCNA"
       return 1
    fi
    sleep $SLEEP_TIME
@@ -49,13 +49,13 @@ function ib_write(){
       log "$IB_WRITE_BW_OUT2"
       PORT=$(echo $IB_WRITE_BW_OUT2 | grep -oP '(?<=port\s)\w+')
       if [ -z "$PORT" ]; then
-         die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC, Port argument was not specified. faultCode: NHCNA"
+         die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC, Port argument was not specified. faultCode: NHCNA"
          return 1
       fi
       NETSTAT_OUT=$(netstat -lnp | grep $PORT)
       log "Running: netstat -lnp | grep $PORT:"
       log "$NETSTAT_OUT"
-      die 1 "$FUNCNAME: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC. FaultCode: NHCNA"
+      die 1 "check_ib_bw_non_gdr: $IB_WRITE_BW returned error code $IB_WRITE_BW_OUT2_RC. FaultCode: NHCNA"
       return 1
    fi
    IFS=$'\n'
@@ -77,7 +77,7 @@ function ib_write(){
          return 1
    fi
    dbg "ib_write_lb_${device}: $ib_bandwidth Gbps"
-   pass 0 "$FUNCNAME: IB write bandwidth non gdr test passed"
+   pass 0 "check_ib_bw_non_gdr: IB write bandwidth non gdr test passed for IB=$device, IB BW=$ib_bandwidth Gbps"
    return 0
 }
 
@@ -99,6 +99,5 @@ function check_ib_bw_non_gdr(){
       ib_write $device $MSG_SIZE $EXP_IB_BW
    done
 
-   pass 0 "$FUNCNAME: check passed"
    return 0
 }

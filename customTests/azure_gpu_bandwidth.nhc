@@ -326,7 +326,6 @@ function check_rocm_gpu_bw(){
         return 1
     fi
 
-    pass 0 "$FUNCNAME: ROCm GPU bandwidth test passed"
     return 0
 }
 
@@ -361,6 +360,6 @@ function check_gpu_bw(){
         die 1 -e "$FUNCNAME: No GPUs found! FaultCode: NHC2009"
 	fi
 
-    pass 0 "$FUNCNAME: GPU Bandiwdth Tests Passed"
+    pass 0 "$FUNCNAME: GPU Bandwidth Tests Passed"
     return 0
 }
