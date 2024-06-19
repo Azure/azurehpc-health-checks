@@ -59,10 +59,12 @@ function evaluate_nvBW_result(){
     for test in "${!result_lines_array[@]}"; do
         case $test in
             $H2D|$D2H)
-                EXP_BW=$EXP_CUDA_BW
+                EXP_BW=$EXP_CUDA_BW 
+                WARN_BW=$(echo "$EXP_BW * 1.05" | bc -l) # this warning value is 10% less than the expected value, we can consider it the failure threshold.
                 ;;
             $P2P)
                 EXP_BW=$EXP_P2P_BW
+                WARN_BW=$(echo "$EXP_BW * 1.05" | bc -l) # this warning value is 10% less than the expected value, we can consider it the failure threshold.
                 ;;
             *)
                 die 1 "check_gpu_bw: failed to parse results. FaultCode: NHCNA"
@@ -86,11 +88,17 @@ function evaluate_nvBW_result(){
                         ((gpu_device++))
                         continue
                     fi
-                    if (( $(echo "$gpubw >= $EXP_BW" | bc -l) )); then
+                    if (( $(echo "$gpubw >= $WARN_BW" | bc -l) )); then
                         if [ "$test" = "$P2P" ]; then
                             dbg "${tests_map[$test]}_GPU_${gpu_device}_${peer_device}: $gpubw GB/s"
                         else
                             dbg "${tests_map[$test]}_GPU_${gpu_device}: $gpubw GB/s"
+                        fi
+                    elif (( $(echo "$gpubw >= $EXP_BW" | bc -l) )); then 
+                        if [ "$test" = "$P2P" ]; then
+                            warning 0 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device to GPU $peer_device has a bandwidth of $gpubw GB/s. Expected threshold $EXP_BW GB/s."
+                        else
+                            warning 0 "check_gpu_bw: ${tests_map[$test]} test on GPU $gpu_device has a bandwidth of $gpubw GB/s. Expected threshold $EXP_BW GB/s."
                         fi
                     else
                         if [ "$test" = "$P2P" ]; then
