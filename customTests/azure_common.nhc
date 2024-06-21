@@ -38,20 +38,6 @@ function warning(){
    local RET="$1"
    shift
 
-   CHECK_SUCCESS=0
-
-   if [[ -z "$CHECK" ]] && CHECK="$FUNCNAME $*"; then
-      if [[ -n "$NHC_RM" && "$MARK_OFFLINE" -eq 1 && "$PASS_CNT" -eq 0 ]]; then
-        if [[ "${CHECK:0:5}" == "pass " ]]; then
-            CHECK="$OFFLINE_NODE '$HOSTNAME' '$*'"
-            eval $OFFLINE_NODE "'$HOSTNAME'" "'$*'"
-            CHECK="$FUNCNAME $*"
-        else
-            eval $OFFLINE_NODE "'$HOSTNAME'" "'$*'"
-        fi
-      fi
-   fi
-
    if [[ -n "$LOGFILE" ]]; then
       echo "WARNING:  $NAME:  Nearing a failure threshold:  $*"
       oecho "WARNING:  $NAME:  Nearing a failure threshold:  $*"
