@@ -46,6 +46,7 @@ RUN apt-get update -y                           \
     net-tools                                   \
     bats                                        \   
     bc
+RUN  apt-get upgrade -y
 
 RUN mkdir -p ${AZ_NHC_ROOT}/LICENSES
 COPY LICENSE ${AZ_NHC_ROOT}/LICENSES/azure-nhc_LICENSE.txt

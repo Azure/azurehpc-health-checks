@@ -92,6 +92,10 @@ function check_ib_bw_non_gdr(){
    if [ -z "$MSG_SIZE" ]; then
       MSG_SIZE=$DEFAULT_MSG_SIZE
    fi
+
+   # log pkeys
+   print_pkeys $FUNCNAME
+
    #get devices
    devices=($(determine_IB_devices))
 

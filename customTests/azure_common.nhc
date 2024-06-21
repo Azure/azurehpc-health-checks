@@ -154,6 +154,16 @@ function determine_IB_devices(){
    return 0
 }
 
+function print_pkeys(){
+   func=$1
+   devices=$(determine_IB_devices)
+   log ${func}:InfiniBand Pkey info:
+   for device in $devices; do
+      key=$(cat /sys/class/infiniband/${device}/ports/1/pkeys/0)
+      log "PKEY for $device: $key"
+   done
+}
+
 function map_IB_to_numa(){
    ib_dir=$1
    if [ -z "$ib_dir" ]; then
