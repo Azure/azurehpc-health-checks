@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export ALL_REDUCE_PATH=/opt/nccl-tests/build/all_reduce_perf
+export RCCL_ALL_REDUCE_PATH=/opt/rccl-tests/all_reduce_perf
 
 function pass(){
    IFS=$' \t\n'
@@ -79,8 +80,16 @@ function background_cleanup() {
 
 
 function check_all_reduce_dependencies() {
-   if [[ ! -f $ALL_REDUCE_PATH ]]; then
-      die 1 "$FUNCNAME: all reduce executable path: $ALL_REDUCE_PATH not found. Ensure nccl-tests is installed and built in. FaultCode: NHCNA"
+
+   # Default to Nvidia NCCL-Test
+   REDUCE_PATH=$ALL_REDUCE_PATH
+   if lspci | grep -iq AMD ; then
+      # Check if AMD RCCL-Test is installed
+      REDUCE_PATH=$RCCL_ALL_REDUCE_PATH 
+   fi
+
+   if [[ ! -f $REDUCE_PATH ]]; then
+      die 1 "$FUNCNAME: all reduce executable path: $REDUCE_PATH not found. Ensure nccl-tests is installed and built in. FaultCode: NHCNA"
       return 1
    fi
 
