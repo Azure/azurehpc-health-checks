@@ -5,6 +5,7 @@ function collect_meta_data(){
     vmhostname=$(hostname)
     vmid=$( curl -H Metadata:true --max-time 10 -s  "http://169.254.169.254/metadata/instance/compute/vmId?api-version=2021-03-01&format=text")
     vmname=$(curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/name?api-version=2021-11-15&format=text")
+    kernelVersion=$(uname -r)
 }
 
 
@@ -31,11 +32,11 @@ if ! grep -q "VM Meta Data" "$OUTPUT_PATH"; then
     collect_meta_data
     # Add meta Data to log output file
     cat <<EOF >> $OUTPUT_PATH
-    cat <<EOF >> $OUTPUT_PATH
     ------ VM Meta Data ------
     VM NAME: $vmname
     VM HOST NAME: $vmhostname
     VM ID: $vmid
+    Kernel Version: $kernelVersion
 EOF
 fi
 

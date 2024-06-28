@@ -82,6 +82,9 @@ function check_ib_bw_gdr(){
    port_numbers=(18510 18511 18512 18513 18514 18515 18516 18517 )
    pid_array=()
 
+   # log pkeys
+   print_pkeys $FUNCNAME
+
    #get devices
    devices=($(determine_IB_devices))
    dev_idx=0

@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/cuda:12.2.2-runtime-ubuntu22.04
+FROM nvcr.io/nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
 
 LABEL maintainer="azurehpc-health-checks"
 
@@ -46,6 +46,7 @@ RUN apt-get update -y                           \
     net-tools                                   \
     bats                                        \   
     bc
+RUN  apt-get upgrade -y
 
 RUN mkdir -p ${AZ_NHC_ROOT}/LICENSES
 COPY LICENSE ${AZ_NHC_ROOT}/LICENSES/azure-nhc_LICENSE.txt
