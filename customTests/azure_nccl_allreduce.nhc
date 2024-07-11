@@ -4,8 +4,8 @@ source /etc/nhc/scripts/azure_common.nhc
 
 # Check for NVlink issues by running NCCL allreduce.
 function collect_nccl_allreduce_data() {
-   TOPOFILE=$1
-   MESSAGE_SIZE=$2
+   MESSAGE_SIZE=$1
+   TOPOFILE=$2
    gpu_count=$(nvidia-smi --list-gpus | wc -l)
 
    if [ -z "$gpu_count" ]; then
@@ -34,8 +34,8 @@ function check_nccl_allreduce() {
    EXP_NCCL_ALLREDUCE_BW=$1
    REPEATS="${2:-1}"
 
-   TOPOFILE=$3
-   MESSAGE_SIZE=$4
+   MESSAGE_SIZE=$3
+   TOPOFILE=$4
 
    if ! check_all_reduce_dependencies ; then
       die 1 -e "$FUNCNAME: Missing one or more dependencies. FaultCode: NHCNA"
@@ -44,7 +44,7 @@ function check_nccl_allreduce() {
 
    for iter in $(seq 1 $REPEATS)
    do
-      collect_nccl_allreduce_data $TOPOFILE $MESSAGE_SIZE
+      collect_nccl_allreduce_data $MESSAGE_SIZE $TOPOFILE
 
       for ((i=0; i<${#nccl_allreduce_out_lines[*]}; i++))
       do
