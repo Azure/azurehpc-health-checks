@@ -31,6 +31,7 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 - [NDv2-serries](https://learn.microsoft.com/en-us/azure/virtual-machines/ndv2-series)
 - [HC-series](https://learn.microsoft.com/en-us/azure/virtual-machines/hc-series)
 - [ND mi300x v5-series](https://techcommunity.microsoft.com/t5/azure-high-performance-computing/azure-previews-nd-mi300x-v5-optimized-for-demanding-ai-and-hpc/ba-p/4002519)
+- [ND H200 v5-series](https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/gpu-accelerated/nd-h200-v5-series?tabs=sizebasic)
 
 ## Setup ##
 
@@ -86,22 +87,22 @@ Many of the hardware checks are part of the default NHC project. If you would li
 
 The following are Azure custom checks added to the existing NHC suite of tests:
 
-| Check | Component Tested | nd96asr_v4 expected| nd96amsr_a100_v4 expected | nd96isr_h100_v5 expected | hx176rs expected | hb176rs_v4 expected |
+| Check | Component Tested | nd96asr_v4 expected| nd96amsr_a100_v4 expected | nd96isr_h100_v5 expected | nd96isr_h200_v5 expected | hx176rs expected | hb176rs_v4 expected |
 |-----|-----|-----|-----|-----|-----|-----|
-| check_gpu_count | GPU count | 8 | 8 | 8 | NA | NA |
-| check_nvlink_status | NVlink | no inactive links | no inactive links  | no inactive links  | NA | NA |
-| check_gpu_xid | GPU XID errors | not present | not present | not present | NA | NA |
-| check_nvsmi_healthmon | Nvidia-smi GPU health check | pass | pass | pass | NA | NA |
-| check_gpu_bandwidth | GPU DtH/HtD bandwidth | 23 GB/s | 23 GB/s | 52 GB/s | NA | NA |
-| check_gpu_ecc | GPU Mem Errors (ECC) |  20000000 | 20000000 | 20000000 | NA | NA |
-| check_gpu_clock_throttling | GPU Throttle codes assertion | not present | not present | not present | NA | NA |
-| check_nccl_allreduce | GPU NVLink bandwidth | 228 GB/s | 228 GB/s | 460 GB/s | NA | NA |
-| check_ib_bw_gdr | IB device (GDR) bandwidth | 180 GB/s | 180 GB/s | 380 GB/s | NA | NA |
-| check_ib_bw_non_gdr | IB device (non GDR) bandwidth | NA | NA | NA | 390 GB/s | 390 GB/s |
-| check_nccl_allreduce_ib_loopback | GPU/GPU Direct RDMA(GDR) + IB device bandwidth | 18 GB/s | 18 GB/s | NA | NA | NA |
-| check_hw_topology | IB/GPU device topology/PCIE mapping | pass | pass | pass | NA | NA |
-| check_ib_link_flapping | IB link flap occurrence  | not present | not present | not present | not present | not present |
-| check_cpu_stream | CPU compute/memory bandwidth | NA | NA | NA | 665500 MB/s | 665500 MB/s |
+| check_gpu_count | GPU count | 8 | 8 | 8 | 8 | NA | NA |
+| check_nvlink_status | NVlink | no inactive links | no inactive links | no inactive links | no inactive links | NA | NA |
+| check_gpu_xid | GPU XID errors | not present | not present | not present | not present | NA | NA |
+| check_nvsmi_healthmon | Nvidia-smi GPU health check | pass | pass | pass | pass | NA | NA |
+| check_gpu_bandwidth | GPU DtH/HtD bandwidth | 23 GB/s | 23 GB/s | 52 GB/s | 55 GB/s | NA | NA |
+| check_gpu_ecc | GPU Mem Errors (ECC) |  20000000 | 20000000 | 20000000 | 20000000 | NA | NA |
+| check_gpu_clock_throttling | GPU Throttle codes assertion | not present | not present | not present | not present | NA | NA |
+| check_nccl_allreduce | GPU NVLink bandwidth | 228 GB/s | 228 GB/s | 460 GB/s | 480 GB/s | NA | NA |
+| check_ib_bw_gdr | IB device (GDR) bandwidth | 180 GB/s | 180 GB/s | 380 GB/s | 400 GB/s | NA | NA |
+| check_ib_bw_non_gdr | IB device (non GDR) bandwidth | NA | NA | NA | NA | 390 GB/s | 390 GB/s |
+| check_nccl_allreduce_ib_loopback | GPU/GPU Direct RDMA(GDR) + IB device bandwidth | 18 GB/s | 18 GB/s | NA | NA | NA | NA |
+| check_hw_topology | IB/GPU device topology/PCIE mapping | pass | pass | pass | pass | NA | NA |
+| check_ib_link_flapping | IB link flap occurrence  | not present | not present | not present | not present | not present | not present |
+| check_cpu_stream | CPU compute/memory bandwidth | NA | NA | NA | NA | 665500 MB/s | 665500 MB/s |
 
 Notes:
 

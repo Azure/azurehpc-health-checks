@@ -52,14 +52,14 @@ function check_nvlink_enabled(){
 
 function evaluate_nvBW_result(){
     # Evaluate the results of the NVBandwidth test
-    EXP_CUDA_BW=$1
+    EXP_GPU_PCIE_BW=$1
     EXP_P2P_BW=$2
     GPU_COUNT=$3
     
     for test in "${!result_lines_array[@]}"; do
         case $test in
             $H2D|$D2H)
-                EXP_BW=$EXP_CUDA_BW 
+                EXP_BW=$EXP_GPU_PCIE_BW 
                 WARN_BW=$(echo "$EXP_BW * 1.05" | bc -l) # this warning value is 10% less than the expected value, we can consider it the failure threshold.
                 ;;
             $P2P)
@@ -122,7 +122,7 @@ function evaluate_nvBW_result(){
 function check_nvBW_gpu_bw()
 {
     # Check GPU BW using NVBandwidth
-    EXP_CUDA_BW=$1
+    EXP_GPU_PCIE_BW=$1
     EXP_P2P_BW=$2
 
     # Lock graphics clocks to max freq to eliminate any time for the GPUs to boost.
@@ -184,7 +184,7 @@ function check_nvBW_gpu_bw()
         result_lines_array["$current_test"]="$extracted_lines"
     fi
 
-    evaluate_nvBW_result $EXP_CUDA_BW $EXP_P2P_BW
+    evaluate_nvBW_result $EXP_GPU_PCIE_BW $EXP_P2P_BW
     
     pass 0 "$FUNCNAME: GPU bandwidth Tests with NVBandwidth passed"
     return 0
@@ -341,13 +341,13 @@ function check_gpu_bw(){
     trap "background_cleanup" RETURN
     if lspci | grep -iq NVIDIA ; then
 	    # Check GPU BW using NVBandwidth
-        EXP_CUDA_BW=$1
+        EXP_GPU_PCIE_BW=$1
         EXP_P2P_BW=$2
-        if [[ -z "$EXP_CUDA_BW"  ]]; then
+        if [[ -z "$EXP_GPU_PCIE_BW"  ]]; then
             die 1 -e "$FUNCNAME: Expected H2D/D2H bandwidth not set! FaultCode: NHCNA"
             return 0
         fi
-        check_nvBW_gpu_bw $EXP_CUDA_BW $EXP_P2P_BW
+        check_nvBW_gpu_bw $EXP_GPU_PCIE_BW $EXP_P2P_BW
     elif lspci | grep -iq AMD ; then
         # Check GPU BW using ROCm Bandwidth Test
         EXP_AMD_HD=$1
