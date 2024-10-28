@@ -51,7 +51,7 @@ function check_hw_topology() {
         TOPO_FILE=$AZ_NHC_ROOT/topofiles/ndv4-topo.xml
     elif [[ $SKU == *"nc"*"a100_v4"* ]]; then
         TOPO_FILE=$AZ_NHC_ROOT/topofiles/ncv4-topo.xml
-    elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
+    elif [[ $SKU == *"nd96isr"*"_v5"* ]]; then
         TOPO_FILE=$AZ_NHC_ROOT/topofiles/ndv5-topo.xml
     else
         die 1 "$FUNCNAME: SKU $SKU is not supported for this test. FauleCode: NHCNA"
