@@ -1,4 +1,4 @@
-from rocm/dev-ubuntu-22.04:6.1
+from rocm/dev-ubuntu-22.04:6.2
 
 LABEL maintainer="azurehpc-health-checks"
 
