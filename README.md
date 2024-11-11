@@ -88,7 +88,7 @@ Many of the hardware checks are part of the default NHC project. If you would li
 The following are Azure custom checks added to the existing NHC suite of tests:
 
 | Check | Component Tested | nd96asr_v4 expected| nd96amsr_a100_v4 expected | nd96isr_h100_v5 expected | nd96isr_h200_v5 expected | hx176rs expected | hb176rs_v4 expected |
-|-----|-----|-----|-----|-----|-----|-----|
+|-----|-----|-----|-----|-----|-----|-----| ----- |
 | check_gpu_count | GPU count | 8 | 8 | 8 | 8 | NA | NA |
 | check_nvlink_status | NVlink | no inactive links | no inactive links | no inactive links | no inactive links | NA | NA |
 | check_gpu_xid | GPU XID errors | not present | not present | not present | not present | NA | NA |
