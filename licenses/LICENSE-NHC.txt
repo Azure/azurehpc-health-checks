@@ -1,4 +1,4 @@
-"Copyright (c) 2010-2021, Michael Jennings <mej@eterm.org>
+Copyright (c) 2010-2021, Michael Jennings <mej@eterm.org>
 
 LBNL Node Health Check (NHC), Copyright (c) 2015, The Regents of the University
 of California, through Lawrence Berkeley National Laboratory (subject to receipt
@@ -38,4 +38,4 @@ without imposing a separate written license agreement for such Enhancements,
 then you hereby grant the following license:  a non-exclusive, royalty-free
 perpetual license to install, use, modify, prepare derivative works, incorporate
 into other computer software, distribute, and sublicense such enhancements or
-derivative works thereof, in binary and source code form."
+derivative works thereof, in binary and source code form.
