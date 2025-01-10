@@ -29,6 +29,7 @@ RUN apt-get update -y                           \
     numactl                                     \
     git                                         \
     curl                                        \
+    vim                                         \
     sudo                                        \
     systemd                                     \
     wget                                        \
