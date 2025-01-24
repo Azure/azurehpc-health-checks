@@ -106,15 +106,11 @@ RUN  mkdir -p /tmp/perftest && \
     rm -rf /tmp/perftest
 
 # Update cmake
-RUN cd /tmp && \
-    wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz && \
-    tar xzf cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz && \
-    cd cmake-${CMAKE_VERSION}-linux-x86_64 && \
-    cp -r share/cmake-* /usr/local/share/ && \
-    cd bin && \
-    cp -f ccmake cmake cpack ctest /usr/local/bin && \
-    cd /tmp && \
-    rm -rf cmake-${CMAKE_VERSION}-linux-x86_64* && \
+RUN wget -q https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz -P /tmp && \ 
+    tar -xzf /tmp/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz -C /tmp && \ 
+    cp -r /tmp/cmake-${CMAKE_VERSION}-linux-x86_64/share/cmake-* /usr/local/share/ && \ 
+    cp /tmp/cmake-${CMAKE_VERSION}-linux-x86_64/bin/{ccmake,cmake,cpack,ctest} /usr/local/bin && \ 
+    rm -rf /tmp/cmake-${CMAKE_VERSION}-linux-x86_64* 
     hash -r
 
 # Install RCCL
