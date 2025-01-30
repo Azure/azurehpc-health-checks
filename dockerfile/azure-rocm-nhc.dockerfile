@@ -111,7 +111,6 @@ RUN wget -q https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}
     cp -r /tmp/cmake-${CMAKE_VERSION}-linux-x86_64/share/cmake-* /usr/local/share/ && \ 
     cp /tmp/cmake-${CMAKE_VERSION}-linux-x86_64/bin/{ccmake,cmake,cpack,ctest} /usr/local/bin && \ 
     rm -rf /tmp/cmake-${CMAKE_VERSION}-linux-x86_64* 
-    hash -r
 
 # Install RCCL
 RUN mkdir -p /opt/rccl &&\
