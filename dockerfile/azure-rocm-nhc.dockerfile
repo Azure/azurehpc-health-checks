@@ -1,4 +1,4 @@
-from rocm/dev-ubuntu-22.04:6.1
+from rocm/dev-ubuntu-22.04:6.2.4
 
 LABEL maintainer="azurehpc-health-checks"
 
@@ -7,6 +7,7 @@ SHELL ["/bin/bash", "-c"]
 ENV OFED_VERSION=23.07-0.5.1.2
 ENV OPEN_MPI_VERSION=4.1.5
 ENV NHC_VERSION=1.4.3
+ENV CMAKE_VERSION=3.30.6
 
 ENV AZ_NHC_ROOT="/azure-nhc"
 ENV MPI_BIN=/opt/openmpi/bin
@@ -28,6 +29,7 @@ RUN apt-get update -y                           \
     numactl                                     \
     git                                         \
     curl                                        \
+    vim                                         \
     sudo                                        \
     systemd                                     \
     wget                                        \
@@ -102,6 +104,13 @@ RUN  mkdir -p /tmp/perftest && \
     cp ib_write_bw ${AZ_NHC_ROOT}/bin/ib_write_bw_nongdr && \
     cp COPYING ${AZ_NHC_ROOT}/LICENSES/perftest_LICENSE && \
     rm -rf /tmp/perftest
+
+# Update cmake
+RUN wget -q https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz -P /tmp && \ 
+    tar -xzf /tmp/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz -C /tmp && \ 
+    cp -r /tmp/cmake-${CMAKE_VERSION}-linux-x86_64/share/cmake-* /usr/local/share/ && \ 
+    cp /tmp/cmake-${CMAKE_VERSION}-linux-x86_64/bin/{ccmake,cmake,cpack,ctest} /usr/local/bin && \ 
+    rm -rf /tmp/cmake-${CMAKE_VERSION}-linux-x86_64* 
 
 # Install RCCL
 RUN mkdir -p /opt/rccl &&\

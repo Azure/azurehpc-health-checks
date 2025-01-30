@@ -12,7 +12,7 @@ if [[ -z "$development" ]]; then
 fi
 
 # Set this to the right path
-HPCX_MPI_DIR=/opt/hpcx-v2.16-gcc-mlnx_ofed-ubuntu22.04-cuda12-gdrcopy2-nccl2.18-x86_64
+HPCX_MPI_DIR=/opt/hpcx-v2.18-gcc-mlnx_ofed-ubuntu22.04-cuda12-x86_64
 
 if [[ ! -d $HPCX_MPI_DIR ]]; then
     echo "HPCX_MPI_DIR: $HPCX_MPI_DIR not found. Please install HPC-X"
