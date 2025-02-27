@@ -3,7 +3,8 @@
 # It replicates the functionality of the Docker-based version but without containerization.
 
 # Set the root directory to the location of this script.
-AZ_NHC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+#AZ_NHC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+AZ_NHC_ROOT="/azurehpc-health-checks":
 WORKING_DIR="$AZ_NHC_ROOT"  # In host mode, our working directory is the same as the root
 
 # Default values for arguments
@@ -217,4 +218,4 @@ export GPU_VENDOR
 
 # Run the health check entrypoint script directly.
 # (Ensure that aznhc-entrypoint.sh is executable and adapted to use the environment variables above.)
-bash "$AZ_NHC_ROOT/host_entrypoint.sh"
+bash "$AZ_NHC_ROOT/aks/ubuntu2204/host_entrypoint.sh"
