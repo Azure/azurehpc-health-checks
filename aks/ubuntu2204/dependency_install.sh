@@ -30,4 +30,4 @@ gcc $DEST_DIR/kvp_client.c -o $DEST_DIR/kvp_client
 
 # Copy custom Azure NHC files to path that NHC searches
 
-cp customTests/* ../etc/nhc/scripts/
+cp customTests/* /etc/nhc/scripts/
