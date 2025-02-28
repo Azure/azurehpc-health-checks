@@ -10,8 +10,7 @@ fi
 if [[ "$build_type" == "cuda" ]]; then
     DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv"
 elif [[ "$build_type" == "rocm" ]]; then
-    echo Rocm is not supported yet but coming soon
-    exit 1
+    DOCK_IMG_NAME="azurenodehealthchecks.azurecr.io/staging/aznhc/aznhc-rocm"
 else
     echo "Please specify a build type: cuda or rocm"
     exit 1
