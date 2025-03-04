@@ -1,2 +1,2 @@
 GPU 6: NVIDIA A100-SXM4-80GB (UUID: GPU-9667d95e-6d22-0c22-1f57-c481f13e7c44)
-NVML: Unable to retrieve NVLink information as all links are inActive
+NVML: Unable to retrieve NVLink information as all links are inactive
