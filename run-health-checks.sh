@@ -7,7 +7,7 @@ DOCK_IMG_NAME_AMD="azurenodehealthchecks.azurecr.io/staging/aznhc/aznhc-rocm"
 DOCK_CONT_NAME=aznhc
 
 
-function print_help() 
+function print_help()
 {
 cat << EOF
 
@@ -15,7 +15,7 @@ Usage: ./run-health-checks.sh [-h|--help] [-c|--config <path to an NHC .conf fil
 Run health checks on the current VM.
 
 -h, -help,          --help                  Display this help
--c, -config,        --config                Optional path to a custom NHC config file. 
+-c, -config,        --config                Optional path to a custom NHC config file.
                                             If not specified the current VM SKU will be detected and the appropriate conf file will be used.
 
 -o, -output,        --output                Optional path to output the health check logs to. All directories in the path must exist.
@@ -52,7 +52,7 @@ eval set -- "$options"
 while true
 do
 case "$1" in
--h|--help) 
+-h|--help)
     print_help
     exit 0
     ;;
@@ -216,7 +216,7 @@ fi
 echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
 
 if lspci | grep -iq NVIDIA ; then
-    NVIDIA_RT="--runtime=nvidia"
+    NVIDIA_RT="--gpus all"
     DOCK_IMG_NAME=$DOCK_IMG_NAME_NV
 elif lspci | grep -iq AMD ; then
     DOCK_IMG_NAME=$DOCK_IMG_NAME_AMD
