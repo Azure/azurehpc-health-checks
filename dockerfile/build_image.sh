@@ -87,8 +87,8 @@ pushd $parent_dir/../
 
 if [[ "$build_type" == "cuda" ]]; then
     echo "Nvidia runtime selected"
-    # ACR registry
-    IMAGE="azurenodehealthchecks.azurecr.io/public/aznhc/aznhc-nv"
+    # MCR registry
+    IMAGE="mcr.microsoft.com/aznhc/aznhc-nv"
     DOCK_FILE=dockerfile/azure-nvrt-nhc.dockerfile
     mkdir -p $build_exe
     pushd $build_exe
@@ -96,7 +96,7 @@ if [[ "$build_type" == "cuda" ]]; then
     popd
 elif [[ "$build_type" == "rocm" ]]; then
     echo "AMD runtime selected"
-    IMAGE="azurenodehealthchecks.azurecr.io/staging/aznhc/aznhc-rocm"
+    IMAGE="mcr.microsoft.com/aznhc/aznhc-rocm"
     DOCK_FILE=dockerfile/azure-rocm-nhc.dockerfile
 else
     echo "Please specify a build type: cuda or rocm"

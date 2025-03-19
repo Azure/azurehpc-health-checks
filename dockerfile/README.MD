@@ -17,7 +17,7 @@ The container can be used on Nvidia GPU as well as CPU based SKUs. The [run scri
 
 The docker image is available publicly and can be pulled down the following ways:
 
-- Using the [pull script](./pull-image-acr.sh). ```sudo ./pull-image-acr.sh cuda```
+- Using the [pull script](./pull-image-mcr.sh). ```sudo ./pull-image-mcr.sh cuda```
 - Directly calling the the docker pull command: ```sudo docker pull mcr.microsoft.com/aznhc/aznhc-nv:latest```
 
 Notes:
