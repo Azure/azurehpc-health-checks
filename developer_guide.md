@@ -63,7 +63,7 @@ Az NHC is ran inside an Ubuntu 22.04 docker container. See instructions for how 
       - You may want to run the test as a normal bash script to verify it works and check expected values.
 
 3. Test the new conf file
-    - Use [docker pull script](./dockerfile/pull-image-acr.sh) to pull down the latest image: ```sudo ./pull-image-acr.sh```
+    - Use [docker pull script](./dockerfile/pull-image-mcr.sh) to pull down the latest image: ```sudo ./pull-image-mcr.sh```
     - ```sudo ./run-health-checks.sh -c <conf name>.conf```
     - This will launch the docker container and add the conf file to the container.
 

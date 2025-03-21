@@ -2,11 +2,11 @@
 
 ## OverView ##
 
-Azure NHC is run within an Ubuntu 22.04 docker container with Nvidia runtime enabled.
+Azure NHC is run within an Ubuntu 22.04 docker container with either Nvidia or AMD runtime enabled.
 
 There are two ways of running Az NHC, with the provided run script and also as a stand alone container.
 
-The container can be used on Nvidia GPU as well as CPU based SKUs. The [run script](../run-health-checks.sh) automaticly addresses the differences. If launching the container manually refer to the [Alternative Method Instructions](#alternative-method-instructions) section for guidance.
+The container can be used on Nvidia or AMD GPU as well as CPU based SKUs. The [run script](../run-health-checks.sh) automaticly addresses the differences. If launching the container manually refer to the [Alternative Method Instructions](#alternative-method-instructions) section for guidance.
 
 ## Prerequisites ##
 
@@ -17,13 +17,13 @@ The container can be used on Nvidia GPU as well as CPU based SKUs. The [run scri
 
 The docker image is available publicly and can be pulled down the following ways:
 
-- Using the [pull script](./pull-image-acr.sh). ```sudo ./pull-image-acr.sh cuda```
-- Directly calling the the docker pull command: ```sudo docker pull mcr.microsoft.com/aznhc/aznhc-nv:latest```
+- Using the [pull script](./pull-image-mcr.sh). ```sudo ./pull-image-mcr.sh cuda```
+- Directly calling the the docker pull command: ```sudo docker pull mcr.microsoft.com/aznhc/aznhc-nv:latest``` or ```docker pull mcr.microsoft.com/aznhc/aznhc-rocm:latest```
 
 Notes:
 
-- To view the current software versions used on the latest image take a look at the [dockerfile](./azure-nvrt-nhc.dockerfile)
-- Rocm image is not yet available.
+- To view the latest Nvidia/CUDA image current software versions take a look at the [CUDA Dockerfile](./azure-nvrt-nhc.dockerfile)
+- To view the latest AMD/ROCm image current software versions take a look at the [ROCm Dockerfile](./azure-rocm-nhc.dockerfile)
 
 ## Run Modes ##
 

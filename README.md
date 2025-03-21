@@ -37,7 +37,7 @@ AzureHPC Node Health Checks provides an automated suite of test that targets spe
 
 Az NHC (Azure Health Checks) uses a docker container to run the health checks. This makes setup rather easy:
 
-1. Pull the image down using [pull script](./dockerfile/pull-image-acr.sh): ```sudo ./dockerfile/pull-image-acr.sh```
+1. Pull the image down using [pull script](./dockerfile/pull-image-mcr.sh): ```sudo ./dockerfile/pull-image-mcr.sh```
 2. Verify you have the image: ```sudo docker container ls```
 
 ## Configuration ##
