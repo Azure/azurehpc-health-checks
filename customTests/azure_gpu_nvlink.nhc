@@ -5,36 +5,40 @@ source /etc/nhc/scripts/azure_common.nhc
 function check_nvlink_status(){
     # Check if nvlink is enabled
     num_gpus=$(nvidia-smi --list-gpus | wc -l)
-
     nvlink_status=$(nvidia-smi nvlink --status)
+    
     if [ $? -ne 0 ]; then
         die 1 "$FUNCNAME: Failed to get NVLINK status with error code $?. FaultCode: NHC2016"
+        return 1
     fi
+
     if [ -z "$nvlink_status" ]; then
         log "$FUNCNAME: NVLINK is not enabled"
         return 0
     fi
+
     for ((i=0; i<num_gpus; i++)); do
         gpu_id=$i
         # Run nvlink command
         nvlink_output=$(nvidia-smi nvlink -s -i $gpu_id)
         if [ $? -ne 0 ]; then
             die 1 "$FUNCNAME: Failed to get NVLINK status with error code $?. FaultCode: NHC2016"
+            return 1
         fi
+
         # Check for inactive links
-        if [[ $nvlink_output == *"inactive"* ]]; then
+        if [[ $nvlink_output == *"all links are inactive"* ]]; then 
+            die 1 "$FUNCNAME: GPU $gpu_id has all nvlinks inactive"
+            return 1
+        elif [[ $nvlink_output == *"inactive"* ]]; then
             # Extract and display the information about inactive links
             inactive_links=$(echo "$nvlink_output" | grep "Link" | grep "<inactive>" | sed 's/Link \([0-9]*\): <inactive>/Link \1: Inactive/')
             die 1 "$FUNCNAME: GPU $gpu_id has nvlinks inactive: $inactive_links. FaultCode: NHC2016"
             return 1
-        elif [[ $nvlink_output == *"all links are inActive"* ]]; then 
-            die 1 "$FUNCNAME: GPU $gpu_id has all nvlinks inactive"
         else
-            dbg "$FUNCNAME: GPU $gpu_id has all nvlinks active."
+            pass "$FUNCNAME: GPU $gpu_id has all nvlinks active."
         fi
-        pass 0 "$FUNCNAME: NVLink is enabled and GPU $gpu_id has all nvlinks active"
     done
-
     
     return 0
 }
