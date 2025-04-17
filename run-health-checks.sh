@@ -41,6 +41,7 @@ CONF_FILE=""
 OUTPUT_PATH="./health.log"
 TIMEOUT=500
 VERBOSE=false
+test=""
 
 options=$(getopt -l "help,config:,output:,timeout:,all:,verbose" -o "hac:o:e:t:d:v" -a -- "$@")
 if [ $? -ne 0 ]; then
