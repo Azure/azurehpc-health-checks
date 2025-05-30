@@ -36,7 +36,7 @@ function check_nvlink_status(){
             die 1 "$FUNCNAME: GPU $gpu_id has nvlinks inactive: $inactive_links. FaultCode: NHC2016"
             return 1
         else
-            pass "$FUNCNAME: GPU $gpu_id has all nvlinks active."
+            pass 0 "$FUNCNAME: GPU $gpu_id has all nvlinks active."
         fi
     done
     
