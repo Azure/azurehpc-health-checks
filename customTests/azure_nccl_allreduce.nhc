@@ -18,7 +18,9 @@ function collect_nccl_allreduce_data() {
 
    # ensure unloaded before use
    MPI_ARGS="-np $gpu_count --map-by ppr:$gpu_count:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
-   nccl_allreduce_out=$(mpirun $MPI_ARGS $ENVIRON_VARS $ALL_REDUCE_PATH $NCCL_ARGS)
+   # Temporarily use the all_reduce_perf binary from nccl-tests due to https://github.com/Azure/azurehpc-health-checks/issues/142
+   # nccl_allreduce_out=$(mpirun $MPI_ARGS $ENVIRON_VARS $ALL_REDUCE_PATH $NCCL_ARGS)
+   nccl_allreduce_out=$(/opt/nccl-tests/build/all_reduce_perf -b 16G -f 2 -g 8 -e 16G -c 1)
    nccl_allreduce_out_rc=$?
    if [[ $nccl_allreduce_out_rc != 0 ]]; then
       die 1 "$FUNCNAME: nccl_allreduce returned error code $nccl_allreduce_out_rc. FaultCode: NHCNA"
