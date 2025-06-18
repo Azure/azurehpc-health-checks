@@ -10,7 +10,7 @@ ENV AOCC_VERSION=4.0.0_1
 ENV PERF_TEST_VERSION=23.10.0
 ENV NV_BANDWIDTH_VERSION=0.4
 ENV NCCL_VERSION=2.19.3-1
-ENV OPEN_MPI_VERSION=4.1.5
+ENV OPEN_MPI_VERSION=5.0.5
 ENV NCCL_TEST_VERSION=2.13.8
 
 ENV AZ_NHC_ROOT="/azure-nhc"
@@ -35,16 +35,16 @@ RUN apt-get update -y                           \
     wget                                        \
     libgomp1                                    \
     libcap2-bin                                 \
-    cmake                                       \ 
+    cmake                                       \
     libpci-dev                                  \
     hwloc                                       \
-    build-essential                             \        
+    build-essential                             \
     libboost-program-options-dev                \
     libssl-dev                                  \
     devscripts                                  \
     openssh-client                              \
     net-tools                                   \
-    bats                                        \   
+    bats                                        \
     bc
 RUN  apt-get upgrade -y
 
@@ -62,8 +62,8 @@ RUN cd /tmp && \
 
 
 # Install OpenMPI
-RUN cd /tmp && \ 
-    wget -q "https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-${OPEN_MPI_VERSION}.tar.gz" && \
+RUN cd /tmp && \
+    wget -q "https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-${OPEN_MPI_VERSION}.tar.gz" && \
     tar -xvf openmpi-${OPEN_MPI_VERSION}.tar.gz && \
     cd openmpi-${OPEN_MPI_VERSION} && \
     cp LICENSE ${AZ_NHC_ROOT}/LICENSES/OpenMPI_LICENSE.txt && \
@@ -78,8 +78,8 @@ ARG host_nccl_dir=dockerfile/build_exe/nccl-${NCCL_VERSION}
 RUN mkdir -p /opt/nccl
 COPY ${host_nccl_dir} /opt/nccl
 RUN cd /opt/nccl/build/pkg/deb/ && \
-    dpkg -i libnccl2_${NCCL_VERSION}+cuda12.2_amd64.deb && \
-    dpkg -i libnccl-dev_${NCCL_VERSION}+cuda12.2_amd64.deb && \
+    dpkg -i libnccl2_${NCCL_VERSION}+cuda12.8_amd64.deb && \
+    dpkg -i libnccl-dev_${NCCL_VERSION}+cuda12.8_amd64.deb && \
     cp /opt/nccl/LICENSE.txt ${AZ_NHC_ROOT}/LICENSES/nccl_LICENSE.txt && \
     rm -rf /opt/nccl
 
@@ -99,7 +99,7 @@ RUN cd /tmp && \
     make install && \
     mv /tmp/lbnl-nhc-${NHC_VERSION}* ${AZ_NHC_ROOT}
 
-# Create workspace directories 
+# Create workspace directories
 RUN mkdir -p ${AZ_NHC_ROOT}/bin && \
     mkdir -p ${AZ_NHC_ROOT}/conf && \
     mkdir -p ${AZ_NHC_ROOT}/output && \
@@ -123,7 +123,7 @@ RUN cd /tmp && \
     apt install -y ./aocc-compiler-${AOCC_VERSION}_amd64.deb && \
     rm aocc-compiler-${AOCC_VERSION}_amd64.deb
 
-# Install stream 
+# Install stream
 RUN mkdir -p /tmp/stream
 COPY customTests/stream/Makefile /tmp/stream/
 RUN cd /tmp/stream && \
