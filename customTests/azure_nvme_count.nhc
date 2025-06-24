@@ -5,7 +5,7 @@ source /etc/nhc/scripts/azure_common.nhc
 function check_nvme_count() {
    EXPECTED_NUM_NVME="$1"
 
-   nvme_count=$(ls /dev/nvme*n1 2>/dev/null | wc -l)
+   nvme_count=$(find /dev -maxdepth 1 -type b | grep -cE '/dev/nvme[0-9]+n1$')
 
    if [ -z "$EXPECTED_NUM_NVME" ]; then
       die 1 -e "$FUNCNAME: No expected value provided for the number of NVMEs. NVME count found: $nvme_count. FaultCode: NHCNA"
