@@ -8,6 +8,7 @@ ENV OFED_VERSION=23.07-0.5.1.2
 ENV NHC_VERSION=1.4.3
 ENV AOCC_VERSION=4.0.0_1
 ENV PERF_TEST_VERSION=23.10.0
+ENV PERF_TEST_HASH=g0705c22
 ENV NV_BANDWIDTH_VERSION=0.4
 ENV NCCL_VERSION=2.19.3-1
 ENV OPEN_MPI_VERSION=5.0.5
@@ -140,10 +141,23 @@ RUN version=$(echo "$AOCC_VERSION" | sed 's/_1$//') && \
 apt remove aocc-compiler-"${version}" -y
 
 # Install Perf-Test
-ARG host_perftest_dir=dockerfile/build_exe/perftest-${PERF_TEST_VERSION}
-COPY ${host_perftest_dir}/ib_write_bw ${AZ_NHC_ROOT}/bin
-COPY ${host_perftest_dir}_nongdr/ib_write_bw ${AZ_NHC_ROOT}/bin/ib_write_bw_nongdr
-COPY ${host_perftest_dir}/COPYING ${AZ_NHC_ROOT}/LICENSES/perftest_LICENSE
+RUN mkdir -p /tmp/perftest && \
+    wget -q -O - https://github.com/linux-rdma/perftest/releases/download/${PERF_TEST_VERSION}-0.29/perftest-${PERF_TEST_VERSION}-0.29.${PERF_TEST_HASH}.tar.gz | tar -xz --strip=1 -C  /tmp/perftest && \
+    cd /tmp/perftest && \
+    ./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h && \
+    make -j$(nproc) && \
+    cp ib_write_bw ${AZ_NHC_ROOT}/bin/ && \
+    cp COPYING ${AZ_NHC_ROOT}/LICENSES/perftest_LICENSE && \
+    rm -rf /tmp/perftest
+
+# Install Perf-Test (non-GDR version)
+RUN mkdir -p /tmp/perftest_nongdr && \
+    wget -q -O - https://github.com/linux-rdma/perftest/releases/download/${PERF_TEST_VERSION}-0.29/perftest-${PERF_TEST_VERSION}-0.29.${PERF_TEST_HASH}.tar.gz | tar -xz --strip=1 -C  /tmp/perftest_nongdr && \
+    cd /tmp/perftest_nongdr && \
+    ./configure && \
+    make -j$(nproc) && \
+    cp ib_write_bw ${AZ_NHC_ROOT}/bin/ib_write_bw_nongdr && \
+    rm -rf /tmp/perftest_nongdr
 
 # Install NV Bandwidth tool
 ARG host_nvbandwidth_dir=dockerfile/build_exe/nvbandwidth-${NV_BANDWIDTH_VERSION}
