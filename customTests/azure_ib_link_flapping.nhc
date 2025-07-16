@@ -22,13 +22,13 @@ function check_ib_link_flapping() {
    local now=$(date +%s)
    
    # Count lost carrier events per device
-   local device_counts=$(awk -v now="$now" -v start="$start_time" '
+   local device_counts=$(grep -i 'lost carrier' "${LOG_PATH}" | awk -v now="$now" -v start="$start_time" '
    BEGIN {
        split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m);
        for (i=1; i<=12; i++) month[m[i]] = i;
    }
    {
-       if (tolower($0) ~ /ib[0-9a-zA-Z_]+.*lost carrier/) {
+       if (match($0, /ib[0-9a-zA-Z_]+/)) {
            log_month = $1;
            log_day = $2;
            log_time = $3;
