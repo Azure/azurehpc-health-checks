@@ -7,19 +7,10 @@ source "${SCRIPT_DIR}/azure_common.nhc"
 #expect to not have any IB link flaps within a given time interval (in hours)
 IB_FLAPPING_LINK_TEST="IB link flapping detected"
 
-# Threshold for link flaps per device (default: 5)
-IB_LINK_FLAP_THRESHOLD="${IB_LINK_FLAP_THRESHOLD:-5}"
-
 function check_ib_link_flapping() {
-   TIME_INTERVAL_HOURS=$1
-   if [[ -z "$TIME_INTERVAL_HOURS" ]]; then
-      TIME_INTERVAL_HOURS=24
-   fi
-
-   LOG_PATH=$2
-   if [[ -z "$LOG_PATH" ]]; then
-      LOG_PATH="$AZ_NHC_ROOT/syslog"
-   fi
+   local TIME_INTERVAL_HOURS=${1:-24}
+   local LOG_PATH=${2:-"$AZ_NHC_ROOT/syslog"}
+   local IB_LINK_FLAP_THRESHOLD="${3:-5}"
 
    if [[ ! -f $LOG_PATH ]]; then
       log "$FUNCNAME: kernel log $LOG_PATH not found. IB Link flapping test skipped."
@@ -37,7 +28,7 @@ function check_ib_link_flapping() {
        for (i=1; i<=12; i++) month[m[i]] = i;
    }
    {
-       if ($0 ~ /ib.*lost carrier/i) {
+       if ($0 ~ /ib[0-9a-zA-Z_]+.*Lost carrier/) {
            log_month = $1;
            log_day = $2;
            log_time = $3;
@@ -65,7 +56,7 @@ function check_ib_link_flapping() {
            log_ts = (delta1 <= delta2) ? ts1 : ts2
 
            if (log_ts >= start && log_ts <= now) {
-               # Extract device name (e.g., ib0, ib1, ibP4p1s0, etc.)
+               # Extract device name (e.g., ib0, ib1, ibP264s182277, etc.)
                match($0, /ib[0-9a-zA-Z_]+/, dev)
                if (dev[0] != "") {
                    count[dev[0]]++
@@ -79,6 +70,7 @@ function check_ib_link_flapping() {
    }
    ' | sort -nr)
 
+   dbg "Raw awk output: $device_counts"
    # Check if any device exceeds threshold
    has_flapping=0
    flapping_devices=""
