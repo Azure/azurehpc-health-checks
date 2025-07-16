@@ -18,11 +18,11 @@ function check_ib_link_flapping() {
    fi
 
    # Calculate start time in epoch
-   start_time=$(date -d "$TIME_INTERVAL_HOURS hours ago" +%s)
-   now=$(date +%s)
+   local start_time=$(date -d "$TIME_INTERVAL_HOURS hours ago" +%s)
+   local now=$(date +%s)
    
    # Count lost carrier events per device
-   device_counts=$(tail -n 10000 "$LOG_PATH" | awk -v now="$now" -v start="$start_time" '
+   local device_counts=$(tail -n 10000 "$LOG_PATH" | awk -v now="$now" -v start="$start_time" '
    BEGIN {
        split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m);
        for (i=1; i<=12; i++) month[m[i]] = i;
