@@ -65,7 +65,7 @@ function check_ib_link_flapping() {
        for (d in count)
            print count[d], d;
    }
-   ' ${LOG_PATH} | sort -nr)
+   ' | sort -nr)
 
    dbg "Raw awk output: $device_counts"
    # Check if any device exceeds threshold
