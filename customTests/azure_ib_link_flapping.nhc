@@ -22,7 +22,7 @@ function check_ib_link_flapping() {
    local now=$(date +%s)
    
    # Count lost carrier events per device
-   local device_counts=$(awk -v now="$now" -v start="$start_time" -v log_path="$LOG_PATH" '
+   local device_counts=$(awk -v now="$now" -v start="$start_time" '
    BEGIN {
        split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m);
        for (i=1; i<=12; i++) month[m[i]] = i;
@@ -65,7 +65,7 @@ function check_ib_link_flapping() {
        for (d in count)
            print count[d], d;
    }
-   ' | sort -nr)
+   ' ${LOG_PATH} | sort -nr)
 
    dbg "Raw awk output: $device_counts"
    # Check if any device exceeds threshold
