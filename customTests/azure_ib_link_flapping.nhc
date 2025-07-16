@@ -12,7 +12,7 @@ function check_ib_link_flapping() {
    local LOG_PATH=${2:-"$AZ_NHC_ROOT/syslog"}
    local IB_LINK_FLAP_THRESHOLD="${3:-5}"
 
-   if [[ ! -f $LOG_PATH ]]; then
+   if [[ ! -f "$LOG_PATH" ]]; then
       log "$FUNCNAME: kernel log $LOG_PATH not found. IB Link flapping test skipped."
       return 0
    fi
