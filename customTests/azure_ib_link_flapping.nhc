@@ -28,7 +28,7 @@ function check_ib_link_flapping() {
        for (i=1; i<=12; i++) month[m[i]] = i;
    }
    {
-       if ($0 ~ /ib[0-9a-zA-Z_]+.*Lost carrier/) {
+       if (tolower($0) ~ /ib[0-9a-zA-Z_]+.*lost carrier/) {
            log_month = $1;
            log_day = $2;
            log_time = $3;
