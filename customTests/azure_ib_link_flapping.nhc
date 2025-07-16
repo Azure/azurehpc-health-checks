@@ -9,20 +9,40 @@ IB_FLAPPING_LINK_TEST="IB link flapping detected"
 
 function check_ib_link_flapping() {
    local TIME_INTERVAL_HOURS=${1:-24}
-   local LOG_PATH=${2:-"$AZ_NHC_ROOT/syslog"}
-   local IB_LINK_FLAP_THRESHOLD="${3:-5}"
+   local IB_LINK_FLAP_THRESHOLD="${2:-5}"
+   
+   # Remaining arguments are log files
+   shift 2
+   local log_files=("$@")
+   
+   # If no log files specified, use default
+   if [[ ${#log_files[@]} -eq 0 ]]; then
+      log_files=("$AZ_NHC_ROOT/syslog")
+   fi
+   
+   # Check each log file exists and warn if not
+   local valid_log_files=()
+   for log_file in "${log_files[@]}"; do
+      if [[ -f "$log_file" ]]; then
+         valid_log_files+=("$log_file")
+      else
+         log "$FUNCNAME: Warning - log file $log_file not found, skipping"
+      fi
+   done
 
-   if [[ ! -f "$LOG_PATH" ]]; then
-      log "$FUNCNAME: kernel log $LOG_PATH not found. IB Link flapping test skipped."
+   if [[ ${#valid_log_files[@]} -eq 0 ]]; then
+      log "$FUNCNAME: No valid log files found. IB Link flapping test skipped."
       return 0
    fi
+
+   dbg "$FUNCNAME: Checking log files: ${valid_log_files[*]}"
 
    # Calculate start time in epoch
    local start_time=$(date -d "$TIME_INTERVAL_HOURS hours ago" +%s)
    local now=$(date +%s)
    
-   # Count lost carrier events per device
-   local device_counts=$(grep -i 'lost carrier' "${LOG_PATH}" | awk -v now="$now" -v start="$start_time" '
+   # AWK script for processing log entries
+   local awk_script='
    BEGIN {
        split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m);
        for (i=1; i<=12; i++) month[m[i]] = i;
@@ -39,7 +59,6 @@ function check_ib_link_flapping() {
            current_year = strftime("%Y", now)
            previous_year = current_year - 1
 
-           # Timestamp for current year
            # Construct timestamp for current year
            ts1 = mktime(current_year " " month[log_month] " " log_day " " substr(log_time, 1, 2) " " substr(log_time, 4, 2) " " substr(log_time, 7, 2))
 
@@ -64,8 +83,41 @@ function check_ib_link_flapping() {
    END {
        for (d in count)
            print count[d], d;
-   }
-   ' | sort -nr)
+   }'
+   
+   # Count lost carrier events per device across all log files
+   local device_counts=""
+   for log_file in "${valid_log_files[@]}"; do
+      local file_counts=""
+      if [[ "$log_file" == *.gz ]]; then
+         # Handle compressed files with zcat
+         file_counts=$(zcat "$log_file" 2>/dev/null | grep -i 'lost carrier' | awk -v now="$now" -v start="$start_time" "$awk_script")
+      else
+         # Handle regular files
+         file_counts=$(grep -i 'lost carrier' "$log_file" | awk -v now="$now" -v start="$start_time" "$awk_script")
+      fi
+      
+      # Combine counts from this file with overall counts
+      if [[ -n "$file_counts" ]]; then
+         if [[ -z "$device_counts" ]]; then
+            device_counts="$file_counts"
+         else
+            # Merge counts from multiple files
+            device_counts=$(echo -e "$device_counts\n$file_counts" | awk '
+            {
+               device_count[$2] += $1
+            }
+            END {
+               for (d in device_count)
+                  print device_count[d], d;
+            }
+            ')
+         fi
+      fi
+   done
+
+   # Sort the final results
+   device_counts=$(echo "$device_counts" | sort -nr)
 
    dbg "Raw awk output: $device_counts"
    # Check if any device exceeds threshold
