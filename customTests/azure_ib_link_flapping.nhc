@@ -40,14 +40,11 @@ function check_ib_link_flapping() {
            previous_year = current_year - 1
 
            # Timestamp for current year
-           cmd1 = "date -d \"" log_month " " log_day " " current_year " " log_time "\" +%s 2>/dev/null"
-           cmd1 | getline ts1
-           close(cmd1)
+           # Construct timestamp for current year
+           ts1 = mktime(current_year " " month[log_month] " " log_day " " substr(log_time, 1, 2) " " substr(log_time, 4, 2) " " substr(log_time, 7, 2))
 
-           # Timestamp for previous year
-           cmd2 = "date -d \"" log_month " " log_day " " previous_year " " log_time "\" +%s 2>/dev/null"
-           cmd2 | getline ts2
-           close(cmd2)
+           # Construct timestamp for previous year
+           ts2 = mktime(previous_year " " month[log_month] " " log_day " " substr(log_time, 1, 2) " " substr(log_time, 4, 2) " " substr(log_time, 7, 2))
 
            # Compute which is closer to now
            delta1 = (ts1 > now) ? ts1 - now : now - ts1
