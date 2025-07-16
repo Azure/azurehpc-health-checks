@@ -6,7 +6,9 @@
 # - device to host bandwidth 
 # - device to device bandwidth
 
-source /etc/nhc/scripts/azure_common.nhc
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/azure_common.nhc"
 
 NVBW=$AZ_NHC_ROOT/bin/nvbandwidth
 H2D="host_to_device_memcpy_ce"
