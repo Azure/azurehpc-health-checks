@@ -73,9 +73,11 @@ function check_ib_link_flapping() {
 
            if (log_ts >= start && log_ts <= now) {
                # Extract device name (e.g., ib0, ib1, ibP264s182277, etc.)
-               match($0, /ib[0-9a-zA-Z_]+/, dev)
-               if (dev[0] != "") {
-                   count[dev[0]]++
+               if (match($0, /ib[0-9a-zA-Z_]+/)) {
+                   dev = substr($0, RSTART, RLENGTH)
+                   if (dev != "") {
+                       count[dev]++
+                   }
                }
            }
        }
