@@ -2,7 +2,9 @@
 
 # reference this link for info on XID error codes: https://docs.nvidia.com/deploy/xid-errors/index.html
 
-source /etc/nhc/scripts/azure_common.nhc
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/azure_common.nhc"
 
 # Check for the following GPU Xid errors in dmesg
 XID_EC="48 56 57 58 62 63 64 65 68 69 73 74 79 80 81 92 119 120"
