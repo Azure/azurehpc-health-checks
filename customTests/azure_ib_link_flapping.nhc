@@ -1,15 +1,13 @@
 #!/bin/bash
 
 source /etc/nhc/scripts/azure_common.nhc
-  
+
 #expect to not have any IB link flaps within a given time interval (in hours)
 IB_FLAPPING_LINK_TEST="IB link flapping detected"
 
-
-
-function check_log_entries(){
+function check_log_entries() {
    logfile=${AZ_NHC_ROOT}/output/aznhc.log
-   last_entry=$( grep -F "Linkflap event:" $logfile | tail -n 1 )
+   last_entry=$(grep -F "Linkflap event:" $logfile | tail -n 1)
    if [ "$last_entry" != "" ]; then
       echo $last_entry | awk -F 'Linkflap event:' '{print $2}'
 
@@ -19,15 +17,15 @@ function check_log_entries(){
    return 0
 }
 
-function check_ib_link_flapping(){
+function check_ib_link_flapping() {
    logfile=${AZ_NHC_ROOT}/output/aznhc.log
    TIME_INTERVAL_HOURS=$1
-   if [[ -z  "$TIME_INTERVAL_HOURS" ]];then
+   if [[ -z "$TIME_INTERVAL_HOURS" ]]; then
       TIME_INTERVAL_HOURS=6
    fi
 
    LOG_PATH=$2
-   if [[ -z  "$LOG_PATH" ]];then
+   if [[ -z "$LOG_PATH" ]]; then
       LOG_PATH="$AZ_NHC_ROOT/syslog"
    fi
 
@@ -40,7 +38,7 @@ function check_ib_link_flapping(){
 
    if [ "$lost_carrier_line" != "" ]; then
       dbg "IB link flapping entry in syslog, $lost_carrier_line"
-      lost_carrier_array=( $lost_carrier_line )
+      lost_carrier_array=($lost_carrier_line)
       last_date_str="${lost_carrier_array[0]} ${lost_carrier_array[1]} ${lost_carrier_array[2]}"
       last_date_sec=$(date --date "$last_date_str" +%s)
       dbg "last_date_sec = $last_date_sec"
@@ -48,8 +46,8 @@ function check_ib_link_flapping(){
       if [ -n "$last_entry" ]; then
          if [ "$last_date_str" != "$last_entry" ]; then
             previous_stored_date_sec=$(date --date "$last_entry" +%s)
-            ((diff_secs=$last_date_sec - $previous_stored_date_sec))
-            ((diff_hours=diff_sec/(60*60)))
+            ((diff_secs = $last_date_sec - $previous_stored_date_sec))
+            ((diff_hours = diff_secs / (60 * 60)))
             if [ $diff_hours -lt $TIME_INTERVAL_HOURS ]; then
                log "Linkflap event:$last_date_str"
                log "$IB_FLAPPING_LINK_TEST, multiple IB link flapping events within $TIME_INTERVAL_HOURS hours($last_entry, $last_date_str)"

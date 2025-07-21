@@ -44,24 +44,7 @@ function build_cuda_exes(){
         cmake -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc  -DCMAKE_CUDA_ARCHITECTURES=${CUDA_ARCHITECTURES} .
         make
     popd
-
-    # Install Perf-Test
-    mkdir -p ${perftest_dir}
-    archive_url=https://github.com/linux-rdma/perftest/releases/download/${PERF_TEST_VERSION}/perftest-${PERF_TEST_VERSION}.${PERF_TEST_HASH}.tar.gz 
-    wget -q -O - $archive_url | tar -xz --strip=1 -C  ${perftest_dir} 
-    pushd ${perftest_dir} 
-        ./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h
-        make
-    popd
-
-    mkdir -p ${perftest_dir}_nongdr
-    archive_url=https://github.com/linux-rdma/perftest/releases/download/${PERF_TEST_VERSION}/perftest-${PERF_TEST_VERSION}.${PERF_TEST_HASH}.tar.gz 
-    wget -q -O - $archive_url | tar -xz --strip=1 -C  ${perftest_dir}_nongdr
-    pushd ${perftest_dir}_nongdr
-        ./configure
-        make
-    popd
-
+    
     # Install NCCL
     NCCL_DOWNLOAD_URL=https://github.com/NVIDIA/nccl/archive/refs/tags/v${NCCL_VERSION}.tar.gz 
     mkdir -p nccl-${NCCL_VERSION}
