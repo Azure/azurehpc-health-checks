@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+FROM nvcr.io/nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 
 LABEL maintainer="azurehpc-health-checks"
 
@@ -8,9 +8,10 @@ ENV OFED_VERSION=23.07-0.5.1.2
 ENV NHC_VERSION=1.4.3
 ENV AOCC_VERSION=4.0.0_1
 ENV PERF_TEST_VERSION=23.10.0
+ENV PERF_TEST_HASH=g0705c22
 ENV NV_BANDWIDTH_VERSION=0.4
 ENV NCCL_VERSION=2.19.3-1
-ENV OPEN_MPI_VERSION=4.1.5
+ENV OPEN_MPI_VERSION=5.0.5
 ENV NCCL_TEST_VERSION=2.13.8
 
 ENV AZ_NHC_ROOT="/azure-nhc"
@@ -62,8 +63,8 @@ RUN cd /tmp && \
 
 
 # Install OpenMPI
-RUN cd /tmp && \ 
-    wget -q "https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-${OPEN_MPI_VERSION}.tar.gz" && \
+RUN cd /tmp && \
+    wget -q "https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-${OPEN_MPI_VERSION}.tar.gz" && \
     tar -xvf openmpi-${OPEN_MPI_VERSION}.tar.gz && \
     cd openmpi-${OPEN_MPI_VERSION} && \
     cp LICENSE ${AZ_NHC_ROOT}/LICENSES/OpenMPI_LICENSE.txt && \
@@ -78,8 +79,8 @@ ARG host_nccl_dir=dockerfile/build_exe/nccl-${NCCL_VERSION}
 RUN mkdir -p /opt/nccl
 COPY ${host_nccl_dir} /opt/nccl
 RUN cd /opt/nccl/build/pkg/deb/ && \
-    dpkg -i libnccl2_${NCCL_VERSION}+cuda12.2_amd64.deb && \
-    dpkg -i libnccl-dev_${NCCL_VERSION}+cuda12.2_amd64.deb && \
+    dpkg -i libnccl2_${NCCL_VERSION}+cuda12.8_amd64.deb && \
+    dpkg -i libnccl-dev_${NCCL_VERSION}+cuda12.8_amd64.deb && \
     cp /opt/nccl/LICENSE.txt ${AZ_NHC_ROOT}/LICENSES/nccl_LICENSE.txt && \
     rm -rf /opt/nccl
 
@@ -140,10 +141,23 @@ RUN version=$(echo "$AOCC_VERSION" | sed 's/_1$//') && \
 apt remove aocc-compiler-"${version}" -y
 
 # Install Perf-Test
-ARG host_perftest_dir=dockerfile/build_exe/perftest-${PERF_TEST_VERSION}
-COPY ${host_perftest_dir}/ib_write_bw ${AZ_NHC_ROOT}/bin
-COPY ${host_perftest_dir}_nongdr/ib_write_bw ${AZ_NHC_ROOT}/bin/ib_write_bw_nongdr
-COPY ${host_perftest_dir}/COPYING ${AZ_NHC_ROOT}/LICENSES/perftest_LICENSE
+RUN mkdir -p /tmp/perftest && \
+    wget -q -O - https://github.com/linux-rdma/perftest/releases/download/${PERF_TEST_VERSION}-0.29/perftest-${PERF_TEST_VERSION}-0.29.${PERF_TEST_HASH}.tar.gz | tar -xz --strip=1 -C  /tmp/perftest && \
+    cd /tmp/perftest && \
+    ./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h && \
+    make -j$(nproc) && \
+    cp ib_write_bw ${AZ_NHC_ROOT}/bin/ && \
+    cp COPYING ${AZ_NHC_ROOT}/LICENSES/perftest_LICENSE && \
+    rm -rf /tmp/perftest
+
+# Install Perf-Test (non-GDR version)
+RUN mkdir -p /tmp/perftest_nongdr && \
+    wget -q -O - https://github.com/linux-rdma/perftest/releases/download/${PERF_TEST_VERSION}-0.29/perftest-${PERF_TEST_VERSION}-0.29.${PERF_TEST_HASH}.tar.gz | tar -xz --strip=1 -C  /tmp/perftest_nongdr && \
+    cd /tmp/perftest_nongdr && \
+    ./configure && \
+    make -j$(nproc) && \
+    cp ib_write_bw ${AZ_NHC_ROOT}/bin/ib_write_bw_nongdr && \
+    rm -rf /tmp/perftest_nongdr
 
 # Install NV Bandwidth tool
 ARG host_nvbandwidth_dir=dockerfile/build_exe/nvbandwidth-${NV_BANDWIDTH_VERSION}
