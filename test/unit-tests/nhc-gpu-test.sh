@@ -70,7 +70,7 @@ done
 @test "Pass case: check_nccl_allreduce" {
     set +e
     topo_file=$(get_topofile)
-    result=$(check_nccl_allreduce 1.0 1 $topo_file 8G)
+    result=$(check_nccl_allreduce 1.0 1 8G $topo_file)
     status=$?
     set -e
     [[ "$result" != *"ERROR"* ]] && [[ $status -eq 0 ]]
@@ -79,7 +79,7 @@ done
 @test "Fail case: check_nccl_allreduce" {
     set +e
     topo_file=$(get_topofile)
-    result=$(check_nccl_allreduce 600.0 1 $topo_file 8G)
+    result=$(check_nccl_allreduce 600.0 1 8G $topo_file)
     set -e
     [[ "$result" == *"ERROR"* ]]
 }
