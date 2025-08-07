@@ -57,6 +57,9 @@ else
     unit_test_status=$?
 fi
 
+# Other hardware unit tests
+sudo docker exec -it aznhc bash -c "bats --pretty /azure-nhc/test/unit-tests/nhc-hardware-test.sh"
+
 sudo docker container stop aznhc
 
 exit $((unit_test_status || integration_test_status))
