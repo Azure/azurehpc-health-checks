@@ -1,12 +1,20 @@
-# Unit Test Scripts #
+# Tests Scripts #
 
-The [run_tests script](./unit-tests/run_tests.sh) can be used to run unit tests. The unit test use [Bash Automated Testing System](https://github.com/bats-core/bats-core) or bats for short.
+| Test Suite      | Script Command      |
+| ------------- | ------------- |
+| Integration Tests | [./unit-tests/run_tests.sh](./unit-tests/run_tests.sh) |
+| Unit Tests | [./unit-tests/run_tests_agnostic.sh](./unit-tests/run_tests_agnostic.sh) |
 
-The run script will attempt to install bats if it is not found.
+The unit test use [Bash Automated Testing System](https://github.com/bats-core/bats-core) or bats for short.
+
+The [run_tests script](./unit-tests/run_tests.sh) can be used to run integration tests. These are expected to run on HPC hardware. The run_tests script will attempt to install bats if it is not found.
+
+The [run_tests_agnostic script](./unit-tests/run_tests_agnostic.sh) doesn't require HPC hardware.
 
 ## Usage ##
 
-- ```./unit-tests/run_tests.sh```
+- ```./unit-tests/run_tests.sh $NHC_PATH_OPTIONAL```
+- ```./unit-tests/run_tests_agnostic.sh -d $NHC_PATH_OPTIONAL``` 
 
 ## Expected output ##
 
