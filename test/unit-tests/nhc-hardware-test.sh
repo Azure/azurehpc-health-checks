@@ -1,13 +1,28 @@
 #!/usr/bin/env bats
 
-source $AZ_NHC_ROOT/customTests/azure_common.nhc
-source $AZ_NHC_ROOT/test/unit-tests/nhc-test-common.sh
+# Hardware tests for Azure NHC that are not GPU or CPU specific
 
+source $NHC_DIR/customTests/azure_common.nhc
+source $NHC_DIR/test/unit-tests/nhc-test-common.sh
+
+# Enumerate over currently tested hardware checks
 hardware_test=( "azure_nvme_count.nhc" )
 
+# Load the hardware checks
 for check in "${hardware_test[@]}" ; do
-    source $AZ_NHC_ROOT/customTests/$check
+    source $NHC_DIR/customTests/$check
 done
+
+## NVME Count Unit Tests
+
+# Given a directory and a count, create mock NVMe devices as empty files
+# Ex - 
+# Input - /tmp/tmp.mNtJgqCZC5 4 
+# Output - 
+# /tmp/tmp.mNtJgqCZC5/dev/nvme3n1
+# /tmp/tmp.mNtJgqCZC5/dev/nvme1n1
+# /tmp/tmp.mNtJgqCZC5/dev/nvme0n1
+# /tmp/tmp.mNtJgqCZC5/dev/nvme2n1
 
 create_mock_nvme_devices() {
     DIR="$1"
