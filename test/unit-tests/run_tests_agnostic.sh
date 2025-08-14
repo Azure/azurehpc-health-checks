@@ -1,4 +1,4 @@
-# !/bin/sh
+#!/bin/sh
 
 # SKU agnostic Unit Tests
 # This script is designed to run unit tests that are not specific to any SKU.
@@ -57,7 +57,7 @@ fi
 
 # Get Common Functions for Testing
 export NHC_DIR
-source $NHC_DIR/test/unit-tests/nhc-test-common.sh
+source "$NHC_DIR/test/unit-tests/nhc-test-common.sh"
 
 # Run Unit Tests
-bats --pretty $NHC_DIR/test/unit-tests/nhc-hardware-test.sh
+bats --pretty "$NHC_DIR/test/unit-tests/nhc-hardware-test.sh"
