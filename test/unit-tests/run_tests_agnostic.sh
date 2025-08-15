@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # SKU agnostic Unit Tests
 # This script is designed to run unit tests that are not specific to any SKU.
