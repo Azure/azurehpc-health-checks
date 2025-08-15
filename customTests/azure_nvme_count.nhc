@@ -1,0 +1,31 @@
+#!/bin/bash
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/azure_common.nhc"
+
+function get_device_count() {
+      DIR="$1"
+
+      nvme_count=$(find "$DIR" -maxdepth 1 | grep -cE '/dev/nvme[0-9]+n1$')
+
+      echo $nvme_count
+}
+
+function check_nvme_count() {
+   EXPECTED_NUM_NVME="$1"
+
+   nvme_count=$(get_device_count /dev)
+
+   if [ -z "$EXPECTED_NUM_NVME" ]; then
+      die 1 -e "$FUNCNAME: No expected value provided for the number of NVMEs. NVME count found: $nvme_count. FaultCode: NHCNA"
+      return 1
+   fi
+
+   if [ "$nvme_count" -ne "$EXPECTED_NUM_NVME" ]; then
+     die 1 -e "$FUNCNAME: Expected to see $EXPECTED_NUM_NVME but found $nvme_count. FaultCode: NHC2023"
+     return 1
+   fi
+
+   pass 0 "$FUNCNAME: Expected $EXPECTED_NUM_NVME and found $nvme_count"
+   return 0
+}
