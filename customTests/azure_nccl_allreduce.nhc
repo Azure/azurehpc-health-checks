@@ -1,6 +1,8 @@
 #!/bin/bash
 
-source /etc/nhc/scripts/azure_common.nhc
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/azure_common.nhc"
 
 # Check for NVlink issues by running NCCL allreduce.
 function collect_nccl_allreduce_data() {
