@@ -68,12 +68,10 @@ function get_linkflap_count(){
    fi
 }
 
-
+# Possible Inputs: Nothing or <TIME_INTERVAL_HOURS> <IB_LINK_FLAP_THRESHOLD> or <TIME_INTERVAL_HOURS> <IB_LINK_FLAP_THRESHOLD> <LOG_FILES>
 function check_ib_link_flapping() {
    local TIME_INTERVAL_HOURS=${1:-24}
    local IB_LINK_FLAP_THRESHOLD="${2:-5}"
-   dbg "HELP"
-         # die "check_ib_link_flapping"
 
    # Remaining arguments are log files
    shift 2
@@ -104,7 +102,6 @@ function check_ib_link_flapping() {
    # Calculate start time in epoch
    local start_time=$(date -d "$TIME_INTERVAL_HOURS hours ago" +%s)
    local now=$(date +%s)
-      pass 0 "$FUNCNAME: No excessive IB link flapping found"
 
    # Count lost carrier events per device across all log files
    local device_counts=""
