@@ -69,7 +69,7 @@ done
     echo "Awk file inputs " $awk_file_counts
 
     # Check that no link flaps were detected
-    [[ "$awk_file_counts" == *""* ]]
+    [[ -z "$awk_file_counts" ]]
 }
 
 @test "Check IB Device Count - 0 Flaps Standard Lookback" {
@@ -88,6 +88,6 @@ done
     echo "Awk file inputs " $awk_file_counts
 
     # Check that no link flaps were detected
-    [[ "$awk_file_counts" == *""* ]]
+    [[ -z "$awk_file_counts" ]]
 }
 
