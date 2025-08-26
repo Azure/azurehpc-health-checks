@@ -1,0 +1,14 @@
+Aug 17 00:00:24 jplc7eb7-vm-0 systemd[1]: logrotate.service: Deactivated successfully.
+Aug 17 00:00:24 jplc7eb7-vm-0 systemd[1]: Finished Rotate log files.
+Aug 17 06:18:01 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: lost carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: lost carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: lost carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: lost carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: lost carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: lost carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: Gained carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: Gained carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: Gained carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: Gained carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: Gained carrier
+Aug 17 06:18:06 jplc7eb7-vm-0 systemd-networkd[5398]: ib6: Gained carrier
