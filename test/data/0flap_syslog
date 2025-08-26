@@ -1,0 +1,2 @@
+Aug 17 00:00:24 vmname systemd[1]: logrotate.service: Deactivated successfully.
+Aug 17 00:00:24 vmname systemd[1]: Finished Rotate log files.
