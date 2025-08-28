@@ -1,71 +1,164 @@
 #!/bin/bash
 
-source /etc/nhc/scripts/azure_common.nhc
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/azure_common.nhc"
 
 #expect to not have any IB link flaps within a given time interval (in hours)
 IB_FLAPPING_LINK_TEST="IB link flapping detected"
 
-function check_log_entries() {
-   logfile=${AZ_NHC_ROOT}/output/aznhc.log
-   last_entry=$(grep -F "Linkflap event:" $logfile | tail -n 1)
-   if [ "$last_entry" != "" ]; then
-      echo $last_entry | awk -F 'Linkflap event:' '{print $2}'
+function get_linkflap_count(){
+   local log_file="$1"
+   local start_time="$2"
+   local now="$3"
 
+   # AWK script for processing log entries
+   local awk_script='
+   BEGIN {
+       split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m);
+       for (i=1; i<=12; i++) month[m[i]] = i;
+   }
+   {
+       if (match($0, /ib[0-9a-zA-Z_]+/)) {
+           log_month = $1;
+           log_day = $2;
+           log_time = $3;
+
+           if (length(log_day) == 1) log_day = "0" log_day;
+
+           # Try both current and previous year
+           current_year = strftime("%Y", now)
+           previous_year = current_year - 1
+
+           # Construct timestamp for current year
+           ts1 = mktime(current_year " " month[log_month] " " log_day " " substr(log_time, 1, 2) " " substr(log_time, 4, 2) " " substr(log_time, 7, 2))
+
+           # Construct timestamp for previous year
+           ts2 = mktime(previous_year " " month[log_month] " " log_day " " substr(log_time, 1, 2) " " substr(log_time, 4, 2) " " substr(log_time, 7, 2))
+
+           # Compute which is closer to now
+           delta1 = (ts1 > now) ? ts1 - now : now - ts1
+           delta2 = (ts2 > now) ? ts2 - now : now - ts2
+
+           log_ts = (delta1 <= delta2) ? ts1 : ts2
+
+           if (log_ts >= start && log_ts <= now) {
+               # Extract device name (e.g., ib0, ib1, ibP264s182277, etc.)
+               if (match($0, /ib[0-9a-zA-Z_]+/)) {
+                   dev = substr($0, RSTART, RLENGTH)
+                   if (dev != "") {
+                       count[dev]++
+                   }
+               }
+           }
+       }
+   }
+   END {
+       for (d in count)
+           print count[d], d;
+   }'
+
+   if [[ "$log_file" == *.gz ]]; then
+      # Handle compressed files with zcat
+      awk_file_counts=$(zcat "$log_file" 2>/dev/null | grep -i 'lost carrier' | awk -v now="$now" -v start="$start_time" "$awk_script")
    else
-      echo ""
+      # Handle regular files
+      awk_file_counts=$(grep -i 'lost carrier' "$log_file" | awk -v now="$now" -v start="$start_time" "$awk_script")
+      # dbg "File counts for $log_file: $awk_file_counts"
    fi
-   return 0
 }
 
+# Possible Inputs: Nothing or <TIME_INTERVAL_HOURS> <IB_LINK_FLAP_THRESHOLD> or <TIME_INTERVAL_HOURS> <IB_LINK_FLAP_THRESHOLD> <LOG_FILES>
 function check_ib_link_flapping() {
-   logfile=${AZ_NHC_ROOT}/output/aznhc.log
-   TIME_INTERVAL_HOURS=$1
-   if [[ -z "$TIME_INTERVAL_HOURS" ]]; then
-      TIME_INTERVAL_HOURS=6
+   local TIME_INTERVAL_HOURS=${1:-24}
+   local IB_LINK_FLAP_THRESHOLD="${2:-5}"
+
+   # Remaining arguments are log files
+   shift 2
+   local log_files=("$@")
+   
+   # If no log files specified, use default
+   if [[ ${#log_files[@]} -eq 0 ]]; then
+      log_files=("$AZ_NHC_ROOT/syslog")
    fi
-
-   LOG_PATH=$2
-   if [[ -z "$LOG_PATH" ]]; then
-      LOG_PATH="$AZ_NHC_ROOT/syslog"
-   fi
-
-   if [[ ! -f $LOG_PATH ]]; then
-      log "$FUNCNAME: kernel log $LOG_PATH not found. IB Link flapping test skipped."
-      return 0
-   fi
-
-   lost_carrier_line=$(grep -i "ib.*lost carrier" $LOG_PATH | tail -n 1)
-
-   if [ "$lost_carrier_line" != "" ]; then
-      dbg "IB link flapping entry in syslog, $lost_carrier_line"
-      lost_carrier_array=($lost_carrier_line)
-      last_date_str="${lost_carrier_array[0]} ${lost_carrier_array[1]} ${lost_carrier_array[2]}"
-      last_date_sec=$(date --date "$last_date_str" +%s)
-      dbg "last_date_sec = $last_date_sec"
-      last_entry=$(check_log_entries)
-      if [ -n "$last_entry" ]; then
-         if [ "$last_date_str" != "$last_entry" ]; then
-            previous_stored_date_sec=$(date --date "$last_entry" +%s)
-            ((diff_secs = $last_date_sec - $previous_stored_date_sec))
-            ((diff_hours = diff_secs / (60 * 60)))
-            if [ $diff_hours -lt $TIME_INTERVAL_HOURS ]; then
-               log "Linkflap event:$last_date_str"
-               log "$IB_FLAPPING_LINK_TEST, multiple IB link flapping events within $TIME_INTERVAL_HOURS hours($last_entry, $last_date_str)"
-               die 1 "$FUNCNAME: $IB_FLAPPING_LINK_TEST, multiple IB link flapping events within $TIME_INTERVAL_HOURS hours. FaultCode: NHC2005"
-            else
-               log "Time interval > $TIME_INTERVAL_HOURS, No new IB link flapping event detected"
-            fi
-         else
-            log "No new IB link flapping events detected"
-            pass 0 "$FUNCNAME: No new IB link flaps found"
-         fi
+   
+   # Check each log file exists and warn if not
+   local valid_log_files=()
+   for log_file in "${log_files[@]}"; do
+      if [[ -f "$log_file" ]]; then
+         valid_log_files+=("$log_file")
       else
-         log "No Link flap entry, so will create it with $last_date_str"
-         log "Linkflap event:$last_date_str"
+         log "$FUNCNAME: Warning - log file $log_file not found, skipping"
       fi
-   else
-      log "No IB link flapping entry in syslog"
-      pass 0 "$FUNCNAME: No IB link flapping found"
+   done
+
+   if [[ ${#valid_log_files[@]} -eq 0 ]]; then
+      log "$FUNCNAME: No valid log files found. IB Link flapping test skipped."
       return 0
    fi
+
+   dbg "$FUNCNAME: Checking log files: ${valid_log_files[*]}"
+
+   # Calculate start time in epoch
+   local start_time=$(date -d "$TIME_INTERVAL_HOURS hours ago" +%s)
+   local now=$(date +%s)
+
+   # Count lost carrier events per device across all log files
+   local device_counts=""
+   for log_file in "${valid_log_files[@]}"; do
+      local file_counts=""
+
+      # Get Device Counts
+      get_linkflap_count "$log_file" "$start_time" "$now"
+      file_counts="$awk_file_counts"
+
+      # Combine counts from this file with overall counts
+      if [[ -n "$file_counts" ]]; then
+         if [[ -z "$device_counts" ]]; then
+            device_counts="$file_counts"
+         else
+            # Merge counts from multiple files
+            device_counts=$(echo -e "$device_counts\n$file_counts" | awk '
+            {
+               device_count[$2] += $1
+            }
+            END {
+               for (d in device_count)
+                  print device_count[d], d;
+            }
+            ')
+         fi
+      fi
+   done
+
+   # Sort the final results
+   device_counts=$(echo "$device_counts" | sort -nr)
+
+   dbg "Raw awk output: $device_counts"
+   # Check if any device exceeds threshold
+   has_flapping=0
+   flapping_devices=""
+   
+   while read -r count device; do
+      if [[ -n "$count" ]] && [[ -n "$device" ]]; then
+         dbg "Device $device had $count link flap events in the last $TIME_INTERVAL_HOURS hours"
+         if [[ $count -ge $IB_LINK_FLAP_THRESHOLD ]]; then
+            has_flapping=1
+            if [[ -n "$flapping_devices" ]]; then
+               flapping_devices="$flapping_devices, "
+            fi
+            flapping_devices="${flapping_devices}${device}($count)"
+         fi
+      fi
+   done <<< "$device_counts"
+   
+   if [[ $has_flapping -eq 1 ]]; then
+      log "$IB_FLAPPING_LINK_TEST: Devices with excessive link flapping (>=$IB_LINK_FLAP_THRESHOLD events in $TIME_INTERVAL_HOURS hours): $flapping_devices"
+      die 1 "$FUNCNAME: $IB_FLAPPING_LINK_TEST. Devices: $flapping_devices. FaultCode: NHC2005"
+   else
+      log "No IB devices exceeded link flap threshold ($IB_LINK_FLAP_THRESHOLD) in the last $TIME_INTERVAL_HOURS hours"
+      pass 0 "$FUNCNAME: No excessive IB link flapping found"
+   fi
+   
+   return 0
 }
