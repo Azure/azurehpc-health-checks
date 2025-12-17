@@ -49,6 +49,8 @@ RUN apt-get update -y                           \
     cmake                                       \ 
     bc
 
+RUN apt-get upgrade -y
+
 # Create workspace directories 
 RUN mkdir -p ${AZ_NHC_ROOT}/bin && \
     mkdir -p ${AZ_NHC_ROOT}/LICENSES && \
