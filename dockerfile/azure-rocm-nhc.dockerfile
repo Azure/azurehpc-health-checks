@@ -116,7 +116,7 @@ RUN wget -q https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}
 
 # Install RCCL
 RUN mkdir -p /opt/rccl &&\
-    git clone https://github.com/ROCm/rccl.git --depth 1 /tmp/rccl &&\
+    git clone https://github.com/ROCm/rccl.git --branch rocm-6.2.4 --depth 1 /tmp/rccl &&\
     cd /tmp/rccl &&\
     mkdir build &&\
     cd build &&\
