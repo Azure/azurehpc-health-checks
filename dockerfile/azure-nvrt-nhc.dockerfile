@@ -122,27 +122,22 @@ RUN git clone https://github.com/Azure/azhpc-images.git /tmp/azhpc-images && \
     cp /tmp/azhpc-images/topology/* ${AZ_NHC_ROOT}/topofiles && \
     rm -rf /tmp/azhpc-images
 
-# install clang dependency needed for stream
+# Install AOCC, build stream, extract libomp, then remove AOCC — all in one layer
+COPY customTests/stream/Makefile /tmp/stream/
 RUN cd /tmp && \
     wget https://download.amd.com/developer/eula/aocc-compiler/aocc-compiler-${AOCC_VERSION}_amd64.deb && \
-    apt install -y ./aocc-compiler-${AOCC_VERSION}_amd64.deb && \
-    rm aocc-compiler-${AOCC_VERSION}_amd64.deb
-
-# Install stream 
-RUN mkdir -p /tmp/stream
-COPY customTests/stream/Makefile /tmp/stream/
-RUN cd /tmp/stream && \
-wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c  && \
-make all CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=${AZ_NHC_ROOT}/bin && \
-rm -rf /tmp/stream && \
-cd ${AZ_NHC_ROOT}/LICENSES && \
-wget https://www.cs.virginia.edu/stream/FTP/Code/LICENSE.txt -O stream_LICENSE.txt
-
-RUN cp /opt/AMD/aocc-compiler-4.0.0/lib/libomp.so ${AZ_NHC_ROOT}/lib
-
-# Remove AOCC after STREAM build
-RUN version=$(echo "$AOCC_VERSION" | sed 's/_1$//') && \
-apt remove aocc-compiler-"${version}" -y
+    apt-get update -y && apt-get install -y ./aocc-compiler-${AOCC_VERSION}_amd64.deb && \
+    rm aocc-compiler-${AOCC_VERSION}_amd64.deb && \
+    cd /tmp/stream && \
+    wget https://www.cs.virginia.edu/stream/FTP/Code/stream.c && \
+    make all CC=/opt/AMD/aocc-compiler-4.0.0/bin/clang EXEC_DIR=${AZ_NHC_ROOT}/bin && \
+    cd ${AZ_NHC_ROOT}/LICENSES && \
+    wget https://www.cs.virginia.edu/stream/FTP/Code/LICENSE.txt -O stream_LICENSE.txt && \
+    cp /opt/AMD/aocc-compiler-4.0.0/lib/libomp.so ${AZ_NHC_ROOT}/lib && \
+    version=$(echo "$AOCC_VERSION" | sed 's/_1$//') && \
+    apt-get remove -y aocc-compiler-"${version}" && \
+    apt-get autoremove -y && \
+    rm -rf /tmp/stream
 
 # Install Perf-Test
 RUN mkdir -p /tmp/perftest && \
