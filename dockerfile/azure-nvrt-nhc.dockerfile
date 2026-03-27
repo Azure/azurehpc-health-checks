@@ -80,15 +80,13 @@ RUN cd /tmp && \
     rm -rf /tmp/openmpi-${OPEN_MPI_VERSION} openmpi-${OPEN_MPI_VERSION}.tar.gz
 
 
-# Install NCCL
+# Install NCCL (bind-mount to avoid persisting .deb files in image layers)
 ARG host_nccl_dir=dockerfile/build_exe/nccl-${NCCL_VERSION}
-RUN mkdir -p /opt/nccl
-COPY ${host_nccl_dir} /opt/nccl
-RUN cd /opt/nccl/build/pkg/deb/ && \
-    dpkg -i libnccl2_${NCCL_VERSION}+cuda12.8_amd64.deb && \
-    dpkg -i libnccl-dev_${NCCL_VERSION}+cuda12.8_amd64.deb && \
-    cp /opt/nccl/LICENSE.txt ${AZ_NHC_ROOT}/LICENSES/nccl_LICENSE.txt && \
-    rm -rf /opt/nccl
+RUN --mount=type=bind,source=${host_nccl_dir}/build/pkg/deb,target=/tmp/nccl \
+    --mount=type=bind,source=${host_nccl_dir}/LICENSE.txt,target=/tmp/nccl-LICENSE.txt \
+    dpkg -i /tmp/nccl/libnccl2_${NCCL_VERSION}+cuda12.8_amd64.deb && \
+    dpkg -i /tmp/nccl/libnccl-dev_${NCCL_VERSION}+cuda12.8_amd64.deb && \
+    cp /tmp/nccl-LICENSE.txt ${AZ_NHC_ROOT}/LICENSES/nccl_LICENSE.txt
 
 
 # Install NCCL-Test
