@@ -23,6 +23,12 @@ ENV MPI_HOME=/opt/openmpi
 
 WORKDIR ${AZ_NHC_ROOT}
 
+# Disable apt caching to reduce image size
+RUN echo 'DPkg::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true"; };' > /etc/apt/apt.conf.d/90docker-clean && \
+    echo 'APT::Update::Post-Invoke { "rm -f /var/lib/apt/lists/* || true"; };' >> /etc/apt/apt.conf.d/90docker-clean && \
+    echo 'Dir::Cache::pkgcache "";' >> /etc/apt/apt.conf.d/90docker-clean && \
+    echo 'Dir::Cache::srcpkgcache "";' >> /etc/apt/apt.conf.d/90docker-clean && \
+    echo 'Acquire::Languages "none";' >> /etc/apt/apt.conf.d/90docker-clean
 
 RUN apt-get update -y                           \
     && DEBIAN_FRONTEND=noninteractive           \
@@ -46,8 +52,8 @@ RUN apt-get update -y                           \
     openssh-client                              \
     net-tools                                   \
     bats                                        \   
-    bc
-RUN  apt-get upgrade -y
+    bc                                          \
+    && apt-get upgrade -y
 
 RUN mkdir -p ${AZ_NHC_ROOT}/LICENSES
 COPY LICENSE ${AZ_NHC_ROOT}/LICENSES/azure-nhc_LICENSE.txt
