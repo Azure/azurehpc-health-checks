@@ -38,7 +38,7 @@ fi
 sudo docker run -itd --name=aznhc --net=host -e TIMEOUT=500 --rm \
 ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE \
 --shm-size=8g \
---privileged -v /sys:/hostsys/ \
+--privileged \
 -v $NHC_DIR/customTests:/azure-nhc/customTests \
 -v $NHC_DIR/test:/azure-nhc/test \
 mcr.microsoft.com/aznhc/aznhc-nv bash

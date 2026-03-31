@@ -27,7 +27,6 @@ Az NHC is ran inside an Ubuntu 22.04 docker container. See instructions for how 
     kernel_log=/var/log/syslog
 
     DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged \
-        -v /sys:/hostsys/ \
         -v $OUTPUT_PATH:$WORKING_DIR/output/aznhc.log \
         -v ${kernel_log}:$WORKING_DIR/syslog
         -v ${AZ_NHC_ROOT}/customTests:$WORKING_DIR/customTests"

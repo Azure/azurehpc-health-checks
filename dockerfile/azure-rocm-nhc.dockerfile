@@ -139,7 +139,7 @@ RUN git clone https://github.com/ROCm/rccl-tests.git  --depth 1 /tmp/rccl-tests 
     mkdir -p /opt/rccl-tests &&\
     ROCM_TARGET_LST=$(pwd)/target.lst make MPI=1 NCCL_HOME=/opt/rccl CUSTOM_RCCL_LIB=/opt/rccl/lib/librccl.so BUILDDIR=/opt/rccl-tests  &&\
     rm -rf /tmp/rccl-tests
-#DOCKER_RUN_ARGS="--name=testnhc --net=host -v /sys:/hostsys/  --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --device /dev/fdk --device /dev/dri --security-opt seccomp=unconfined "
+#DOCKER_RUN_ARGS="--name=testnhc --net=host --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --device /dev/fdk --device /dev/dri --security-opt seccomp=unconfined "
 
 # Copy entrypoint script
 COPY dockerfile/aznhc-entrypoint.sh ${AZ_NHC_ROOT}

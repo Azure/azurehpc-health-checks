@@ -61,7 +61,6 @@ This method should be used when no customizations are needed. Care must be used 
     kernel_log=/var/log/syslog
 
     DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g\
-        -v /sys:/hostsys/ \
         -v $OUTPUT_PATH:$WORKING_DIR/output/aznhc.log \
         -v ${kernel_log}:$WORKING_DIR/syslog
         -v ${AZ_NHC_ROOT}/customTests:$WORKING_DIR/customTests"
@@ -75,6 +74,6 @@ This method should be used when no customizations are needed. Care must be used 
     # This example also does not mount an output file. This means results will be printed to STDOUT.
     NVIDIA_RT="--runtime=nvidia" # only for GPU SKUs, omit for non-gpu
     DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv"
-    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g -v /sys:/hostsys/
+    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g
     sudo docker run ${DOCKER_RUN_ARGS}  "${DOCK_IMG_NAME}" bash -c "/azure-nhc/aznhc-entrypoint.sh"
    ```
