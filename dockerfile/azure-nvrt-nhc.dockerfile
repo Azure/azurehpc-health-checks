@@ -24,8 +24,7 @@ ENV MPI_HOME=/opt/openmpi
 WORKDIR ${AZ_NHC_ROOT}
 
 # Disable apt caching to reduce image size
-RUN echo 'DPkg::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin || true"; };' > /etc/apt/apt.conf.d/90docker-clean && \
-    echo 'APT::Update::Post-Invoke { "rm -f /var/lib/apt/lists/* || true"; };' >> /etc/apt/apt.conf.d/90docker-clean && \
+RUN echo 'DPkg::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin /var/lib/apt/lists/*.lz4 /var/lib/apt/lists/*Release* /var/lib/apt/lists/*Packages* /var/lib/apt/lists/*Translation* || true"; };' > /etc/apt/apt.conf.d/90docker-clean && \
     echo 'Dir::Cache::pkgcache "";' >> /etc/apt/apt.conf.d/90docker-clean && \
     echo 'Dir::Cache::srcpkgcache "";' >> /etc/apt/apt.conf.d/90docker-clean && \
     echo 'Acquire::Languages "none";' >> /etc/apt/apt.conf.d/90docker-clean
