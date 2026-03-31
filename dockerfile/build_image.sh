@@ -11,13 +11,29 @@ if [[ -z "$development" ]]; then
     development="false"
 fi
 
-# Set this to the right path
-HPCX_MPI_DIR=/opt/hpcx-v2.18-gcc-mlnx_ofed-ubuntu22.04-cuda12-x86_64
+# Detect HPC-X installation directory with fallback:
+# 1. Use HPCX_DIR from environment (e.g. set by 'module load mpi/hpcx')
+# 2. Try loading the hpcx module
+# 3. Auto-detect from /opt/hpcx-*
+if [[ -z "$HPCX_DIR" ]]; then
+    # Try loading the module if 'module' command is available
+    if type module &>/dev/null; then
+        module load mpi/hpcx 2>/dev/null
+    fi
+fi
 
-if [[ ! -d $HPCX_MPI_DIR ]]; then
-    echo "HPCX_MPI_DIR: $HPCX_MPI_DIR not found. Please install HPC-X"
+if [[ -z "$HPCX_DIR" ]]; then
+    # Auto-detect: pick the most recently modified hpcx directory in /opt
+    HPCX_DIR=$(ls -dt /opt/hpcx-* 2>/dev/null | head -1)
+fi
+
+if [[ -z "$HPCX_DIR" || ! -d "$HPCX_DIR" ]]; then
+    echo "Error: HPC-X installation not found."
+    echo "Please install HPC-X, load the module ('module load mpi/hpcx'), or set HPCX_DIR."
     exit 1
 fi
+
+echo "Using HPC-X at: $HPCX_DIR"
 
 
 NV_BANDWIDTH_VERSION=0.4
@@ -55,11 +71,11 @@ function build_cuda_exes(){
     popd
 
     # Nccl tests
-    source ${HPCX_MPI_DIR}/hpcx-init.sh && hpcx_load
+    source ${HPCX_DIR}/hpcx-init.sh && hpcx_load
     mkdir -p nccl-tests
     wget -q -O - https://github.com/NVIDIA/nccl-tests/archive/refs/tags/v${NCCL_TEST_VERSION}.tar.gz | tar -xz --strip=1 -C nccl-tests
     pushd nccl-tests
-        make MPI=1 MPI_HOME=${HPCX_MPI_DIR} CUDA_HOME=/usr/local/cuda
+        make MPI=1 MPI_HOME=${HPCX_DIR}/ompi CUDA_HOME=/usr/local/cuda
     popd
 
     return 0

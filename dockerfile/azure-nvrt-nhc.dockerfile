@@ -79,18 +79,18 @@ RUN cd /tmp && \
     rm -rf /tmp/openmpi-${OPEN_MPI_VERSION} openmpi-${OPEN_MPI_VERSION}.tar.gz
 
 
-# Install NCCL (bind-mount to avoid persisting .deb files in image layers)
-ARG host_nccl_dir=dockerfile/build_exe/nccl-${NCCL_VERSION}
-RUN --mount=type=bind,source=${host_nccl_dir}/build/pkg/deb,target=/tmp/nccl \
-    --mount=type=bind,source=${host_nccl_dir}/LICENSE.txt,target=/tmp/nccl-LICENSE.txt \
-    dpkg -i /tmp/nccl/libnccl2_${NCCL_VERSION}+cuda12.8_amd64.deb && \
-    dpkg -i /tmp/nccl/libnccl-dev_${NCCL_VERSION}+cuda12.8_amd64.deb && \
-    cp /tmp/nccl-LICENSE.txt ${AZ_NHC_ROOT}/LICENSES/nccl_LICENSE.txt
+# Use NCCL from the base image (already installed)
+# Save the NCCL license
+RUN cp /usr/share/doc/libnccl2/copyright ${AZ_NHC_ROOT}/LICENSES/nccl_LICENSE.txt || true
 
-
-# Install NCCL-Test
-ARG host_nccl_test_dir=dockerfile/build_exe/nccl-tests
-COPY ${host_nccl_test_dir} /opt/nccl-tests
+# Build NCCL-Tests inside the container
+RUN cd /tmp && \
+    wget -q -O - https://github.com/NVIDIA/nccl-tests/archive/refs/tags/v${NCCL_TEST_VERSION}.tar.gz | tar -xz && \
+    cd nccl-tests-${NCCL_TEST_VERSION} && \
+    make MPI=1 MPI_HOME=${MPI_HOME} CUDA_HOME=/usr/local/cuda && \
+    mkdir -p /opt/nccl-tests/build && \
+    cp -r build/* /opt/nccl-tests/build/ && \
+    rm -rf /tmp/nccl-tests-${NCCL_TEST_VERSION}
 
 # Install NHC
 RUN cd /tmp && \
@@ -157,10 +157,15 @@ RUN mkdir -p /tmp/perftest_nongdr && \
     cp ib_write_bw ${AZ_NHC_ROOT}/bin/ib_write_bw_nongdr && \
     rm -rf /tmp/perftest_nongdr
 
-# Install NV Bandwidth tool
-ARG host_nvbandwidth_dir=dockerfile/build_exe/nvbandwidth-${NV_BANDWIDTH_VERSION}
-COPY ${host_nvbandwidth_dir}/nvbandwidth ${AZ_NHC_ROOT}/bin
-COPY ${host_nvbandwidth_dir}/LICENSE ${AZ_NHC_ROOT}/LICENSES/nvbandwidth_LICENSE
+# Build NV Bandwidth tool inside the container
+RUN cd /tmp && \
+    wget -q -O - https://github.com/NVIDIA/nvbandwidth/archive/refs/tags/v${NV_BANDWIDTH_VERSION}.tar.gz | tar -xz && \
+    cd nvbandwidth-${NV_BANDWIDTH_VERSION} && \
+    cmake -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc -DCMAKE_CUDA_ARCHITECTURES="70;80;90" . && \
+    make && \
+    cp nvbandwidth ${AZ_NHC_ROOT}/bin/ && \
+    cp LICENSE ${AZ_NHC_ROOT}/LICENSES/nvbandwidth_LICENSE && \
+    rm -rf /tmp/nvbandwidth-${NV_BANDWIDTH_VERSION}
 
 # Copy entrypoint script
 COPY dockerfile/aznhc-entrypoint.sh ${AZ_NHC_ROOT}
