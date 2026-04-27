@@ -2,7 +2,7 @@
 
 # For NHC developers, this script is used to build the cuda or rocm runtime image for NHC
 
-# Choices are: cuda or rocm Runtime
+# Choices are: cuda, cuda-ubuntu2604, or rocm Runtime
 build_type=$1
 # keep build artifacts
 development=$2
@@ -77,12 +77,20 @@ if [[ "$build_type" == "cuda" ]]; then
     pushd $build_exe
     build_cuda_exes
     popd
+elif [[ "$build_type" == "cuda-ubuntu2604" ]]; then
+    echo "Nvidia runtime (Ubuntu 26.04 experimental) selected"
+    IMAGE="mcr.microsoft.com/aznhc/aznhc-nv-ubuntu2604"
+    DOCK_FILE=dockerfile/azure-nvrt-nhc-ubuntu2604.dockerfile
+    mkdir -p $build_exe
+    pushd $build_exe
+    build_cuda_exes
+    popd
 elif [[ "$build_type" == "rocm" ]]; then
     echo "AMD runtime selected"
     IMAGE="mcr.microsoft.com/aznhc/aznhc-rocm"
     DOCK_FILE=dockerfile/azure-rocm-nhc.dockerfile
 else
-    echo "Please specify a build type: cuda or rocm"
+    echo "Please specify a build type: cuda, cuda-ubuntu2604, or rocm"
     exit 1
 fi
 
