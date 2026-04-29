@@ -57,13 +57,18 @@ This method should be used when no customizations are needed. Care must be used 
    ```bash
     NVIDIA_RT="--runtime=nvidia" # only for GPU SKUs, Omit for non-gpu
     DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv"
-    OUTPUT_PATH=${AZ_NHC_ROOT}/output/aznhc.log
+    # Host-side paths. AZ_NHC_ROOT only exists *inside* the container
+    # (set by the dockerfile ENV) — on the host you must use real paths.
+    NHC_DIR=$(pwd)                                   # repo root on the host
+    OUTPUT_PATH=$NHC_DIR/aznhc.log                   # log file on the host
     kernel_log=/var/log/syslog
+    touch "$OUTPUT_PATH"
 
-    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g\
-        -v $OUTPUT_PATH:$WORKING_DIR/output/aznhc.log \
-        -v ${kernel_log}:$WORKING_DIR/syslog
-        -v ${AZ_NHC_ROOT}/customTests:$WORKING_DIR/customTests"
+    # The container's working dir is /azure-nhc — that's where mounts must land.
+    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g \
+        -v $OUTPUT_PATH:/azure-nhc/output/aznhc.log \
+        -v ${kernel_log}:/azure-nhc/syslog \
+        -v $NHC_DIR/customTests:/azure-nhc/customTests"
     sudo docker run ${DOCKER_RUN_ARGS}  "${DOCK_IMG_NAME}" bash -c "/azure-nhc/aznhc-entrypoint.sh"
    ```
 
