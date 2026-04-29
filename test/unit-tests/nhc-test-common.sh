@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Allow callers that only set NHC_DIR (host-side) to still work; in-container
+# scripts set AZ_NHC_ROOT via the dockerfile ENV.
+: "${AZ_NHC_ROOT:=$NHC_DIR}"
+
 function die() {
     log "ERROR:  $NAME:  Health check failed:  $*"
 }
@@ -31,7 +35,7 @@ function get_sad_path_conf(){
         echo "Unit-test for this SKU $SKU is not supported" 
         return 1
     fi
-    relative_path="$NHC_DIR/test/bad_test_confs/$conf_name.conf"
+    relative_path="$AZ_NHC_ROOT/test/bad_test_confs/$conf_name.conf"
     echo "$(realpath -m $relative_path)"
     return 0
 }
@@ -40,15 +44,15 @@ function get_topofile(){
     SKU=$( curl -H Metadata:true --max-time 10 -s "http://169.254.169.254/metadata/instance/compute/vmSize?api-version=2021-01-01&format=text")
     SKU="${SKU,,}"
     if echo "$SKU" | grep -q "nd96amsr_a100_v4"; then
-        topo_file="$NHC_DIR/customTests/topofiles/ndv4-topo.xml"
+        topo_file="$AZ_NHC_ROOT/customTests/topofiles/ndv4-topo.xml"
     elif echo "$SKU" | grep -q "nd96asr_v4"; then
-        topo_file="$NHC_DIR/customTests/topofiles/ndv4-topo.xml"
+        topo_file="$AZ_NHC_ROOT/customTests/topofiles/ndv4-topo.xml"
     elif echo "$SKU" | grep -q "nd96isr_h100_v5"; then
-        topo_file="$NHC_DIR/customTests/topofiles/ndv5-topo.xml"
+        topo_file="$AZ_NHC_ROOT/customTests/topofiles/ndv5-topo.xml"
     elif echo "$SKU" | grep -q "nc96ads_a100_v4"; then
-        topo_file="$NHC_DIR/customTests/topofiles/ncv4-topo.xml"
+        topo_file="$AZ_NHC_ROOT/customTests/topofiles/ncv4-topo.xml"
     elif echo "$SKU" | grep -q "nd40rs_v2"; then
-        topo_file="$NHC_DIR/customTests/topofiles/ndv2-topo.xml"
+        topo_file="$AZ_NHC_ROOT/customTests/topofiles/ndv2-topo.xml"
     else
         echo "there is no topofile for this SKU $SKU" 
         return 1

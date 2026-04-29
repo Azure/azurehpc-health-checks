@@ -59,7 +59,13 @@ fi
 
 # Other hardware unit tests
 sudo docker exec -it aznhc bash -c "bats --pretty /azure-nhc/test/unit-tests/nhc-hardware-test.sh"
+hardware_test_status=$?
+
+# InfiniBand unit tests
+echo "Running IB Unit tests"
+sudo docker exec -it aznhc bash -c "bats --pretty /azure-nhc/test/unit-tests/nhc-ib-test.sh"
+ib_test_status=$?
 
 sudo docker container stop aznhc
 
-exit $((unit_test_status || integration_test_status))
+exit $((unit_test_status || integration_test_status || hardware_test_status || ib_test_status))
