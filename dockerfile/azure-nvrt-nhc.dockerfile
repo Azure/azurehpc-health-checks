@@ -150,6 +150,7 @@ RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive \
     openssh-client net-tools bc                         \
     pciutils                                            \
     libnccl2                                            \
+    bats                                                \
     && apt-get upgrade -y --allow-change-held-packages  \
     && rm -rf /var/lib/apt/lists/*
 
