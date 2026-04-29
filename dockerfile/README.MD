@@ -74,6 +74,6 @@ This method should be used when no customizations are needed. Care must be used 
     # This example also does not mount an output file. This means results will be printed to STDOUT.
     NVIDIA_RT="--runtime=nvidia" # only for GPU SKUs, omit for non-gpu
     DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv"
-    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g
+    DOCKER_RUN_ARGS="--name=aznhc --net=host --rm ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --shm-size=8g"
     sudo docker run ${DOCKER_RUN_ARGS}  "${DOCK_IMG_NAME}" bash -c "/azure-nhc/aznhc-entrypoint.sh"
    ```
