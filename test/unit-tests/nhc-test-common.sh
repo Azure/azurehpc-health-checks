@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Allow callers that only set NHC_DIR (host-side) to still work; in-container
-# scripts set AZ_NHC_ROOT via the dockerfile ENV.
+# Allow callers that only set NHC_DIR (host-side, e.g. run_tests_agnostic.sh)
+# to still work; in-container scripts set AZ_NHC_ROOT via the dockerfile ENV.
 : "${AZ_NHC_ROOT:=$NHC_DIR}"
 
 function die() {
