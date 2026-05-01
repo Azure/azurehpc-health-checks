@@ -38,7 +38,7 @@ fi
 sudo docker run -itd --name=aznhc --net=host -e TIMEOUT=500 --rm \
 ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE \
 --shm-size=8g \
---privileged -v /sys:/hostsys/ \
+--privileged \
 -v $NHC_DIR/customTests:/azure-nhc/customTests \
 -v $NHC_DIR/test:/azure-nhc/test \
 mcr.microsoft.com/aznhc/aznhc-nv bash
@@ -59,7 +59,13 @@ fi
 
 # Other hardware unit tests
 sudo docker exec -it aznhc bash -c "bats --pretty /azure-nhc/test/unit-tests/nhc-hardware-test.sh"
+hardware_test_status=$?
+
+# InfiniBand unit tests
+echo "Running IB Unit tests"
+sudo docker exec -it aznhc bash -c "bats --pretty /azure-nhc/test/unit-tests/nhc-ib-test.sh"
+ib_test_status=$?
 
 sudo docker container stop aznhc
 
-exit $((unit_test_status || integration_test_status))
+exit $((unit_test_status || integration_test_status || hardware_test_status || ib_test_status))

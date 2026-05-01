@@ -1,12 +1,14 @@
 #!/usr/bin/env bats
 
-source $NHC_DIR/customTests/azure_common.nhc
-source $NHC_DIR/test/unit-tests/nhc-test-common.sh
+# Source nhc-test-common.sh first: it provides the AZ_NHC_ROOT fallback
+# needed when running on the host with only NHC_DIR set.
+source ${AZ_NHC_ROOT:-$NHC_DIR}/test/unit-tests/nhc-test-common.sh
+source $AZ_NHC_ROOT/customTests/azure_common.nhc
 
 azure_ib_link_flapping_test=( "azure_ib_link_flapping.nhc" )
  
 for check in "${azure_ib_link_flapping_test[@]}" ; do
-    source $NHC_DIR/customTests/$check
+    source $AZ_NHC_ROOT/customTests/$check
 done
 
 #Invalid File Input
@@ -23,7 +25,7 @@ done
 
 # Valid File with no link flaps
 @test "Check Valid File Input" {
-    filePath="$NHC_DIR/test/data/1dev_6flap_syslog"
+    filePath="$AZ_NHC_ROOT/test/data/1dev_6flap_syslog"
     lookback=24
     threshold=1
     run check_ib_link_flapping $lookback $threshold "$filePath"
@@ -35,7 +37,7 @@ done
 }  
 
 @test "Check IB Device Count - 1 Device 6 Flaps" {
-    filePath="$NHC_DIR/test/data/1dev_6flap_syslog"
+    filePath="$AZ_NHC_ROOT/test/data/1dev_6flap_syslog"
     lookback=24
     threshold=1
 
@@ -54,7 +56,7 @@ done
 }
 
 @test "Check IB Device Count - 1 Device 6 Flaps Small Lookback" {
-    filePath="$NHC_DIR/test/data/1dev_6flap_syslog"
+    filePath="$AZ_NHC_ROOT/test/data/1dev_6flap_syslog"
     lookback=1
     threshold=1
 
@@ -73,7 +75,7 @@ done
 }
 
 @test "Check IB Device Count - 0 Flaps Standard Lookback" {
-    filePath="$NHC_DIR/test/data/1dev_6flap_syslog"
+    filePath="$AZ_NHC_ROOT/test/data/1dev_6flap_syslog"
     lookback=24
     threshold=1
 

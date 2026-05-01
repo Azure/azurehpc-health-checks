@@ -21,6 +21,11 @@ ENV PERF_TEST_HASH=g0705c22
 
 WORKDIR ${AZ_NHC_ROOT}
 
+# Disable apt caching to reduce image size
+RUN echo 'DPkg::Post-Invoke { "rm -f /var/cache/apt/archives/*.deb /var/cache/apt/archives/partial/*.deb /var/cache/apt/*.bin /var/lib/apt/lists/*.lz4 /var/lib/apt/lists/*Release* /var/lib/apt/lists/*Packages* /var/lib/apt/lists/*Translation* || true"; };' > /etc/apt/apt.conf.d/90docker-clean && \
+    echo 'Dir::Cache::pkgcache "";' >> /etc/apt/apt.conf.d/90docker-clean && \
+    echo 'Dir::Cache::srcpkgcache "";' >> /etc/apt/apt.conf.d/90docker-clean && \
+    echo 'Acquire::Languages "none";' >> /etc/apt/apt.conf.d/90docker-clean
 
 RUN apt-get update -y                           \
     && DEBIAN_FRONTEND=noninteractive           \
@@ -47,9 +52,8 @@ RUN apt-get update -y                           \
     bats                                        \
     rocm-bandwidth-test                         \
     cmake                                       \ 
-    bc
-
-RUN apt-get upgrade -y
+    bc                                          \
+    && apt-get upgrade -y
 
 # Create workspace directories 
 RUN mkdir -p ${AZ_NHC_ROOT}/bin && \
@@ -82,7 +86,7 @@ COPY conf ${AZ_NHC_ROOT}/default/conf
 RUN cd /tmp && \
     wget -q https://content.mellanox.com/ofed/MLNX_OFED-${OFED_VERSION}/MLNX_OFED_LINUX-${OFED_VERSION}-ubuntu22.04-x86_64.tgz && \
     tar xzf MLNX_OFED_LINUX-${OFED_VERSION}-ubuntu22.04-x86_64.tgz && \
-    MLNX_OFED_LINUX-${OFED_VERSION}-ubuntu22.04-x86_64/mlnxofedinstall --user-space-only --without-fw-update --without-ucx-cuda --force --all && \
+    MLNX_OFED_LINUX-${OFED_VERSION}-ubuntu22.04-x86_64/mlnxofedinstall --user-space-only --without-fw-update --without-ucx-cuda --force && \
     rm -rf /tmp/MLNX_OFED_LINUX*
 
 # Install OpenMPI
@@ -135,7 +139,7 @@ RUN git clone https://github.com/ROCm/rccl-tests.git  --depth 1 /tmp/rccl-tests 
     mkdir -p /opt/rccl-tests &&\
     ROCM_TARGET_LST=$(pwd)/target.lst make MPI=1 NCCL_HOME=/opt/rccl CUSTOM_RCCL_LIB=/opt/rccl/lib/librccl.so BUILDDIR=/opt/rccl-tests  &&\
     rm -rf /tmp/rccl-tests
-#DOCKER_RUN_ARGS="--name=testnhc --net=host -v /sys:/hostsys/  --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --device /dev/fdk --device /dev/dri --security-opt seccomp=unconfined "
+#DOCKER_RUN_ARGS="--name=testnhc --net=host --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE --privileged --device /dev/fdk --device /dev/dri --security-opt seccomp=unconfined "
 
 # Copy entrypoint script
 COPY dockerfile/aznhc-entrypoint.sh ${AZ_NHC_ROOT}

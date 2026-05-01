@@ -2,15 +2,17 @@
 
 # Hardware tests for Azure NHC that are not GPU or CPU specific
 
-source $NHC_DIR/customTests/azure_common.nhc
-source $NHC_DIR/test/unit-tests/nhc-test-common.sh
+# Source nhc-test-common.sh first: it provides the AZ_NHC_ROOT fallback
+# needed when running on the host with only NHC_DIR set.
+source ${AZ_NHC_ROOT:-$NHC_DIR}/test/unit-tests/nhc-test-common.sh
+source $AZ_NHC_ROOT/customTests/azure_common.nhc
 
 # Enumerate over currently tested hardware checks
 hardware_test=( "azure_nvme_count.nhc" )
 
 # Load the hardware checks
 for check in "${hardware_test[@]}" ; do
-    source $NHC_DIR/customTests/$check
+    source $AZ_NHC_ROOT/customTests/$check
 done
 
 ## NVME Count Unit Tests
