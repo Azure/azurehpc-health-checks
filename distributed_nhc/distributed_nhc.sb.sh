@@ -49,8 +49,8 @@ Kusto Exporting - Applies to both SLURM and direct shell script usage
                     --kusto-database        If kusto-export-url is specified, this is required and is the database to export results to. 
 
                     --kusto-identity        If kusto-export-url is specified, this is optional and is the identity to use to authenticate to Kusto.
-                                            If not provided, will use DefaultAzureCredential to authenticate.
-                                            If provided but with no client ID, will use System Assigned Identity to authenticate. For example by just specifying '--kusto-identity' with no value.
+                                            If not provided, will use System Assigned Identity to authenticate.
+                                            If provided but with no client ID, will also use System Assigned Identity to authenticate. For example by just specifying '--kusto-identity' with no value.
                                             If provided with a client ID, will use User Assigned Identity to authenticate. For example by specifying '--kusto-identity my_client_id'.
 
                     --kusto-health-table    If kusto-export-url is specified, this is optional and is the table to export health results to. Defaults to "NodeHealthCheck"
@@ -93,7 +93,7 @@ VERBOSE="False"
 
 KUSTO_EXPORT_ENABLED="False"
 KUSTO_EXPORT_ARGS=()
-KUSTO_IDENTITY="False" # hold onto this seperately to help with the passing arguments to the export script
+KUSTO_IDENTITY_ARGS=()
 
 nhc_start_time=$(date +%s.%N)
 
@@ -125,6 +125,22 @@ SHARED_LONG_OPTS="help,version:,git:,config:,force,verbose,kusto-export-url:,kus
 # These options are only needed by PSSH
 PSSH_SHORT_OPTS="F:w:"
 PSSH_LONG_OPTS="nodefile:,nodelist:"
+
+NORMALIZED_ARGS=()
+while [ $# -gt 0 ]; do
+case "$1" in
+--kusto-identity)
+    if [ $# -gt 1 ] && [[ "$2" != -* ]]; then
+        NORMALIZED_ARGS+=("--kusto-identity=$2")
+        shift 2
+        continue
+    fi
+    ;;
+esac
+NORMALIZED_ARGS+=("$1")
+shift
+done
+set -- "${NORMALIZED_ARGS[@]}"
 
 # Select options based on execution mode
 if [ "$EXECUTION_MODE" == "SLURM" ]; then
@@ -210,11 +226,12 @@ case "$1" in
 --kusto-identity) 
     shift
     echo "Setting Kusto identity to $1"
-    KUSTO_IDENTITY="$1"
     # Handle case of no client id provided
-    if [ -z "$KUSTO_IDENTITY" ]; then
+    if [ -z "$1" ]; then
         echo "No client id provided, using system assigned identity"
-        KUSTO_IDENTITY="True"
+        KUSTO_IDENTITY_ARGS+=("--identity")
+    else
+        KUSTO_IDENTITY_ARGS+=("--identity" "$1")
     fi
     ;;
 --kusto-health-table) 
@@ -300,13 +317,6 @@ echo "NHC took $nhc_duration minutes to finish"
 echo
 
 if [ "$KUSTO_EXPORT_ENABLED" == "True" ]; then
-    # Place identity arg at the end (if specified)
-    if [ "$KUSTO_IDENTITY" == "True" ]; then
-        KUSTO_EXPORT_ARGS+=("--identity")
-    elif [ -n "$KUSTO_IDENTITY" ]; then
-        KUSTO_EXPORT_ARGS+=("--identity" "$KUSTO_IDENTITY")
-    fi
-
     export_files=( "$HEALTH_LOG_FILE_PATH")
     if [ "$VERBOSE" == "True" ]; then
         export_files+=( "$DEBUG_LOG_FILE_PATH" )
@@ -321,6 +331,6 @@ if [ "$KUSTO_EXPORT_ENABLED" == "True" ]; then
     # Run export script
     kusto_export_script=$(realpath -e "./export_nhc_result_to_kusto.py")
     echo "Using export script $kusto_export_script"
-    python3 $kusto_export_script ${KUSTO_EXPORT_ARGS[@]} $KUSTO_IDENTITY -- ${export_files[@]}
+    python3 "$kusto_export_script" "${KUSTO_EXPORT_ARGS[@]}" "${KUSTO_IDENTITY_ARGS[@]}" -- "${export_files[@]}"
     echo "Ingestion queued, results take ~5 minutes to appear in Kusto"
 fi

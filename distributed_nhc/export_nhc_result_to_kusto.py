@@ -7,7 +7,7 @@ import subprocess
 from datetime import datetime
 from csv import DictReader
 from argparse import ArgumentParser
-from azure.identity import ManagedIdentityCredential, DefaultAzureCredential
+from azure.identity import ManagedIdentityCredential
 from azure.kusto.data import KustoConnectionStringBuilder
 from azure.kusto.ingest import QueuedIngestClient, IngestionProperties
 import pandas as pd
@@ -228,16 +228,18 @@ def parse_args():
     parser.add_argument("--debug_table_name", default="NodeHealthCheck_Debug", help="Kusto table name for debug results")
     parser.add_argument("--results_table_name", default="AzNhcRunEvents", help="Kusto table name for results")
     parser.add_argument("--uuid", default="None", help="UUID to help identify results in Kusto table")
-    parser.add_argument("--identity", nargs="?", const=True, default=False, help="Managed Identity to use for authentication, if a client ID is provided it will be used, otherwise the system-assigned identity will be used. If --identity is not provided DefaultAzureCredentials will be used.")
-    return parser.parse_args()
+    parser.add_argument("--identity", nargs="?", const="", default=None, help="Managed Identity to use for authentication. If a client ID is provided, the user-assigned identity will be used. If omitted or provided without a client ID, the system-assigned identity will be used.")
+    args = parser.parse_args()
+
+    if isinstance(args.identity, str) and args.identity.lower() in ("true", "false"):
+        parser.error("--identity expects an optional managed identity client ID; use --identity without a value for system-assigned identity")
+
+    return args
 
 def get_creds(identity):
-    if identity is True:
+    if identity is None or identity == "":
         return ManagedIdentityCredential()
-    elif identity:
-        return ManagedIdentityCredential(client_id=identity)
-    else:
-        return DefaultAzureCredential()
+    return ManagedIdentityCredential(client_id=identity)
 
 args = parse_args()
 creds = get_creds(args.identity)
