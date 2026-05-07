@@ -85,10 +85,18 @@ RUN cd /tmp && \
     rm -rf /tmp/stream /opt/AMD
 
 # Build Perf-Test (GDR version)
+#
+# perftest >= 23.x auto-enables HAVE_CUDA_DMABUF when CUDA headers are
+# present (any CUDA toolkit >= 11.7 satisfies this; this dockerfile uses
+# 12.4 in the builder stage). Both --use_cuda (legacy nvidia-peermem)
+# and --use_cuda_dmabuf (modern DMA-BUF) code paths get compiled in.
+# The NHC scripts pick between them at runtime via azure_gdr_detect.nhc.
 RUN mkdir -p /tmp/perftest && \
     wget -q -O - https://github.com/linux-rdma/perftest/releases/download/${PERF_TEST_VERSION}-0.29/perftest-${PERF_TEST_VERSION}-0.29.${PERF_TEST_HASH}.tar.gz | tar -xz --strip=1 -C /tmp/perftest && \
     cd /tmp/perftest && \
     ./configure CUDA_H_PATH=/usr/local/cuda/include/cuda.h && \
+    grep -q '^#define HAVE_CUDA 1' config.h || (echo "perftest: HAVE_CUDA not set; CUDA headers were not detected" && exit 1) && \
+    grep -q '^#define HAVE_CUDA_DMABUF 1' config.h || (echo "perftest: HAVE_CUDA_DMABUF not set; this perftest release lacks DMA-BUF support and will not work on inbox-RDMA hosts" && exit 1) && \
     make -j$(nproc) && \
     cp ib_write_bw ${AZ_NHC_ROOT}/bin/ && \
     cp COPYING ${AZ_NHC_ROOT}/LICENSES/perftest_LICENSE && \

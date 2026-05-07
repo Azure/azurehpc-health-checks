@@ -108,6 +108,7 @@ Notes:
 
 - The scripts for all tests can be found in the [custom test directory](./customTests/)
 - Not all supported SKUs are listed in the above table
+- `check_ib_bw_gdr` and `check_nccl_allreduce_ib_loopback` automatically pick the GPUDirect RDMA path at runtime: legacy `nvidia-peermem` when DOCA-OFED / MLNX_OFED has it loaded, otherwise modern DMA-BUF (inbox kernels, NVIDIA driver R515+, rdma-core ≥36, NCCL ≥2.19 — all of which the AzNHC container ships). Set `AZNHC_GDR_MODE=peermem|dmabuf` to force a specific path for debugging.
 
 ## Legacy Releases ##
 

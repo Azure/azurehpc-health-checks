@@ -1,0 +1,110 @@
+#!/bin/bash
+
+# GPUDirect RDMA mode selection.
+#
+# AzNHC's GDR-dependent checks (check_ib_bw_gdr,
+# check_nccl_allreduce_ib_loopback) historically relied on the legacy
+# `nvidia-peermem` kernel module, which patches `ib_core` via
+# `ib_register_peer_memory_client()`. That symbol is only exported by
+# the proprietary Mellanox/DOCA-OFED `ib_core`, so on hosts running the
+# upstream kernel (e.g. Ubuntu 24.04 / 26.04 with linux-azure 6.x/7.x,
+# RHEL 9.x with the inbox driver, or any image that intentionally skips
+# DOCA-OFED), `modprobe nvidia-peermem` returns EINVAL and every GDR
+# check fails at MR registration time.
+#
+# Modern stacks instead use the DMA-BUF path:
+#   - kernel mlx5_ib: ib_umem_dmabuf_get() (upstream >= 5.12)
+#   - NVIDIA driver: gpu_dmabuf export (R515+ open kernel modules)
+#   - rdma-core: ibv_reg_dmabuf_mr() (>= 36)
+#   - CUDA: cuMemGetHandleForAddressRange(... DMA_BUF_FD ...) (>= 11.7)
+#   - NCCL:  NCCL_DMABUF_ENABLE=1 (>= 2.19)
+#
+# Selection policy (intentionally simple):
+#   1. If nvidia-peermem is loaded, use peermem. It's the historically
+#      validated path; if it's there it works.
+#   2. Otherwise, use DMA-BUF blindly. We don't probe kernel / driver /
+#      rdma-core versions because:
+#       a) the entire azhpc-images supported-distro matrix already
+#          satisfies the DMA-BUF prerequisites (linux >= 5.12, NVIDIA
+#          R515+, rdma-core >= 36);
+#       b) when DMA-BUF really *isn't* functional, the test fails fast
+#          with an explicit ib_write_bw / NCCL error -- the same
+#          outcome a more elaborate detector would produce, just with
+#          a clearer error message;
+#       c) version probes have non-trivial false-negative surface
+#          (driver re-numbering, custom kernels, MOFED-rebuilt
+#          libibverbs) that would silently downgrade healthy hosts to
+#          MEMORY_NONE.
+#
+# Functions exposed:
+#   detect_gdr_mode      -> echoes "dmabuf" | "peermem"
+#   gdr_mode_summary     -> human-readable explanation written to dbg log
+#
+# Override knob (debugging / CI matrix):
+#   AZNHC_GDR_MODE=dmabuf|peermem  forces a specific mode.
+#
+# These probes are read-only against /sys and /proc -- no module load
+# attempts, no GPU allocations.
+
+# Cache the result so repeated calls within one NHC run don't re-probe.
+__GDR_MODE_CACHED=""
+
+function _peermem_loaded() {
+   # Authoritative signal: the legacy peer-memory ABI is exported by
+   # MOFED's patched ib_core. When nvidia-peermem (or its predecessor
+   # nv_peer_mem) has successfully registered, this directory exists.
+   if [[ -d /sys/kernel/mm/memory_peers ]]; then
+      return 0
+   fi
+   # Fallback: module listed in /proc/modules. Match both the modern
+   # nvidia_peermem and the legacy out-of-tree nv_peer_mem names.
+   if grep -qE '^(nvidia_peermem|nv_peer_mem) ' /proc/modules 2>/dev/null; then
+      return 0
+   fi
+   return 1
+}
+
+function detect_gdr_mode() {
+   if [[ -n "$__GDR_MODE_CACHED" ]]; then
+      echo "$__GDR_MODE_CACHED"
+      return 0
+   fi
+
+   # Allow operator override for debugging / forced behavior.
+   if [[ -n "$AZNHC_GDR_MODE" ]]; then
+      case "$AZNHC_GDR_MODE" in
+         dmabuf|peermem)
+            __GDR_MODE_CACHED="$AZNHC_GDR_MODE"
+            echo "$__GDR_MODE_CACHED"
+            return 0
+            ;;
+         *)
+            # invalid -- ignore and detect normally
+            ;;
+      esac
+   fi
+
+   # Prefer peermem when it's already loaded (DOCA/MOFED hosts);
+   # otherwise default to DMA-BUF and let the actual test be the
+   # source of truth.
+   if _peermem_loaded; then
+      __GDR_MODE_CACHED="peermem"
+   else
+      __GDR_MODE_CACHED="dmabuf"
+   fi
+
+   echo "$__GDR_MODE_CACHED"
+}
+
+function gdr_mode_summary() {
+   local mode
+   mode=$(detect_gdr_mode)
+   case "$mode" in
+      peermem)
+         dbg "GDR mode: legacy nvidia-peermem (DOCA/MOFED detected via /sys/kernel/mm/memory_peers or /proc/modules). ib_write_bw will use --use_cuda."
+         ;;
+      dmabuf)
+         dbg "GDR mode: DMA-BUF (no peermem detected). ib_write_bw will use --use_cuda_dmabuf; NCCL_DMABUF_ENABLE=1 will be set."
+         ;;
+   esac
+}

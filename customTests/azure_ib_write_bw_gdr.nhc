@@ -3,6 +3,7 @@
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/azure_common.nhc"
+source "${SCRIPT_DIR}/azure_gdr_detect.nhc"
 
 IB_WRITE_BW_EXE_PATH=$AZ_NHC_ROOT/bin/ib_write_bw
 SLEEP_TIME=5
@@ -17,7 +18,8 @@ function run_ib_bw_gdr(){
    PORTARG=$2
    device=$3
    dev_idx=$4
- 
+   GDR_MODE=$5
+
    #NUMA mapping
    if ! numa_node=$(get_ib_numa_node "$device"); then
       die 1 "check_ib_bw_gdr: $IB_WRITE_BW, IB=$device, could not determine NUMA node. FaultCode: NHC2005"
@@ -27,7 +29,16 @@ function run_ib_bw_gdr(){
    MESSAGE_SIZE=8388608
    IB_WRITE_BW=$( basename $IB_WRITE_BW_EXE_PATH )
    IB_WRITE_BW_ARGS="-p $PORTARG -s $MESSAGE_SIZE -x 0 -F --report_gbits  --perform_warm_up"
-   IB_WRITE_BW_OUT1=$(numactl -N $numa_node -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=$dev_idx -d $device > /dev/null &)
+
+   # GPU memory registration path: --use_cuda alone uses the legacy
+   # nvidia-peermem ABI; adding --use_cuda_dmabuf switches to the modern
+   # DMA-BUF path. See azure_gdr_detect.nhc for the selection logic.
+   GDR_FLAGS="--use_cuda=$dev_idx"
+   if [[ "$GDR_MODE" == "dmabuf" ]]; then
+      GDR_FLAGS+=" --use_cuda_dmabuf"
+   fi
+
+   IB_WRITE_BW_OUT1=$(numactl -N $numa_node -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $GDR_FLAGS -d $device > /dev/null &)
    IB_WRITE_BW_OUT1_RC=$?
  
    if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
@@ -40,7 +51,7 @@ function run_ib_bw_gdr(){
   
   sleep $SLEEP_TIME
   device_peer=$device
-  IB_WRITE_BW_OUT2=$(numactl -N $numa_node  -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=$dev_idx -d $device_peer $HOSTNAME)
+  IB_WRITE_BW_OUT2=$(numactl -N $numa_node  -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS $GDR_FLAGS -d $device_peer $HOSTNAME)
   IB_WRITE_BW_OUT2_RC=$?
   if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
 	 NETSTAT_OUT=$(netstat -lnp | grep $PORTARG)
@@ -57,7 +68,7 @@ function run_ib_bw_gdr(){
 	 if [[ "${IB_WRITE_BW_OUT2_LINES[$i]//$MESSAGE_SIZE}" != "${IB_WRITE_BW_OUT2_LINES[$i]}" ]]; then
 		LINE=( ${IB_WRITE_BW_OUT2_LINES[$i]} )
 		ib_bandwidth=${LINE[3]}
-      dbg "IB devices=${device}, ${device_peer}: numa domains=$numa_node,$numa_node, Measured IB BW $ib_bandwidth Gbps"
+      dbg "IB devices=${device}, ${device_peer}: numa domains=$numa_node,$numa_node, GDR mode=$GDR_MODE, Measured IB BW $ib_bandwidth Gbps"
 		break
 	 fi
   done
@@ -68,13 +79,21 @@ function run_ib_bw_gdr(){
 	 return 1
   fi
  
-  pass 0 "check_ib_bw_gdr: IB write bandwidth test IB_WRITE_BW passed for IB=$device, IB BW=$ib_bandwidth Gbps"
+  pass 0 "check_ib_bw_gdr: IB write bandwidth test IB_WRITE_BW passed for IB=$device, IB BW=$ib_bandwidth Gbps (GDR mode: $GDR_MODE)"
   return 0
 }
 
 function check_ib_bw_gdr(){
    trap "background_cleanup" RETURN
-   
+
+   # Pick the GPU memory registration path before doing anything else.
+   # detect_gdr_mode always returns either "peermem" or "dmabuf"; the
+   # actual feasibility of the chosen path is enforced by ib_write_bw
+   # itself, which fails fast and clearly if the kernel/driver/rdma-core
+   # combination can't satisfy the request.
+   gdr_mode_summary
+   GDR_MODE=$(detect_gdr_mode)
+
    GPU_FREQ=$(boost_gpu_clock)
    if [[ $? != 0 ]]; then
       die 1 -e "$FUNCNAME: Failed to boost GPU clocks. FaultCode: NHCNA"
@@ -93,7 +112,7 @@ function check_ib_bw_gdr(){
 
    for device in "${devices[@]}";
    do
-      run_ib_bw_gdr $EXP_IB_BW ${port_numbers[$dev_idx]} $device $dev_idx &
+      run_ib_bw_gdr $EXP_IB_BW ${port_numbers[$dev_idx]} $device $dev_idx "$GDR_MODE" &
       pid_array+=($!)
       (( dev_idx++ ))
    done
