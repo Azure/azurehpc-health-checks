@@ -171,10 +171,7 @@ pip3 install -r ./distributed_nhc/requirements.txt
 User Assigned Managed Identity
 python3 ./export_nhc_result_to_kusto.py --ingest_url https://ingest-<cluster>.kusto.windows.net --database mydatabase --identity client_id -- my.health.log my.debug.log
 
-System Assigned Managed Identity
-python3 ./export_nhc_result_to_kusto.py --ingest_url https://ingest-<cluster>.kusto.windows.net --database mydatabase --identity -- my.health.log my.debug.log
-
-Default Azure Credentials
+System Assigned Managed Identity (default)
 python3 ./export_nhc_result_to_kusto.py --ingest_url https://ingest-<cluster>.kusto.windows.net --database mydatabase -- my.health.log my.debug.log
 
 Specifying Custom Table Names
@@ -191,10 +188,7 @@ If an ingest_url is specified, the health and debug logs will be automatically e
 User Assigned Managed Identity
 ./distributed_nhc.sb.sh -w mynode --kusto-export-url https://ingest-<cluster>.kusto.windows.net --kusto-database mydatabase --kusto-identity client_id
 
-System Assigned Managed Identity
-./distributed_nhc.sb.sh -w mynode --kusto-export-url https://ingest-<cluster>.kusto.windows.net --kusto-database mydatabase --kusto-identity
-
-Default Azure Credentials
+System Assigned Managed Identity (default)
 ./distributed_nhc.sb.sh -w mynode --kusto-export-url https://ingest-<cluster>.kusto.windows.net --kusto-database mydatabase
 
 Specifying Custom Table Names
