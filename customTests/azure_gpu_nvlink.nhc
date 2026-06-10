@@ -46,14 +46,14 @@ function check_nvlink_status(){
             # fewer links are active than expected. This supports SKUs where some
             # links are inactive by design.
             if [[ -n "$expected_active_links" ]]; then
-                total_links=$(echo "$nvlink_output" | grep -c "Link")
-                inactive_count=$(echo "$nvlink_output" | grep "Link" | grep -c "<inactive>")
+                total_links=$(echo "$nvlink_output" | grep -cE '^[[:space:]]*Link [0-9]+:')
+                inactive_count=$(echo "$nvlink_output" | grep -E '^[[:space:]]*Link [0-9]+:' | grep -c "<inactive>")
                 active_links=$((total_links - inactive_count))
                 if (( active_links < expected_active_links )); then
                     die 1 "$FUNCNAME: GPU $gpu_id has $active_links active nvlinks, expected at least $expected_active_links: $inactive_links. FaultCode: NHC2016"
                     return 1
                 else
-                    pass 0 "$FUNCNAME: GPU $gpu_id has $active_links active nvlinks (expected at least $expected_active_links)."
+                    pass 0 "$FUNCNAME: GPU $gpu_id has $active_links active nvlinks (expected at least $expected_active_links). Inactive links: $inactive_links."
                 fi
             else
                 die 1 "$FUNCNAME: GPU $gpu_id has nvlinks inactive: $inactive_links. FaultCode: NHC2016"
