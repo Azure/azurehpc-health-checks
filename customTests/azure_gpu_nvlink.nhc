@@ -39,15 +39,18 @@ function check_nvlink_status(){
             die 1 "$FUNCNAME: GPU $gpu_id has all nvlinks inactive"
             return 1
         elif [[ $nvlink_output == *"inactive"* ]]; then
+            # Pattern that matches only actual per-link status lines (e.g. "Link 0:")
+            link_line_re='^[[:space:]]*Link [0-9]+:'
+
             # Extract and display the information about inactive links
-            inactive_links=$(echo "$nvlink_output" | grep "Link" | grep "<inactive>" | sed 's/Link \([0-9]*\): <inactive>/Link \1: Inactive/')
+            inactive_links=$(echo "$nvlink_output" | grep -E "$link_line_re" | grep "<inactive>" | sed 's/Link \([0-9]*\): <inactive>/Link \1: Inactive/')
 
             # When an expected number of active links is provided, only fail if
             # fewer links are active than expected. This supports SKUs where some
             # links are inactive by design.
             if [[ -n "$expected_active_links" ]]; then
-                total_links=$(echo "$nvlink_output" | grep -cE '^[[:space:]]*Link [0-9]+:')
-                inactive_count=$(echo "$nvlink_output" | grep -E '^[[:space:]]*Link [0-9]+:' | grep -c "<inactive>")
+                total_links=$(echo "$nvlink_output" | grep -cE "$link_line_re")
+                inactive_count=$(echo "$nvlink_output" | grep -E "$link_line_re" | grep -c "<inactive>")
                 active_links=$((total_links - inactive_count))
                 if (( active_links < expected_active_links )); then
                     die 1 "$FUNCNAME: GPU $gpu_id has $active_links active nvlinks, expected at least $expected_active_links: $inactive_links. FaultCode: NHC2016"
