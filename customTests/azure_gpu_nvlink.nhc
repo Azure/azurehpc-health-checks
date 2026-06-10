@@ -5,6 +5,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/azure_common.nhc"
 
 function check_nvlink_status(){
+    # Optional argument: the minimum number of active nvlinks expected per GPU.
+    # Some SKUs (e.g. NCv5 H100 PCIE) only enable a subset of the available links
+    # by design, so the remaining links are expected to be inactive. When this
+    # argument is omitted, every link must be active (default behavior).
+    expected_active_links=$1
+
     # Check if nvlink is enabled
     num_gpus=$(nvidia-smi --list-gpus | wc -l)
     nvlink_status=$(nvidia-smi nvlink --status)
@@ -33,10 +39,29 @@ function check_nvlink_status(){
             die 1 "$FUNCNAME: GPU $gpu_id has all nvlinks inactive"
             return 1
         elif [[ $nvlink_output == *"inactive"* ]]; then
+            # Pattern that matches only actual per-link status lines (e.g. "Link 0:")
+            link_line_re='^[[:space:]]*Link [0-9]+:'
+
             # Extract and display the information about inactive links
-            inactive_links=$(echo "$nvlink_output" | grep "Link" | grep "<inactive>" | sed 's/Link \([0-9]*\): <inactive>/Link \1: Inactive/')
-            die 1 "$FUNCNAME: GPU $gpu_id has nvlinks inactive: $inactive_links. FaultCode: NHC2016"
-            return 1
+            inactive_links=$(echo "$nvlink_output" | grep -E "$link_line_re" | grep "<inactive>" | sed 's/Link \([0-9]*\): <inactive>/Link \1: Inactive/')
+
+            # When an expected number of active links is provided, only fail if
+            # fewer links are active than expected. This supports SKUs where some
+            # links are inactive by design.
+            if [[ -n "$expected_active_links" ]]; then
+                total_links=$(echo "$nvlink_output" | grep -cE "$link_line_re")
+                inactive_count=$(echo "$nvlink_output" | grep -E "$link_line_re" | grep -c "<inactive>")
+                active_links=$((total_links - inactive_count))
+                if (( active_links < expected_active_links )); then
+                    die 1 "$FUNCNAME: GPU $gpu_id has $active_links active nvlinks, expected at least $expected_active_links: $inactive_links. FaultCode: NHC2016"
+                    return 1
+                else
+                    pass 0 "$FUNCNAME: GPU $gpu_id has $active_links active nvlinks (expected at least $expected_active_links). Inactive links: $inactive_links."
+                fi
+            else
+                die 1 "$FUNCNAME: GPU $gpu_id has nvlinks inactive: $inactive_links. FaultCode: NHC2016"
+                return 1
+            fi
         else
             pass 0 "$FUNCNAME: GPU $gpu_id has all nvlinks active."
         fi
