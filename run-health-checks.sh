@@ -2,6 +2,7 @@
 
 AZ_NHC_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCK_IMG_NAME_NV="mcr.microsoft.com/aznhc/aznhc-nv"
+DOCK_IMG_NAME_NV_ARM="mcr.microsoft.com/aznhc/aznhc-nv:aarch64"
 DOCK_IMG_NAME_CPU=$DOCK_IMG_NAME_NV # Default to the NV image
 DOCK_IMG_NAME_AMD="mcr.microsoft.com/aznhc/aznhc-rocm"
 DOCK_CONT_NAME=aznhc
@@ -217,11 +218,19 @@ echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
 
 if lspci | grep -iq NVIDIA ; then
     NVIDIA_RT="--gpus all"
-    DOCK_IMG_NAME=$DOCK_IMG_NAME_NV
+    if [ "$(uname -m)" == "aarch64" ]; then
+        DOCK_IMG_NAME=$DOCK_IMG_NAME_NV_ARM
+    else
+        DOCK_IMG_NAME=$DOCK_IMG_NAME_NV
+    fi
 elif lspci | grep -iq AMD ; then
     DOCK_IMG_NAME=$DOCK_IMG_NAME_AMD
 else
-    DOCK_IMG_NAME=$DOCK_IMG_NAME_CPU
+    if [ "$(uname -m)" == "aarch64" ]; then
+        DOCK_IMG_NAME=$DOCK_IMG_NAME_NV_ARM
+    else
+        DOCK_IMG_NAME=$DOCK_IMG_NAME_CPU
+    fi
 fi
 
 WORKING_DIR="/azure-nhc"

@@ -25,6 +25,15 @@ Notes:
 - To view the latest Nvidia/CUDA image current software versions take a look at the [CUDA Dockerfile](./azure-nvrt-nhc.dockerfile)
 - To view the latest AMD/ROCm image current software versions take a look at the [ROCm Dockerfile](./azure-rocm-nhc.dockerfile)
 
+### aarch64 / Grace (GB200, GB300, ...) SKUs ###
+
+Grace-based Nvidia SKUs use a separate arm64-native image, tagged `mcr.microsoft.com/aznhc/aznhc-nv:aarch64`. It is built from the [aarch64 CUDA Dockerfile](./azure-nvrt-nhc-aarch64.dockerfile), which documents in its header comment how it differs from the x86_64 image (CUDA 13 base for Blackwell support, DOCA-Host apt repo instead of MLNX_OFED, no STREAM binary).
+
+- `run-health-checks.sh` auto-selects this image whenever it detects `uname -m == aarch64`, so no extra flags are needed on Grace hosts.
+- Pull it explicitly with: ```sudo ./pull-image-mcr.sh cuda-arm```
+- Build it locally with: ```sudo ./build_image.sh cuda-arm``` (must be run on an aarch64 host with Docker's arm64 default platform)
+- GPUDirect RDMA (`check_ib_bw_gdr`) requires the `nvidia_peermem` kernel module to be loaded on the **host** (`sudo modprobe nvidia-peermem`). If it isn't loaded, GDR IB tests fail with `Couldn't allocate MR with error=14`, which can look like a hardware fault but is a missing host module.
+
 ## Run Modes ##
 
 ### Prefered Method: Run Script ###

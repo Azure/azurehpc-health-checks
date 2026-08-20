@@ -18,6 +18,8 @@ Az NHC is ran inside an Ubuntu 22.04 docker container. See instructions for how 
 
     Any changes to how the ```docker run``` command is ran needs to be updated in [Docker docs](./dockerfile/README.MD) and any additional instructions in the main [docs](./README.md).
 
+    Grace-based (aarch64) SKUs use a separate image built from [azure-nvrt-nhc-aarch64.dockerfile](./dockerfile/azure-nvrt-nhc-aarch64.dockerfile), tagged `mcr.microsoft.com/aznhc/aznhc-nv:aarch64`. `run-health-checks.sh` selects it automatically based on `uname -m`. When changing NVIDIA/IB tooling, check whether the aarch64 dockerfile needs the same update (it uses a different apt repo, DOCA-Host, instead of MLNX_OFED, since no aarch64 MOFED build exists) — see that dockerfile's header comment for details.
+
 2. Launching the docker container as an interactive session may be easier to develop on:
 
   ```bash
