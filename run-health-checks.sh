@@ -216,21 +216,33 @@ fi
 
 echo "Running health checks using $CONF_FILE and outputting to $OUTPUT_PATH"
 
+CPU_ARCH=$(uname -m)
+case "$CPU_ARCH" in
+    x86_64)
+        DOCK_IMG_NAME_NV_ARCH=$DOCK_IMG_NAME_NV
+        DOCK_IMG_NAME_CPU_ARCH=$DOCK_IMG_NAME_CPU
+        ;;
+    aarch64)
+        DOCK_IMG_NAME_NV_ARCH=$DOCK_IMG_NAME_NV_ARM
+        DOCK_IMG_NAME_CPU_ARCH=$DOCK_IMG_NAME_NV_ARM
+        ;;
+    *)
+        echo "Unsupported CPU architecture: $CPU_ARCH" >&2
+        exit 1
+        ;;
+esac
+
 if lspci | grep -iq NVIDIA ; then
     NVIDIA_RT="--gpus all"
-    if [ "$(uname -m)" == "aarch64" ]; then
-        DOCK_IMG_NAME=$DOCK_IMG_NAME_NV_ARM
-    else
-        DOCK_IMG_NAME=$DOCK_IMG_NAME_NV
-    fi
+    DOCK_IMG_NAME=$DOCK_IMG_NAME_NV_ARCH
 elif lspci | grep -iq AMD ; then
+    if [[ "$CPU_ARCH" != "x86_64" ]]; then
+        echo "Unsupported CPU architecture for AMD GPUs: $CPU_ARCH" >&2
+        exit 1
+    fi
     DOCK_IMG_NAME=$DOCK_IMG_NAME_AMD
 else
-    if [ "$(uname -m)" == "aarch64" ]; then
-        DOCK_IMG_NAME=$DOCK_IMG_NAME_NV_ARM
-    else
-        DOCK_IMG_NAME=$DOCK_IMG_NAME_CPU
-    fi
+    DOCK_IMG_NAME=$DOCK_IMG_NAME_CPU_ARCH
 fi
 
 WORKING_DIR="/azure-nhc"
