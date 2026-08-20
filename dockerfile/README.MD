@@ -2,7 +2,9 @@
 
 ## OverView ##
 
-Azure NHC is run within an Ubuntu 22.04 docker container with either Nvidia or AMD runtime enabled.
+Azure NHC runs in Docker containers with either the Nvidia or AMD runtime
+enabled. Container dependencies vary by image and are independent of the host
+operating system.
 
 There are two ways of running Az NHC, with the provided run script and also as a stand alone container.
 
@@ -27,7 +29,7 @@ Notes:
 
 ### aarch64 / Grace (GB200, GB300, ...) SKUs ###
 
-Grace-based Nvidia SKUs use a separate arm64-native image, tagged `mcr.microsoft.com/aznhc/aznhc-nv:aarch64`. It is built from the [aarch64 CUDA Dockerfile](./azure-nvrt-nhc-aarch64.dockerfile), which documents in its header comment how it differs from the x86_64 image (CUDA 13 base for Blackwell support, DOCA-Host apt repo instead of MLNX_OFED, no STREAM binary).
+Grace-based Nvidia SKUs use a separate arm64-native image, tagged `mcr.microsoft.com/aznhc/aznhc-nv:aarch64`. It is built from the [aarch64 CUDA Dockerfile](./azure-nvrt-nhc-aarch64.dockerfile) using Ubuntu 24.04, CUDA 13, and DOCA-Host packages. STREAM is not currently included in this image.
 
 - `run-health-checks.sh` auto-selects this image whenever it detects `uname -m == aarch64`, so no extra flags are needed on Grace hosts.
 - Pull it explicitly with: ```sudo ./pull-image-mcr.sh cuda-arm```
