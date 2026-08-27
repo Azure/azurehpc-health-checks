@@ -167,7 +167,6 @@ function check_nvBW_gpu_bw()
     for line in "${nvout[@]}"; do
         if [[ $line == Running* ]]; then
             if [ "$current_test" != "" ]; then
-                extracted_lines="$(echo "${extracted_lines}" | awk 'NR>1')"
                 result_lines_array["$current_test"]="$extracted_lines"
             fi
             # Set current test and remove extra spaces and dots
@@ -175,14 +174,13 @@ function check_nvBW_gpu_bw()
             extracted_lines=""
         fi
 
-        if [[ ! "$line" == *"memcpy"*  ]]; then
+        if [[ $line =~ ^[[:space:]]*[0-9]+([[:space:]]+([0-9]+([.][0-9]+)?|N/A))+[[:space:]]*$ ]]; then
             extracted_lines+="$line"$'\n'
         fi
     done
     
     # Save the last test's extracted lines
     if [ "$current_test" != "" ]; then
-        extracted_lines="$(echo "${extracted_lines}" | awk 'NR>1')"
         result_lines_array["$current_test"]="$extracted_lines"
     fi
 
