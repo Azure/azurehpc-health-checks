@@ -14,10 +14,10 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.7.0
       
       - name: Trigger ADO pipeline
-        uses: Azure/pipelines@v1.2
+        uses: Azure/pipelines@fac73367a779c3bd02c073d6c41bc81d18b2c0ad # v1.2
         with:
           azure-devops-project-url: 'https://dev.azure.com/hpc-platform-team/hpc-vm-health-check-framework'
           azure-pipeline-name: 'hpc-vm-health-check-framework'
