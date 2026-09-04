@@ -3,7 +3,7 @@
 source ${AZ_NHC_ROOT:-$NHC_DIR}/test/unit-tests/nhc-test-common.sh
 source "$AZ_NHC_ROOT/customTests/azure_gpu_bandwidth.nhc"
 
-@test "Parse nvbandwidth v0.10 result matrices" {
+@test "check_nvBW_gpu_bw: Parse nvbandwidth v0.10 result matrices" {
     nvbandwidth_output=$(<"$AZ_NHC_ROOT/test/data/nvbandwidth_v0.10_output.txt")
 
     parse_nvbandwidth_results "$nvbandwidth_output" 2 "$H2D" "$D2H" "$P2P"
@@ -13,7 +13,7 @@ source "$AZ_NHC_ROOT/customTests/azure_gpu_bandwidth.nhc"
     [[ "${result_lines_array[$P2P]}" == $'0       N/A    276.07\n1    276.19       N/A' ]]
 }
 
-@test "Reject nvbandwidth output without a result matrix" {
+@test "check_nvBW_gpu_bw: Reject nvbandwidth output without a result matrix" {
     run parse_nvbandwidth_results \
         $'Running host_to_device_memcpy_ce.\nSUM host_to_device_memcpy_ce 51.97' \
         2 "$H2D"
@@ -21,7 +21,7 @@ source "$AZ_NHC_ROOT/customTests/azure_gpu_bandwidth.nhc"
     [[ "$status" -ne 0 ]]
 }
 
-@test "Reject an incomplete nvbandwidth result matrix" {
+@test "check_nvBW_gpu_bw: Reject an incomplete nvbandwidth result matrix" {
     nvbandwidth_output=$(<"$AZ_NHC_ROOT/test/data/nvbandwidth_v0.10_output.txt")
     nvbandwidth_output="${nvbandwidth_output//$'1    276.19       N/A\n'/}"
 
