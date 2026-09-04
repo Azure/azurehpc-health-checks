@@ -177,6 +177,7 @@ function save_nvbandwidth_matrix(){
     return 0
 }
 
+# Usage: parse_nvbandwidth_results "$nvbandwidth_output" 2 "$H2D" "$D2H" "$P2P"
 function parse_nvbandwidth_results(){
     local nvresult=$1
     local gpu_count=$2
