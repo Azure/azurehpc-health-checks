@@ -35,13 +35,19 @@ if lspci | grep -iq NVIDIA ; then
     NVIDIA_RT="--runtime=nvidia"
 fi
 
+if [ "$(uname -m)" == "aarch64" ]; then
+    DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv:aarch64"
+else
+    DOCK_IMG_NAME="mcr.microsoft.com/aznhc/aznhc-nv"
+fi
+
 sudo docker run -itd --name=aznhc --net=host -e TIMEOUT=500 --rm \
 ${NVIDIA_RT} --cap-add SYS_ADMIN --cap-add=CAP_SYS_NICE \
 --shm-size=8g \
 --privileged \
 -v $NHC_DIR/customTests:/azure-nhc/customTests \
 -v $NHC_DIR/test:/azure-nhc/test \
-mcr.microsoft.com/aznhc/aznhc-nv bash
+${DOCK_IMG_NAME} bash
 
 sudo docker exec -it aznhc bash -c "cp /azure-nhc/customTests/azure_common.nhc /etc/nhc/scripts/"
 

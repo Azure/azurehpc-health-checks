@@ -121,6 +121,121 @@ function evaluate_nvBW_result(){
     return 0
 }
 
+function save_nvbandwidth_matrix(){
+    local test_name=$1
+    local matrix_lines=$2
+    local matrix_line_count=$3
+    local gpu_count=$4
+    local expected_data_rows
+    local row_index
+    local column_index
+    local -a matrix_rows
+    local -a fields
+
+    if [[ -z "$test_name" ]]; then
+        return 0
+    fi
+
+    case "$test_name" in
+        "$H2D"|"$D2H")
+            expected_data_rows=1
+            ;;
+        "$P2P")
+            expected_data_rows=$gpu_count
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    if (( matrix_line_count != expected_data_rows + 1 )); then
+        return 1
+    fi
+
+    readarray -t matrix_rows < <(printf '%s' "$matrix_lines")
+    read -ra fields <<< "${matrix_rows[0]}"
+    if (( ${#fields[@]} != gpu_count )); then
+        return 1
+    fi
+    for ((column_index=0; column_index<gpu_count; column_index++)); do
+        if [[ "${fields[$column_index]}" != "$column_index" ]]; then
+            return 1
+        fi
+    done
+
+    for ((row_index=1; row_index<${#matrix_rows[@]}; row_index++)); do
+        read -ra fields <<< "${matrix_rows[$row_index]}"
+        if (( ${#fields[@]} != gpu_count + 1 )); then
+            return 1
+        fi
+        if [[ "${fields[0]}" != "$((row_index - 1))" ]]; then
+            return 1
+        fi
+    done
+
+    result_lines_array["$test_name"]="$(printf '%s\n' "${matrix_rows[@]:1}")"
+    return 0
+}
+
+# Usage: parse_nvbandwidth_results "$nvbandwidth_output" 2 "$H2D" "$D2H" "$P2P"
+function parse_nvbandwidth_results(){
+    local nvresult=$1
+    local gpu_count=$2
+    shift 2
+    local -a expected_tests=( "$@" )
+    local current_test=""
+    local matrix_lines=""
+    local matrix_line_count=0
+    local reading_matrix=false
+    local matrix_row_regex='^[[:space:]]*[0-9]+([[:space:]]+(N/A|[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?))+[[:space:]]*$'
+    local expected_test
+    local line
+
+    if (( gpu_count <= 0 || ${#expected_tests[@]} == 0 )); then
+        return 1
+    fi
+
+    result_lines_array=()
+
+    while IFS= read -r line; do
+        if [[ "$line" == Running* ]]; then
+            if ! save_nvbandwidth_matrix "$current_test" "$matrix_lines" "$matrix_line_count" "$gpu_count"; then
+                return 1
+            fi
+
+            current_test="${line#Running}"
+            current_test="${current_test//./}"
+            current_test="${current_test#"${current_test%%[![:space:]]*}"}"
+            matrix_lines=""
+            matrix_line_count=0
+            reading_matrix=false
+            continue
+        fi
+
+        if [[ "$line" == *"memcpy"* ]]; then
+            reading_matrix=true
+            continue
+        fi
+
+        if [[ "$reading_matrix" == true ]] && [[ "$line" =~ $matrix_row_regex ]]; then
+            matrix_lines+="$line"$'\n'
+            matrix_line_count=$((matrix_line_count + 1))
+        elif [[ "$reading_matrix" == true ]] && (( matrix_line_count > 0 )); then
+            reading_matrix=false
+        fi
+    done <<< "$nvresult"
+
+    if ! save_nvbandwidth_matrix "$current_test" "$matrix_lines" "$matrix_line_count" "$gpu_count"; then
+        return 1
+    fi
+
+    for expected_test in "${expected_tests[@]}"; do
+        if [[ -z "${result_lines_array[$expected_test]+present}" ]]; then
+            return 1
+        fi
+    done
+}
+
 function check_nvBW_gpu_bw()
 {
     # Check GPU BW using NVBandwidth
@@ -156,34 +271,9 @@ function check_nvBW_gpu_bw()
     if ! catch_error "$cmd" "$error_nbw"; then
         return 0
     fi
-    nvresult=$output
-    IFS=$'\n'
-    nvout=( $nvresult )
-    IFS=$' \t\n'
-
-    current_test=""
-
-    # Extract the lines for each test
-    for line in "${nvout[@]}"; do
-        if [[ $line == Running* ]]; then
-            if [ "$current_test" != "" ]; then
-                extracted_lines="$(echo "${extracted_lines}" | awk 'NR>1')"
-                result_lines_array["$current_test"]="$extracted_lines"
-            fi
-            # Set current test and remove extra spaces and dots
-            current_test="${line#Running}" && current_test="${current_test//./}" && current_test="${current_test#"${current_test%%[![:space:]]*}"}"
-            extracted_lines=""
-        fi
-
-        if [[ ! "$line" == *"memcpy"*  ]]; then
-            extracted_lines+="$line"$'\n'
-        fi
-    done
-    
-    # Save the last test's extracted lines
-    if [ "$current_test" != "" ]; then
-        extracted_lines="$(echo "${extracted_lines}" | awk 'NR>1')"
-        result_lines_array["$current_test"]="$extracted_lines"
+    if ! parse_nvbandwidth_results "$output" "$ngpus" $cmd_args; then
+        die 1 "check_gpu_bw: failed to parse NVBandwidth results. FaultCode: NHCNA"
+        return 0
     fi
 
     evaluate_nvBW_result $EXP_GPU_PCIE_BW $EXP_P2P_BW

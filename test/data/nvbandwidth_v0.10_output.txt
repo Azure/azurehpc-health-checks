@@ -1,0 +1,26 @@
+Running host_to_device_memcpy_ce.
+memcpy CE CPU(row) -> GPU(column) bandwidth (GB/s)
+          0         1
+0     26.03     25.94
+
+SUM host_to_device_memcpy_ce 51.97
+COEFFICIENT_OF_VARIATION host_to_device_memcpy_ce 0.01
+NOTE: The reported results may not reflect the full capabilities of the platform.
+Performance can vary with software drivers, hardware clocks, and system topology.
+
+Running device_to_host_memcpy_ce.
+memcpy CE GPU(row) -> CPU(column) bandwidth (GB/s)
+          0         1
+0     25.97     26.00
+
+SUM device_to_host_memcpy_ce 51.97
+COEFFICIENT_OF_VARIATION device_to_host_memcpy_ce 0.02
+
+Running device_to_device_memcpy_read_ce.
+memcpy CE GPU(row) <- GPU(column) bandwidth (GB/s)
+          0         1
+0       N/A    276.07
+1    276.19       N/A
+
+SUM device_to_device_memcpy_read_ce 552.26
+COEFFICIENT_OF_VARIATION device_to_device_memcpy_read_ce 0.01
