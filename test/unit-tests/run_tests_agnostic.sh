@@ -62,3 +62,4 @@ source "$NHC_DIR/test/unit-tests/nhc-test-common.sh"
 # Run Unit Tests
 bats --pretty "$NHC_DIR/test/unit-tests/nhc-hardware-test.sh"
 bats --pretty "$NHC_DIR/test/unit-tests/nhc-ib-test.sh"
+bats --pretty "$NHC_DIR/test/unit-tests/nhc-gpu-agnostic.sh"
