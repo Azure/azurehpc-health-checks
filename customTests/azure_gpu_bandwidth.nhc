@@ -265,7 +265,11 @@ function check_nvBW_gpu_bw()
     if [[ "$(check_nvlink_enabled)" == true && -n "$EXP_P2P_BW" ]]; then
         cmd_args="$cmd_args $P2P"
     fi  
-    cmd="$NVBW -t $cmd_args -i 10"
+    nvbw_args=""
+    if [[ "${NVBW_DISABLE_AFFINITY:-0}" == "1" ]]; then
+        nvbw_args="-d"
+    fi
+    cmd="$NVBW -t $cmd_args -i 10 $nvbw_args"
 
     error_nbw="check_gpu_bw: Failed to run NVBandwidth with error code"
     if ! catch_error "$cmd" "$error_nbw"; then
