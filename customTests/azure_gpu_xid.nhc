@@ -19,7 +19,9 @@ function check_gpu_xid()
    fi
 
    logfile=${AZ_NHC_ROOT}/output/aznhc.log
-   kernel_log="$AZ_NHC_ROOT/syslog"
+   #kernel_log="$AZ_NHC_ROOT/syslog"
+   kernel_log=$2
+   #kernel_log="/var/log/syslog"
    if [[ ! -f $kernel_log ]]; then
       log "$FUNCNAME: $kernel_log not found. Skipping GPU Xid error test."
       return 0
