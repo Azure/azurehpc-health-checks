@@ -81,7 +81,7 @@ done
 @test "Fail case: check_nccl_allreduce" {
     set +e
     topo_file=$(get_topofile)
-    result=$(check_nccl_allreduce 600.0 1 8G $topo_file)
+    result=$(check_nccl_allreduce 100000 1 8G $topo_file)
     set -e
     [[ "$result" == *"ERROR"* ]]
 }
