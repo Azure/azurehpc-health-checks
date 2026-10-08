@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# Active GPU memory correctness test using the Pantheon March C- workload
+# (https://github.com/pantheongpu/pantheon, pip package "pantheon-gpu").
+# March C- detects stuck-at, transition and coupling faults that ECC counters
+# and XID checks only report after the fact. Works on NVIDIA (CUDA) and AMD (ROCm).
+#
+# Usage: check_gpu_memtest [duration_seconds] [memory_percent]
+#   duration_seconds  Time Pantheon spends on the test (default 60)
+#   memory_percent    Percentage of free VRAM to test (default 90)
+#
+# Pantheon exits non-zero when verification finds memory errors (or the test
+# fails to run). The check is skipped, with a log message, if Pantheon is not
+# installed so that adding it to a conf file is safe on images without it.
+
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/azure_common.nhc"
+
+# Extra time allowed on top of the test duration for startup and the first
+# build of the kernels, after which the run is killed and the check fails.
+GPU_MEMTEST_TIMEOUT_MARGIN=${GPU_MEMTEST_TIMEOUT_MARGIN:-300}
+
+function check_gpu_memtest() {
+   local duration="${1:-60}"
+   local mem_pct="${2:-90}"
+   local pantheon_bin="${PANTHEON_BIN:-pantheon}"
+
+   if ! [[ "$duration" =~ ^[0-9]+$ ]] || [[ "$duration" -eq 0 ]]; then
+      die 1 "$FUNCNAME: duration must be a positive integer number of seconds, got '$duration'. FaultCode: NHCNA"
+      return 1
+   fi
+   if ! [[ "$mem_pct" =~ ^[0-9]+$ ]] || [[ "$mem_pct" -lt 1 || "$mem_pct" -gt 100 ]]; then
+      die 1 "$FUNCNAME: memory percent must be between 1 and 100, got '$mem_pct'. FaultCode: NHCNA"
+      return 1
+   fi
+
+   if ! command -v "$pantheon_bin" > /dev/null 2>&1; then
+      log "Warning: $FUNCNAME: '$pantheon_bin' not found. Skipping GPU memory test."
+      return 0
+   fi
+
+   # Pantheon writes its reports to the current directory, keep them out of the way.
+   local workdir
+   workdir=$(mktemp -d "${TMPDIR:-/tmp}/aznhc-memtest.XXXXXX") || {
+      die 1 "$FUNCNAME: unable to create a working directory. FaultCode: NHCNA"
+      return 1
+   }
+
+   local out rc
+   out=$(cd "$workdir" && timeout "$((duration + GPU_MEMTEST_TIMEOUT_MARGIN))" \
+      "$pantheon_bin" --test march_test --gpu all --duration "$duration" --mem "$mem_pct" --verify 2>&1)
+   rc=$?
+   rm -rf "$workdir"
+   dbg "$FUNCNAME: pantheon exit code $rc"
+
+   if [[ $rc -eq 124 ]]; then
+      log "$out"
+      die 1 "$FUNCNAME: pantheon march_test did not finish within $((duration + GPU_MEMTEST_TIMEOUT_MARGIN))s. FaultCode: NHCNA"
+      return 1
+   elif [[ $rc -ne 0 ]]; then
+      log "$out"
+      if echo "$out" | grep -q "Verification: FAIL"; then
+         die 1 "$FUNCNAME: GPU memory errors detected by march_test (exit code $rc). FaultCode: NHCNA"
+      else
+         die 1 "$FUNCNAME: pantheon march_test failed to run (exit code $rc). FaultCode: NHCNA"
+      fi
+      return 1
+   fi
+
+   pass 0 "$FUNCNAME: march_test passed on all GPUs (${duration}s, ${mem_pct}% of free memory)"
+   return 0
+}

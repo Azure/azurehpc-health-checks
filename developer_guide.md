@@ -57,6 +57,7 @@ when changing a Docker image.
       - check_cuda_bw
       - check_gpu_ecc
       - check_gpu_clock_throttling
+      - check_gpu_memtest (optional, requires Pantheon in the image)
       - check_nccl_allreduce
     - CPU SKU
       - check_cpu_stream

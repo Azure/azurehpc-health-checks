@@ -29,3 +29,58 @@ source "$AZ_NHC_ROOT/customTests/azure_gpu_bandwidth.nhc"
 
     [[ "$status" -ne 0 ]]
 }
+
+# check_gpu_memtest: a stub "pantheon" executable stands in for the real tool,
+# so these tests run without a GPU.
+@test "check_gpu_memtest: Pass when pantheon exits 0" {
+    source "$AZ_NHC_ROOT/customTests/azure_gpu_memtest.nhc"
+    stub=$(mktemp)
+    printf '#!/bin/bash\nexit 0\n' > "$stub"
+    chmod +x "$stub"
+    PANTHEON_BIN="$stub" run check_gpu_memtest 1
+    rm -f "$stub"
+
+    [[ "$status" -eq 0 ]]
+    [[ "$output" != *"ERROR"* ]]
+}
+
+@test "check_gpu_memtest: Fail when pantheon reports memory errors" {
+    source "$AZ_NHC_ROOT/customTests/azure_gpu_memtest.nhc"
+    stub=$(mktemp)
+    printf '#!/bin/bash\necho "Verification: FAIL (1 march errors over 1 passes)"\nexit 1\n' > "$stub"
+    chmod +x "$stub"
+    PANTHEON_BIN="$stub" run check_gpu_memtest 1
+    rm -f "$stub"
+
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"ERROR"* ]]
+    [[ "$output" == *"memory errors detected"* ]]
+}
+
+@test "check_gpu_memtest: Fail when pantheon exceeds the timeout" {
+    source "$AZ_NHC_ROOT/customTests/azure_gpu_memtest.nhc"
+    stub=$(mktemp)
+    printf '#!/bin/bash\nsleep 30\n' > "$stub"
+    chmod +x "$stub"
+    GPU_MEMTEST_TIMEOUT_MARGIN=1 PANTHEON_BIN="$stub" run check_gpu_memtest 1
+    rm -f "$stub"
+
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"did not finish"* ]]
+}
+
+@test "check_gpu_memtest: Skip when pantheon is not installed" {
+    source "$AZ_NHC_ROOT/customTests/azure_gpu_memtest.nhc"
+    PANTHEON_BIN=/nonexistent/pantheon run check_gpu_memtest 1
+
+    [[ "$status" -eq 0 ]]
+    [[ "$output" == *"Skipping"* ]]
+}
+
+@test "check_gpu_memtest: Reject an invalid duration" {
+    source "$AZ_NHC_ROOT/customTests/azure_gpu_memtest.nhc"
+    run check_gpu_memtest abc
+
+    [[ "$status" -ne 0 ]]
+    [[ "$output" == *"ERROR"* ]]
+}
