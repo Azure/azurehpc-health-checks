@@ -125,8 +125,7 @@ function check_ib_bw_gdr_data_direct(){
    # Endpoints are IB_DEVICE:GPU_INDEX because DataDirect requires each HCA's affine GPU.
    for endpoint in "$@";
    do
-      run_ib_bw_gdr $EXP_IB_BW $port ${endpoint%%:*} ${endpoint##*:} "--use_cuda_dmabuf --use_data_direct" &
-      pid_array+=($!)
+      NHC_CHECK_ALL=1 run_ib_bw_gdr $EXP_IB_BW $port ${endpoint%%:*} ${endpoint##*:} "--use_cuda_dmabuf --use_data_direct" &      pid_array+=($!)
       (( port++ ))
    done
 
