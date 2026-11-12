@@ -9,10 +9,18 @@ function collect_nccl_allreduce_ib_loopback_data() {
 
    MESSAGE_SIZE=$1
    TOPOFILE=$2
+   GDR_LEVEL=$3
    gpu_count=$(nvidia-smi --list-gpus | wc -l)
-   
+
+   if [[ -z "$gpu_count" || "$gpu_count" -eq 0 ]]; then
+      return 1
+   fi
+
    MPI_ARGS="-np $gpu_count --map-by ppr:$gpu_count:node -bind-to numa -mca coll_hcoll_enable 0 --allow-run-as-root"
-   ENVIRON_VARS="-x LD_LIBRARY_PATH=$LD_LIBRARY_PATH -x NCCL_IB_PCI_RELAXED_ORDERING=1 -x UCX_IB_PCI_RELAXED_ORDERING=on -x UCX_TLS=tcp -x UCX_NET_DEVICES=eth0 -x CUDA_DEVICE_ORDER=PCI_BUS_ID -x NCCL_SOCKET_IFNAME=eth0 -x NCCL_NET_GDR_LEVEL=5 -x NCCL_TOPO_FILE=$TOPOFILE -x NCCL_SHM_DISABLE=1 -x NCCL_P2P_DISABLE=1"
+   ENVIRON_VARS="-x LD_LIBRARY_PATH=$LD_LIBRARY_PATH -x NCCL_IB_PCI_RELAXED_ORDERING=1 -x UCX_IB_PCI_RELAXED_ORDERING=on -x UCX_TLS=tcp -x UCX_NET_DEVICES=eth0 -x CUDA_DEVICE_ORDER=PCI_BUS_ID -x NCCL_SOCKET_IFNAME=eth0 -x NCCL_NET_GDR_LEVEL=$GDR_LEVEL -x NCCL_SHM_DISABLE=1 -x NCCL_P2P_DISABLE=1"
+   if [[ -n "$TOPOFILE" ]]; then
+      ENVIRON_VARS+=" -x NCCL_TOPO_FILE=$TOPOFILE"
+   fi
    NCCL_ARGS="-b $MESSAGE_SIZE -f 2 -g 1 -e $MESSAGE_SIZE -c 1"
 
    # ensure unloaded before use
@@ -20,7 +28,7 @@ function collect_nccl_allreduce_ib_loopback_data() {
    nccl_allreduce_ib_loopback_out=$(mpirun $MPI_ARGS $ENVIRON_VARS $ALL_REDUCE_PATH $NCCL_ARGS)
    nccl_allreduce_ib_loopback_out_rc=$?
    if [[ $nccl_allreduce_ib_loopback_out_rc != 0 ]]; then
-      die 1 "$FUNCNAME: nccl_allreduce (IB loopback) returned error code $nccl_allreduce_ib_loopback_out_rc. FaultCode: NHCNA"
+      return 1
    fi
    IFS=$'\n'
    nccl_allreduce_ib_loopback_out_lines=( $nccl_allreduce_ib_loopback_out )
@@ -35,26 +43,41 @@ function check_nccl_allreduce_ib_loopback() {
    REPEATS="${2:-1}"
    MESSAGE_SIZE=$3
    TOPOFILE=$4
+   GDR_LEVEL=${5:-SYS}
 
    if ! check_all_reduce_dependencies ; then
       die 1 -e "$FUNCNAME: Missing one or more dependencies. FaultCode: NHCNA"
       return 0
    fi
 
+   measured_bw=
    for iter in $(seq 1 $REPEATS)
    do
-      collect_nccl_allreduce_ib_loopback_data $MESSAGE_SIZE $TOPOFILE
+      avg_bus_bw=
+      if ! collect_nccl_allreduce_ib_loopback_data "$MESSAGE_SIZE" "$TOPOFILE" "$GDR_LEVEL"; then
+         dbg "Iteration ${iter} of ${REPEATS} failed: nccl_allreduce (IB loopback) returned error code $nccl_allreduce_ib_loopback_out_rc"
+         continue
+      fi
 
       for ((i=0; i<${#nccl_allreduce_ib_loopback_out_lines[*]}; i++))
       do
-         if [[ "${nccl_allreduce_ib_loopback_out_lines[$i]//bandwidth}" != "${nccl_allreduce_ib_loopback_out_lines[$i]}" ]]
+         if [[ "${nccl_allreduce_ib_loopback_out_lines[$i]}" == *"FAILED"* ]]; then
+            avg_bus_bw=
+            break
+         fi
+         if [[ "${nccl_allreduce_ib_loopback_out_lines[$i]}" == *"Avg bus bandwidth"* ]]
          then
-            IFS=$' \t\n'
-            nccl_allreduce_ib_loopback_out_line=( ${nccl_allreduce_ib_loopback_out_lines[$i]} )
-            avg_bus_bw=${nccl_allreduce_ib_loopback_out_line[5]}
+            avg_bus_bw=${nccl_allreduce_ib_loopback_out_lines[$i]##*:}
+            avg_bus_bw=${avg_bus_bw//[[:space:]]/}
             break
          fi
       done
+      if [[ ! "$avg_bus_bw" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+         dbg "$nccl_allreduce_ib_loopback_out"
+         dbg "Iteration ${iter} of ${REPEATS} failed: no valid NCCL allreduce IB loopback bandwidth result (got '$avg_bus_bw')"
+         continue
+      fi
+      measured_bw=$avg_bus_bw
       dbg "nccl_all_red_lb: $avg_bus_bw  GB/s"
       if (( $(echo "$avg_bus_bw < $EXP_NCCL_ALLREDUCE_IB_LOOPBACK_BW" | bc -l) ));
       then
@@ -67,6 +90,10 @@ function check_nccl_allreduce_ib_loopback() {
       fi
    done
 
-   die 1 "$FUNCNAME: NCCL allreduce, BUS BW (expected >=$EXP_NCCL_ALLREDUCE_IB_LOOPBACK_BW GB/s, but measured $avg_bus_bw GB/s). FaultCode: NHC2003"
+   if [[ -n "$measured_bw" ]]; then
+      die 1 "$FUNCNAME: NCCL allreduce, BUS BW (expected >=$EXP_NCCL_ALLREDUCE_IB_LOOPBACK_BW GB/s, but measured $measured_bw GB/s). FaultCode: NHC2003"
+   else
+      die 1 "$FUNCNAME: NCCL allreduce IB loopback produced no valid result in $REPEATS attempts. FaultCode: NHCNA"
+   fi
    return 0
 }

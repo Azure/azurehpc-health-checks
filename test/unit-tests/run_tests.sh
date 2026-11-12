@@ -53,7 +53,7 @@ sudo docker exec -it aznhc bash -c "cp /azure-nhc/customTests/azure_common.nhc /
 
 if lspci | grep -iq NVIDIA ; then
     echo "Running GPU Unit tests"
-    sudo docker exec -it aznhc bash -c "bats --pretty /azure-nhc/test/unit-tests/nhc-gpu-test.sh"
+    sudo docker exec -it aznhc bash -c "bats --pretty /azure-nhc/test/unit-tests/nhc-gpu-test.sh /azure-nhc/test/unit-tests/nhc-gpu-agnostic.sh"
     unit_test_status=$?
 elif lspci | grep -iq AMD ; then
 	# AMD installs

@@ -18,8 +18,9 @@ source $NHC_DIR/test/unit-tests/nhc-test-common.sh
     fi
     set +e
     out=$(sudo $NHC_PATH -c $bad_conf_file -o $logpath)
-    set -e
-    echo "$out" | grep -q "ERROR"
     result=$?
-    [ "$result" -eq 0 ]
+    set -e
+    echo "$out"
+    [ "$result" -ne 0 ]
+    echo "$out" | grep -q "ERROR"
 }

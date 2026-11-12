@@ -31,6 +31,8 @@ function get_sad_path_conf(){
         conf_name="nc96ads_a100_v4"
     elif echo "$SKU" | grep -q "nd40rs_v2"; then
         conf_name="nd40rs_v2"
+    elif echo "$SKU" | grep -q "nd128isr_gb300_v6"; then
+        conf_name="nd128isr_gb300_v6"
     else
         echo "Unit-test for this SKU $SKU is not supported" 
         return 1
@@ -53,6 +55,9 @@ function get_topofile(){
         topo_file="$AZ_NHC_ROOT/customTests/topofiles/ncv4-topo.xml"
     elif echo "$SKU" | grep -q "nd40rs_v2"; then
         topo_file="$AZ_NHC_ROOT/customTests/topofiles/ndv2-topo.xml"
+    elif echo "$SKU" | grep -q "nd128isr_gb300_v6"; then
+        # GB300 exposes its topology directly to NCCL.
+        topo_file=""
     else
         echo "there is no topofile for this SKU $SKU" 
         return 1
@@ -68,6 +73,8 @@ function get_ib_type(){
         echo "gdr"
     elif echo "$SKU" | grep -q "nd40rs_v2" || echo "$SKU" | grep -q "hb176rs_v4"; then
         echo "non_gdr"
+    elif echo "$SKU" | grep -q "nd128isr_gb300_v6"; then
+        echo "data_direct"
     else
         echo "none" 
     fi

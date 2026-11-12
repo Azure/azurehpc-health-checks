@@ -17,6 +17,7 @@ function run_ib_bw_gdr(){
    PORTARG=$2
    device=$3
    dev_idx=$4
+   DATA_DIRECT_ARGS=$5
  
    #NUMA mapping
    if ! numa_node=$(get_ib_numa_node "$device"); then
@@ -27,7 +28,7 @@ function run_ib_bw_gdr(){
    MESSAGE_SIZE=8388608
    IB_WRITE_BW=$( basename $IB_WRITE_BW_EXE_PATH )
    IB_WRITE_BW_ARGS="-p $PORTARG -s $MESSAGE_SIZE -x 0 -F --report_gbits  --perform_warm_up"
-   IB_WRITE_BW_OUT1=$(numactl -N $numa_node -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=$dev_idx -d $device > /dev/null &)
+   IB_WRITE_BW_OUT1=$(numactl -N $numa_node -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=$dev_idx $DATA_DIRECT_ARGS -d $device > /dev/null &)
    IB_WRITE_BW_OUT1_RC=$?
  
    if [[ $IB_WRITE_BW_OUT1_RC != 0 ]]; then
@@ -40,7 +41,7 @@ function run_ib_bw_gdr(){
   
   sleep $SLEEP_TIME
   device_peer=$device
-  IB_WRITE_BW_OUT2=$(numactl -N $numa_node  -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=$dev_idx -d $device_peer $HOSTNAME)
+  IB_WRITE_BW_OUT2=$(numactl -N $numa_node  -m $numa_node $IB_WRITE_BW_EXE_PATH $IB_WRITE_BW_ARGS --use_cuda=$dev_idx $DATA_DIRECT_ARGS -d $device_peer $HOSTNAME)
   IB_WRITE_BW_OUT2_RC=$?
   if [[ $IB_WRITE_BW_OUT2_RC != 0 ]]; then
 	 NETSTAT_OUT=$(netstat -lnp | grep $PORTARG)
@@ -52,6 +53,7 @@ function run_ib_bw_gdr(){
   IFS=$'\n'
   IB_WRITE_BW_OUT2_LINES=( $IB_WRITE_BW_OUT2 )
   IFS=$' \t\n'
+  ib_bandwidth=
   for ((i=0; i<${#IB_WRITE_BW_OUT2_LINES[*]}; i++))
   do
 	 if [[ "${IB_WRITE_BW_OUT2_LINES[$i]//$MESSAGE_SIZE}" != "${IB_WRITE_BW_OUT2_LINES[$i]}" ]]; then
@@ -62,10 +64,15 @@ function run_ib_bw_gdr(){
 	 fi
   done
   dbg "ib_write_lb_${device}: $ib_bandwidth Gbps"
+  if [[ ! "$ib_bandwidth" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+	 log "$IB_WRITE_BW_OUT2"
+	 die 1 "check_ib_bw_gdr: $IB_WRITE_BW, IB=$device, could not parse a valid IB BW result (got '$ib_bandwidth'). FaultCode: NHCNA"
+	 return 1
+  fi
   if (( $(echo "$ib_bandwidth < $EXP_IB_BW" | bc -l) )); then
 	 log "$IB_WRITE_BW_OUT2"
     die 1 "check_ib_bw_gdr: $IB_WRITE_BW, IB=$device, $device_peer, IB BW (expected > $EXP_IB_BW Gbps, but measured $ib_bandwidth Gbps. FaultCode: NHC2003"
-	 return 1
+	 return 2
   fi
  
   pass 0 "check_ib_bw_gdr: IB write bandwidth test IB_WRITE_BW passed for IB=$device, IB BW=$ib_bandwidth Gbps"
@@ -100,6 +107,48 @@ function check_ib_bw_gdr(){
    wait  "${pid_array[@]}"
 
    remove_clock_boost
+
+   return 0
+}
+
+function check_ib_bw_gdr_data_direct(){
+   trap "background_cleanup" RETURN
+
+   EXP_IB_BW=$1
+   shift
+   port=18510
+   pid_array=()
+
+   # log pkeys
+   print_pkeys $FUNCNAME
+
+   # Endpoints are IB_DEVICE:GPU_INDEX because DataDirect requires each HCA's affine GPU.
+   for endpoint in "$@";
+   do
+      NHC_CHECK_ALL=1 run_ib_bw_gdr $EXP_IB_BW $port ${endpoint%%:*} ${endpoint##*:} "--use_cuda_dmabuf --use_data_direct" &      pid_array+=($!)
+      (( port++ ))
+   done
+
+   failed=0
+   low_bw=0
+   for pid in "${pid_array[@]}";
+   do
+      wait $pid
+      rc=$?
+      if (( rc == 2 )); then
+         low_bw=1
+      elif (( rc != 0 )); then
+         failed=1
+      fi
+   done
+
+   # run_ib_bw_gdr failures occur in subshells, so report them from this process.
+   # It returns 2 for low bandwidth; other failures are setup or command errors.
+   if (( low_bw )); then
+      die 1 "$FUNCNAME: DataDirect IB write bandwidth below $EXP_IB_BW Gbps. FaultCode: NHC2003"
+   elif (( failed )); then
+      die 1 "$FUNCNAME: DataDirect IB write bandwidth test failed. FaultCode: NHCNA"
+   fi
 
    return 0
 }

@@ -14,6 +14,9 @@ for check in "${gpu_test[@]}" ; do
     source $AZ_NHC_ROOT/customTests/$check
 done
 
+# Matches conf/nd128isr_gb300_v6.conf; DataDirect requires each HCA's affine GPU.
+GB300_DATA_DIRECT_ENDPOINTS="mlx5_ib0:1 mlx5_ib1:0 mlx5_ib2:3 mlx5_ib3:2"
+
 @test "Pass case: check_gpu_count" {
     set +e
     gpu_count=$(nvidia-smi --list-gpus | wc -l)
@@ -93,6 +96,8 @@ done
         result=$(check_ib_bw_gdr 1.0)
     elif [[ $ib_type == "non_gdr" ]]; then
         result=$(check_ib_bw_non_gdr 1.0)
+    elif [[ $ib_type == "data_direct" ]]; then
+        result=$(check_ib_bw_gdr_data_direct 1.0 $GB300_DATA_DIRECT_ENDPOINTS)
     else
         # no IB test, set to passing case
         result="PASS"
@@ -109,6 +114,8 @@ done
         result=$(check_ib_bw_gdr 1000.0)
     elif [[ $ib_type == "non_gdr" ]]; then
         result=$(check_ib_bw_non_gdr 1000.0)
+    elif [[ $ib_type == "data_direct" ]]; then
+        result=$(check_ib_bw_gdr_data_direct 1000.0 $GB300_DATA_DIRECT_ENDPOINTS)
     else
         # no IB test, set to passing case
         result="ERROR"
